@@ -23,3 +23,11 @@ path = "rust_builder/cargokit/**"
 precedence = "override"
 SPDX-FileCopyrightText = "2022 Matej Knopp"
 SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# The app icons: copies of kernoid/brand's apps/ – kept as they are, under its licence (update them by copying).
+[[annotations]]
+path = ["macos/Runner/Assets.xcassets/AppIcon.appiconset/*.png", "ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png",
+  "android/app/src/main/res/mipmap-*/ic_launcher.png", "windows/runner/resources/app_icon.ico"]
+precedence = "override"
+SPDX-FileCopyrightText = "falkOSS – Falcon Lake Open Source Software gUG (haftungsbeschränkt) i. G."
+SPDX-License-Identifier = "CC-BY-ND-4.0"

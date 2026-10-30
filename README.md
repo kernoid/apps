@@ -46,4 +46,5 @@ scripts/check-age.py      # after changing rust/Cargo.lock: crates younger than 
 ## Licence
 
 MIT – see [LICENSE](LICENSE). Documentation prose is CC BY 4.0; cargokit (`rust_builder/cargokit`) is MIT OR
-Apache-2.0. Contributions are signed off (`git commit -s`, [DCO](https://developercertificate.org/)).
+Apache-2.0; the app icons are copies from [kernoid/brand](https://github.com/kernoid/brand) under CC BY-ND 4.0.
+Contributions are signed off (`git commit -s`, [DCO](https://developercertificate.org/)).
