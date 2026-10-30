@@ -98,8 +98,9 @@ checked on the device, and sent encrypted and signed whenever every recipient ha
 beforehand. Unlocking with a passkey (PRF) and a copy in the system's key store, vaults, encrypted calendars and the native
 shells follow. Signing in with OpenID Connect came the same day: kernoid's login page in the system's browser
 (flutter_web_auth_2 – ASWebAuthenticationSession, Custom Tabs, a loopback listener on desktops), kernoid's built-in
-client of the apps and the scope `urn:kernoid:data`; the access token is renewed while the app runs (OPEN: the refresh
-token in the system's key store across starts). Calendars and contacts came on the SDK (2026-10-30): the
+client of the apps and the scope `urn:kernoid:data`; the access token is renewed while the app runs, and the login is
+kept in the system's key store (the refresh token, rotated and kept again with each renewal) and resumed at start;
+signing out revokes it. Calendars and contacts came on the SDK (2026-10-30): the
 calendars as two weeks of days with recurring events as their instances and all-day events as dates, invitations
 answered from the event, events made, changed and deleted (inviting people by address); contacts with search,
 made, changed and deleted, an email started from an address (OPEN: one instance of a recurring event on its own,

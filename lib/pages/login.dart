@@ -11,12 +11,15 @@ import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 
 /// Signing in: with OpenID Connect in the system's browser – kernoid's login page, with a passkey, a password or a
-/// second factor –, or with an address and an app password. **OPEN**: the refresh token in the system's key store, so
-/// that the app stays signed in across starts (docs/plan.md, 7).
+/// second factor –, or with an address and an app password. A login with OpenID Connect is kept and resumed at start
+/// (`app/kept_login.dart`); one with an app password is not.
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.onSignedIn});
+  const LoginPage({super.key, required this.onSignedIn, this.notice});
 
   final ValueChanged<Kernoid> onSignedIn;
+
+  /// Why the kept login could not be resumed, if it could not.
+  final String? notice;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -28,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
   final _address = TextEditingController();
   final _password = TextEditingController();
   bool _busy = false;
-  String? _error;
+  late String? _error = widget.notice;
 
   @override
   void dispose() {

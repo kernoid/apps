@@ -5,7 +5,7 @@ The **first-party apps** of [kernoid](https://kernoid.dev) – one sovereign cor
 under **MIT**.
 
 > **Status: first prototype.** Signing in with kernoid's login page in the system's browser (OpenID Connect – a
-> passkey, a password or a second factor) or with an app password, mail (mailboxes, messages, reading, sending plain
+> passkey, a password or a second factor; kept in the system's key store) or with an app password, mail (mailboxes, messages, reading, sending plain
 > text) with end-to-end encryption (the key made here, unlocked with the recovery code; encrypted and signed whenever
 > every recipient has a key), calendars (two weeks as a list of days; events made, changed, deleted and answered),
 > contacts (search; made, changed, deleted; writing to one) and files (stores, directories, saving a file) on macOS,
@@ -28,7 +28,7 @@ under **MIT**.
 
 [Flutter](https://docs.flutter.dev/get-started/install) 3.47.8 and [rustup](https://rustup.rs) – the Rust version and
 targets come from `rust/rust-toolchain.toml`. Then `flutter run -d macos` (or `ios`, `linux`, `android`, `windows`);
-the first build compiles the Rust side, later ones only what changed. Linux needs `libgtk-3-dev`.
+the first build compiles the Rust side, later ones only what changed. Linux needs `libgtk-3-dev` and `libsecret-1-dev`.
 
 | Path | Content |
 |---|---|

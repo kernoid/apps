@@ -53,6 +53,10 @@ layout and the checks.
 - Signing in with OpenID Connect goes through flutter_web_auth_2: `dev.kernoid.kernoid:/oauth` on Apple's systems and
   Android (the `CallbackActivity` in `AndroidManifest.xml`), `http://127.0.0.1:<port>/oauth` on desktops. The system's
   browser is out of the integration test's reach; the protocol is tested in kernoid's SDK against a real kernoid.
+- The login is kept with flutter_secure_storage (`app/kept_login.dart`): Keychain on Apple's systems – on macOS the
+  login keychain, as the data protection keychain needs a signing team's entitlement –, Android Keystore, Windows
+  Credential Manager, Secret Service on Linux (`libsecret-1-dev` to build). Every renewal rotates the refresh token
+  and is kept again; one used before ends the login at the server.
 - An iOS build needs a `libc` new enough for `backtrace` on iOS – do not set it back below the version in
   `rust/Cargo.lock`.
 - Android in CI builds for arm64 only and without debug info; the runner needs disk space freed first.

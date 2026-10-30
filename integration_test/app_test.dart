@@ -6,6 +6,7 @@
 //     [--dart-define=KERNOID_TEST_INVITATION=<title> --dart-define=KERNOID_TEST_CONTACT=<name>] \
 //     [--dart-define=KERNOID_TEST_SCREENSHOTS=/a/directory]
 // The account needs mail in its inbox and files at the top of its store. Without a server the test does nothing.
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -13,7 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:kernoid/app/kept_login.dart';
 import 'package:kernoid/main.dart';
+import 'package:kernoid/src/rust/api/kernoid.dart';
 import 'package:kernoid/src/rust/frb_generated.dart';
 
 const server = String.fromEnvironment('KERNOID_TEST_SERVER');
@@ -253,6 +256,43 @@ void main() {
     await waitGone(tester, inList('Erika Probe $stamp'));
   });
 
+  testWidgets('a login with OpenID Connect is kept and resumed', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    // What the system's browser does – kernoid's login page logs in and finishes the auth request – is done here over
+    // HTTP; the rest is the app's: the login begun and finished, kept in the key store, resumed, signed out.
+    final callback = await tester.runAsync(() async {
+      final login = await Kernoid.beginLogin(
+        server: server,
+        redirectUri: 'http://127.0.0.1:47614/oauth',
+        address: address,
+      );
+      final url = await browser(login.url, address, password);
+      final account = await Kernoid.finishLogin(login: login, callback: url);
+      await KeptLogin.keep(account);
+      expect(account.keptLogin(), isNotNull);
+      expect(account.keptLogin(), isNot(contains('access_token')));
+      return account;
+    });
+    expect(callback!.username, address);
+
+    // As after a restart: the kept login is resumed – with a new refresh token, kept again.
+    final before = callback.keptLogin();
+    final resumed = await tester.runAsync(KeptLogin.resume);
+    expect(resumed?.username, address);
+    expect(resumed!.keptLogin(), isNot(before));
+    await tester.runAsync(() => resumed.mailboxes());
+
+    // Signed out: revoked and forgotten; nothing to resume.
+    await tester.runAsync(() async {
+      await KeptLogin.forget();
+      await resumed.signOut();
+    });
+    expect(await tester.runAsync(KeptLogin.resume), isNull);
+  });
+
   testWidgets('a key is made in the app', (tester) async {
     if (server.isEmpty || newAddress.isEmpty) {
       markTestSkipped('no KERNOID_TEST_NEW_ADDRESS');
@@ -319,6 +359,45 @@ void main() {
     await waitFor(tester, find.text('Aus der App'));
     await shoot(tester, 'e2e-sent');
   });
+}
+
+/// What the system's browser does in a login with OpenID Connect: kernoid's login page logs in (here with the
+/// password, `/v1/sessions`) and finishes the auth request `authorize` parked. Returns the URL it is sent back to.
+/// Requests go to 127.0.0.1 with the server's host, as `*.localhost` may not resolve.
+Future<String> browser(String loginUrl, String address, String password) async {
+  final client = HttpClient();
+  final base = Uri.parse(server);
+  Future<HttpClientResponse> send(String method, Uri uri, {String? bearer, Object? json}) async {
+    final request = await client.openUrl(method, uri.replace(host: '127.0.0.1'));
+    request.headers.host = uri.host;
+    request.headers.port = uri.port;
+    request.followRedirects = false;
+    if (bearer != null) request.headers.set('authorization', 'Bearer $bearer');
+    if (json != null) {
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode(json));
+    }
+    return request.close();
+  }
+
+  Future<Map<String, dynamic>> body(HttpClientResponse response) async =>
+      jsonDecode(await response.transform(utf8.decoder).join()) as Map<String, dynamic>;
+  final session = await body(
+    await send('POST', base.replace(path: '/v1/sessions'), json: {'address': address, 'password': password}),
+  );
+  final toLogin = await send('GET', Uri.parse(loginUrl));
+  await toLogin.drain<void>();
+  final request = toLogin.headers.value('location')!.split('authRequest=').last;
+  final finished = await body(
+    await send(
+      'POST',
+      base.replace(path: '/v1/auth-requests/$request'),
+      bearer: session['token'] as String,
+      json: {},
+    ),
+  );
+  client.close();
+  return finished['callback_url'] as String;
 }
 
 /// A text in a list entry – not the same text in a field of a form still open.

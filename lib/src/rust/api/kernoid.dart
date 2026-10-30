@@ -7,8 +7,9 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `status`, `unique_path`, `write`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -67,10 +68,12 @@ abstract class Kernoid implements RustOpaqueInterface {
   Future<List<FileNode>> files({required String accountId, String? parentId});
 
   /// Finishes a login with the URL the browser came back to. The access token is renewed in the background before
-  /// it expires; the app stays logged in while it runs (**OPEN**: the refresh token in the system's key store,
-  /// for the next start).
+  /// it expires; [`Kernoid::kept_login`] and [`Kernoid::watch_login`] give what to keep to stay signed in.
   static Future<Kernoid> finishLogin({required OidcLogin login, required String callback}) =>
       RustLib.instance.api.crateApiKernoidKernoidFinishLogin(login: login, callback: callback);
+
+  /// What to keep in the system's key store to stay signed in – none for a login with an app password.
+  String? keptLogin();
 
   Future<E2eStatus> keyStatus();
 
@@ -86,6 +89,11 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey();
+
+  /// Signs in again with what [`Kernoid::kept_login`] gave – after a restart. The refresh token is used up by it:
+  /// keep the new one ([`Kernoid::kept_login`]). A login that ended is `unauthorized`: forget what was kept.
+  static Future<Kernoid> resume({required String kept}) =>
+      RustLib.instance.api.crateApiKernoidKernoidResume(kept: kept);
 
   /// Makes a contact in the account's default address book, or – with `account_id` and `contact_id` – changes one.
   /// Addresses and numbers that stay keep their labels (work, home, mobile …).
@@ -113,10 +121,17 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   String get server;
 
+  /// Signs out: a login with OpenID Connect is revoked at the server – the browser's session there stays.
+  Future<void> signOut();
+
   /// Unlocks the key with the recovery code; it stays in this process's memory only.
   Future<E2eStatus> unlockKey({required String code});
 
   String get username;
+
+  /// Hears of every renewal with what to keep from then on: kernoid rotates refresh tokens, and one used before
+  /// would end the login at the next start.
+  Stream<String> watchLogin();
 }
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<OidcLogin>>

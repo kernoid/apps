@@ -1724,7 +1724,7 @@ dependencies = [
 [[package]]
 name = "kernoid-client"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5#4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5"
+source = "git+https://github.com/kernoid/kernoid?rev=5c64e18e4e7d27a909e83fdbf368e62f753c4e11#5c64e18e4e7d27a909e83fdbf368e62f753c4e11"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1749,7 +1749,7 @@ dependencies = [
 [[package]]
 name = "kernoid-e2e"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5#4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5"
+source = "git+https://github.com/kernoid/kernoid?rev=5c64e18e4e7d27a909e83fdbf368e62f753c4e11#5c64e18e4e7d27a909e83fdbf368e62f753c4e11"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",
@@ -1769,6 +1769,7 @@ dependencies = [
  "kernoid-client",
  "kernoid-e2e",
  "rustls",
+ "serde",
  "serde_json",
  "tokio",
 ]

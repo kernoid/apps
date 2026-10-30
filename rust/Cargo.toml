@@ -22,14 +22,15 @@ chrono = { version = "=0.4.45", default-features = false, features = ["clock", "
 flutter_rust_bridge = "=2.13.0"
 # kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – from kernoid/kernoid until it is on
 # crates.io (docs/plan.md, 1).
-kernoid-client = { git = "https://github.com/kernoid/kernoid", rev = "4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5" }
-kernoid-e2e = { git = "https://github.com/kernoid/kernoid", rev = "4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5" }
+kernoid-client = { git = "https://github.com/kernoid/kernoid", rev = "5c64e18e4e7d27a909e83fdbf368e62f753c4e11" }
+kernoid-e2e = { git = "https://github.com/kernoid/kernoid", rev = "5c64e18e4e7d27a909e83fdbf368e62f753c4e11" }
 # Named only for its feature: prefer the post-quantum key exchange X25519MLKEM768, as kernoid does (RFC 0006, 2).
 rustls = { version = "=0.23.46", default-features = false, features = ["aws-lc-rs", "prefer-post-quantum", "std", "tls12"] }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.151"
 tokio = { version = "=1.53.3", features = ["rt-multi-thread", "fs", "io-util"] }
 
 [dev-dependencies]
-serde_json = "=1.0.151"
 tokio = { version = "=1.53.3", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 
 # OpenPGP's Argon2 and post-quantum keys are slow without optimisation, even in debug builds.

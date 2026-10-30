@@ -7,6 +7,8 @@ use std::future::Future;
 use std::sync::{Arc, LazyLock};
 
 use flutter_rust_bridge::frb;
+
+use crate::frb_generated::StreamSink;
 use tokio::sync::Mutex;
 
 use kernoid_client::e2e::{E2e, Outgoing, Plan};
@@ -58,14 +60,47 @@ pub struct Kernoid {
     e2e: Arc<Mutex<E2e>>,
     /// Decrypted messages by email id, for saving their attachments; forgotten when the key is locked.
     opened: Arc<Mutex<HashMap<String, Vec<u8>>>>,
-    /// For a login with OpenID Connect: the task that renews the access token before it expires.
-    renewal: Option<tokio::task::JoinHandle<()>>,
+    /// For a login with OpenID Connect: its tokens and the task that renews them before the access token expires.
+    login: Option<Arc<Login>>,
+}
+
+/// A login with OpenID Connect while the app runs: the server, the tokens – renewed in the background –, and who
+/// hears of each renewal (to keep the new refresh token).
+struct Login {
+    server: String,
+    tokens: std::sync::Mutex<client::oidc::Tokens>,
+    watcher: std::sync::Mutex<Option<StreamSink<String>>>,
+    renewal: std::sync::Mutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+impl std::fmt::Debug for Login {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Login").field("server", &self.server).finish_non_exhaustive()
+    }
+}
+
+/// What the app keeps in the system's key store to stay signed in: the server and the SDK's saved login (the refresh
+/// token, never the access token).
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Kept {
+    server: String,
+    login: client::oidc::Saved,
+}
+
+impl Login {
+    fn kept(&self) -> Option<String> {
+        let saved = self.tokens.lock().ok()?.saved()?;
+        serde_json::to_string(&Kept { server: self.server.clone(), login: saved }).ok()
+    }
 }
 
 impl Drop for Kernoid {
     fn drop(&mut self) {
-        if let Some(renewal) = self.renewal.take() {
-            renewal.abort();
+        if let Some(login) = &self.login
+            && let Ok(mut renewal) = login.renewal.lock()
+            && let Some(task) = renewal.take()
+        {
+            task.abort();
         }
     }
 }
@@ -354,7 +389,7 @@ impl Kernoid {
             Ok((client, e2e))
         })
         .await?;
-        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), renewal: None })
+        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), login: None })
     }
 
     /// Begins a login with OpenID Connect at `server`: kernoid's login page in the system's browser, with a passkey,
@@ -374,20 +409,75 @@ impl Kernoid {
     }
 
     /// Finishes a login with the URL the browser came back to. The access token is renewed in the background before
-    /// it expires; the app stays logged in while it runs (**OPEN**: the refresh token in the system's key store,
-    /// for the next start).
+    /// it expires; [`Kernoid::kept_login`] and [`Kernoid::watch_login`] give what to keep to stay signed in.
     pub async fn finish_login(login: &OidcLogin, callback: String) -> Result<Kernoid, KernoidError> {
         let (inner, server) = (login.login.clone(), login.server.clone());
-        let (client, e2e, tokens) = run(async move {
-            let tokens = client::oidc::finish(&inner, &callback, &options()).await?;
-            let url = client::session_url(Some(&server), "")?;
-            let client = Client::connect_with_token(&url, &tokens.access_token, &options()).await?;
+        let tokens = run(async move { client::oidc::finish(&inner, &callback, &options()).await }).await?;
+        Kernoid::signed_in(server, tokens).await
+    }
+
+    /// Signs in again with what [`Kernoid::kept_login`] gave – after a restart. The refresh token is used up by it:
+    /// keep the new one ([`Kernoid::kept_login`]). A login that ended is `unauthorized`: forget what was kept.
+    pub async fn resume(kept: String) -> Result<Kernoid, KernoidError> {
+        let kept: Kept = serde_json::from_str(&kept)
+            .map_err(|_| KernoidError { unauthorized: true, message: "the kept login is unreadable".into() })?;
+        let saved = kept.login.tokens();
+        let tokens = run(async move { client::oidc::refresh(&saved, &options()).await }).await?;
+        Kernoid::signed_in(kept.server, tokens).await
+    }
+
+    async fn signed_in(server: String, tokens: client::oidc::Tokens) -> Result<Kernoid, KernoidError> {
+        let (access, url_server) = (tokens.access_token.clone(), server.clone());
+        let (client, e2e) = run(async move {
+            let url = client::session_url(Some(&url_server), "")?;
+            let client = Client::connect_with_token(&url, &access, &options()).await?;
             let e2e = E2e::load(&client).await.unwrap_or_default();
-            Ok((client, e2e, tokens))
+            Ok((client, e2e))
         })
         .await?;
-        let renewal = RUNTIME.spawn(renew(client.clone(), tokens));
-        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), renewal: Some(renewal) })
+        let login = Arc::new(Login {
+            server,
+            tokens: std::sync::Mutex::new(tokens),
+            watcher: std::sync::Mutex::new(None),
+            renewal: std::sync::Mutex::new(None),
+        });
+        let task = RUNTIME.spawn(renew(client.clone(), login.clone()));
+        if let Ok(mut renewal) = login.renewal.lock() {
+            *renewal = Some(task);
+        }
+        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), login: Some(login) })
+    }
+
+    /// What to keep in the system's key store to stay signed in – none for a login with an app password.
+    #[frb(sync)]
+    pub fn kept_login(&self) -> Option<String> {
+        self.login.as_ref()?.kept()
+    }
+
+    /// Hears of every renewal with what to keep from then on: kernoid rotates refresh tokens, and one used before
+    /// would end the login at the next start.
+    pub fn watch_login(&self, sink: StreamSink<String>) {
+        if let Some(login) = &self.login
+            && let Ok(mut watcher) = login.watcher.lock()
+        {
+            *watcher = Some(sink);
+        }
+    }
+
+    /// Signs out: a login with OpenID Connect is revoked at the server – the browser's session there stays.
+    pub async fn sign_out(&self) -> Result<(), KernoidError> {
+        let Some(login) = self.login.clone() else { return Ok(()) };
+        if let Ok(mut renewal) = login.renewal.lock()
+            && let Some(task) = renewal.take()
+        {
+            task.abort();
+        }
+        let tokens = login
+            .tokens
+            .lock()
+            .map(|t| t.clone())
+            .map_err(|_| KernoidError { unauthorized: false, message: "the login is broken".into() })?;
+        run(async move { client::oidc::revoke(&tokens, &options()).await }).await
     }
 
     #[frb(sync, getter)]
@@ -657,21 +747,34 @@ impl Kernoid {
     }
 }
 
-/// Renews the access token a minute before it expires, as long as the refresh token is good.
-async fn renew(client: Client, mut tokens: client::oidc::Tokens) {
+/// Renews the access token a minute before it expires, as long as the refresh token is good, and tells the watcher
+/// what to keep from then on.
+async fn renew(client: Client, login: Arc<Login>) {
     loop {
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+        let Ok(tokens) = login.tokens.lock().map(|t| t.clone()) else { return };
         let wait = tokens.expires_at.saturating_sub(now).saturating_sub(60).max(10);
         tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
         match client::oidc::refresh(&tokens, &options()).await {
             Ok(new) => {
                 client.set_access_token(&new.access_token);
-                tokens = new;
+                if let Ok(mut kept) = login.tokens.lock() {
+                    *kept = new;
+                }
+                if let (Some(text), Ok(watcher)) = (login.kept(), login.watcher.lock())
+                    && let Some(sink) = watcher.as_ref()
+                {
+                    let _ = sink.add(text);
+                }
             }
-            // Logged out, or the refresh token revoked: calls fail with "unauthorized", and the app asks again.
+            // Signed out elsewhere, or the refresh token revoked: calls fail with "unauthorized", and the app asks again.
             Err(client::Error::Unauthorized) => return,
             // Offline for now: try again shortly.
-            Err(_) => tokens.expires_at = now + 120,
+            Err(_) => {
+                if let Ok(mut kept) = login.tokens.lock() {
+                    kept.expires_at = now + 120;
+                }
+            }
         }
     }
 }
