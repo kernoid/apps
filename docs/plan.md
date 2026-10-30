@@ -57,9 +57,10 @@ The app is built now and released **with the first stable version** (maintainer,
 is incorporated and holds the app stores' developer accounts – publishing in the stores needs that legal entity.
 Until then, in this order:
 
-1. **The Rust SDK** in `kernoid/kernoid`: the protocol layer of the terminal app (`apps/tui/src/jmap/`, MIT today)
-   becomes `kernoid-client`, made async; the terminal app uses it and becomes AGPL like the rest of the repository.
-2. **`kernoid-sync`**: local state, changes, transfers, conflicts – tested against a real kernoid in CI.
+1. **The Rust SDK** in `kernoid/kernoid`: the protocol layer of the terminal app became `kernoid-client`
+   (`apps/client`), async; the terminal app uses it and is AGPL like the rest of the repository (done 2026-10-30).
+2. **`kernoid-sync`** (`apps/sync`): local state, changes, conflicts – tested against a real kernoid in CI (first
+   version 2026-10-30; OPEN: moves as moves, resumed transfers, vaults).
 3. **This repository:** the Flutter app with mail, calendars and contacts, files inside the app – with end-to-end
    encryption (section 6) from its first version, not added later.
 4. **System integration** of files (section 5), in the order of section 2.
@@ -86,8 +87,8 @@ apps/
 `android`, `windows-sync`).
 
 **The first prototype (2026-10-30)** has a simpler shape: `rust/` is one crate, `kernoid_bridge` – the API Dart sees
-(`src/api/`) and an async JMAP client (`src/client/`) that becomes `kernoid-client` once the SDK exists in
-`kernoid/kernoid`; `rust_builder/` is flutter_rust_bridge's plugin with cargokit, which builds `rust/` for each
+(`src/api/`), on `kernoid-client` from `kernoid/kernoid` by commit until it is on crates.io (its own JMAP client
+before, which became the SDK's); `rust_builder/` is flutter_rust_bridge's plugin with cargokit, which builds `rust/` for each
 platform (changed to build with the exact Rust of `rust/rust-toolchain.toml`). It signs in with an app password
 and does mail (mailboxes, messages, reading, sending plain text) and files (stores, directories, saving).
 End-to-end encrypted mail came the same day, on `kernoid-e2e` (from `kernoid/kernoid` by commit until it is on

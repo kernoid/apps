@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
-# The Rust side of kernoid's apps: what Dart calls through flutter_rust_bridge (`src/api/`) and, for now, an async JMAP
-# client (`src/client/`) that becomes `kernoid-client` of kernoid's Rust SDK (docs/plan.md, 1). A workspace of its own;
-# dependencies are exact (`=`), permissive (`deny.toml`) and at least two weeks old when taken.
+# The Rust side of kernoid's apps: what Dart calls through flutter_rust_bridge (`src/api/`), on kernoid's Rust SDK
+# (`kernoid-client`, docs/plan.md, 1). A workspace of its own; dependencies are exact (`=`), permissive (`deny.toml`) and
+# at least two weeks old when taken.
 [workspace]
 
 [package]
@@ -18,21 +18,17 @@ publish = false
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-base64 = "=0.22.1"
 flutter_rust_bridge = "=2.13.0"
-# End-to-end encryption (RFC 0006): the library of kernoid's apps, MIT, from kernoid/kernoid until it is on crates.io
-# with the SDK (docs/plan.md, 1).
-kernoid-e2e = { git = "https://github.com/kernoid/kernoid", rev = "cf92f77b52cb68ccbaceed109c79b737877edcca" }
-# HTTPS with rustls on AWS-LC and the system's trust store (rustls-platform-verifier).
-reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "http2", "json"] }
+# kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – from kernoid/kernoid until it is on
+# crates.io (docs/plan.md, 1).
+kernoid-client = { git = "https://github.com/kernoid/kernoid", rev = "1e65d76be1033885fc4963afa266290597657edb" }
+kernoid-e2e = { git = "https://github.com/kernoid/kernoid", rev = "1e65d76be1033885fc4963afa266290597657edb" }
 # Named only for its feature: prefer the post-quantum key exchange X25519MLKEM768, as kernoid does (RFC 0006, 2).
 rustls = { version = "=0.23.46", default-features = false, features = ["aws-lc-rs", "prefer-post-quantum", "std", "tls12"] }
-serde = { version = "=1.0.228", features = ["derive"] }
-serde_json = "=1.0.151"
-thiserror = "=2.0.21"
 tokio = { version = "=1.53.3", features = ["rt-multi-thread", "fs", "io-util"] }
 
 [dev-dependencies]
+serde_json = "=1.0.151"
 tokio = { version = "=1.53.3", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 
 # OpenPGP's Argon2 and post-quantum keys are slow without optimisation, even in debug builds.

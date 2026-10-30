@@ -9,8 +9,8 @@ use std::sync::{Arc, LazyLock};
 use flutter_rust_bridge::frb;
 use tokio::sync::Mutex;
 
-use crate::client::e2e::{self, E2e, Plan};
-use crate::client::{self, Client, files, mail};
+use kernoid_client::e2e::{E2e, Outgoing, Plan};
+use kernoid_client::{self as client, Client, files, mail};
 
 static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
     tokio::runtime::Builder::new_multi_thread()
@@ -169,6 +169,9 @@ pub struct SendPlan {
     pub reason: Option<String>,
 }
 
+/// The width HTML is set to as text: wide, so that the app wraps it, not html2text.
+const TEXT_WIDTH: usize = 10_000;
+
 fn addresses(list: Option<Vec<mail::EmailAddress>>) -> Vec<Address> {
     list.unwrap_or_default().into_iter().map(|a| Address { name: a.name, email: a.email }).collect()
 }
@@ -194,12 +197,44 @@ fn recipients(to: &[String]) -> Vec<String> {
     to.iter().map(|a| a.trim().to_owned()).filter(|a| a.contains('@')).collect()
 }
 
+/// A plain-text message to `to`.
+fn draft(to: &[String], subject: &str, text: &str) -> mail::Draft {
+    mail::Draft {
+        from: None,
+        to: recipients(to).into_iter().map(|email| mail::EmailAddress { name: None, email }).collect(),
+        cc: Vec::new(),
+        bcc: Vec::new(),
+        subject: subject.to_owned(),
+        body: text.to_owned(),
+        in_reply_to: Vec::new(),
+        references: Vec::new(),
+        attachments: Vec::new(),
+    }
+}
+
+/// The identity the account sends as: the one of its own address, else the first.
+async fn identity(client: &Client, account: &str) -> client::Result<mail::Identity> {
+    let identities = mail::identities(client, account).await?;
+    let own = client.session.username.to_lowercase();
+    identities
+        .iter()
+        .find(|identity| identity.email.to_lowercase() == own)
+        .or(identities.first())
+        .cloned()
+        .ok_or_else(|| client::Error::Protocol("the account has no identity to send as".into()))
+}
+
 impl Kernoid {
     /// Logs in with an address and an app password (**OPEN**: OpenID Connect with PKCE, tokens in the system's
     /// key store – docs/plan.md, 7).
     pub async fn login(server: String, address: String, password: String) -> Result<Kernoid, KernoidError> {
         let (client, e2e) = run(async move {
-            let client = Client::login(&server, &address, &password).await?;
+            let url = client::session_url(Some(server.trim()), address.trim())?;
+            let options = client::Options {
+                allow_http: false,
+                user_agent: concat!("kernoid-app/", env!("CARGO_PKG_VERSION")).into(),
+            };
+            let client = Client::connect(&url, address.trim(), &password, &options).await?;
             // A server without the extension, or one that fails to answer it, is mail without end-to-end encryption.
             let e2e = E2e::load(&client).await.unwrap_or_default();
             Ok((client, e2e))
@@ -246,15 +281,17 @@ impl Kernoid {
     pub async fn emails(&self, mailbox_id: String, position: u32, limit: u32) -> Result<EmailPage, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
         run(async move {
-            let (emails, total) = mail::page(&client, &account, &mailbox_id, position, limit).await?;
+            let (emails, total) =
+                mail::emails(&client, &account, Some(&mailbox_id), "", u64::from(position), u64::from(limit)).await?;
             let e2e = e2e.lock().await;
             let emails = emails
                 .into_iter()
                 .map(|mut e| {
-                    let opened = e2e.open_summary(&mut e);
+                    e2e.open_summary(&mut e);
+                    let opened = e.opened;
                     EmailSummary {
-                        seen: e.keywords.get("$seen").copied().unwrap_or(false),
-                        flagged: e.keywords.get("$flagged").copied().unwrap_or(false),
+                        seen: e.is_seen(),
+                        flagged: e.is_flagged(),
                         encrypted: e.encrypted,
                         locked: e.encrypted && !opened,
                         id: e.id,
@@ -276,46 +313,42 @@ impl Kernoid {
         let (client, account) = (self.client.clone(), self.account(client::MAIL)?);
         let (e2e, opened) = (self.e2e.clone(), self.opened.clone());
         run(async move {
-            let email = mail::email(&client, &account, &id).await?;
-            let encrypted = email.encrypted;
-            let o = e2e.lock().await.open(&client, &account, email).await?;
-            let e = o.email;
-            let mut attachments: Vec<Attachment> = e
+            let email = mail::full(&client, &account, &[id.as_str()])
+                .await?
+                .into_iter()
+                .next()
+                .ok_or_else(|| client::Error::Protocol("the email is gone".into()))?;
+            let encrypted = email.summary.encrypted;
+            let e = e2e.lock().await.open(&client, &account, email).await?;
+            let sealed = e.sealed.unwrap_or_default();
+            let attachments: Vec<Attachment> = e
                 .attachments
                 .iter()
-                .filter_map(|part| {
-                    Some(Attachment {
-                        blob_id: Some(part.blob_id.clone()?),
-                        part_index: None,
-                        name: part.name.clone().unwrap_or_else(|| "attachment".into()),
-                        media_type: part.media_type.clone(),
-                        size: count(part.size),
-                    })
+                .filter(|part| part.blob_id.is_some() || part.inner.is_some())
+                .map(|part| Attachment {
+                    blob_id: part.blob_id.clone(),
+                    part_index: part.inner.and_then(|index| u32::try_from(index).ok()),
+                    name: part.name.clone().unwrap_or_else(|| "attachment".into()),
+                    media_type: part.kind.clone(),
+                    size: count(part.size),
                 })
                 .collect();
-            attachments.extend(o.parts.iter().map(|p| Attachment {
-                blob_id: None,
-                part_index: u32::try_from(p.index).ok(),
-                name: p.name.clone().unwrap_or_else(|| "attachment".into()),
-                media_type: p.media_type.clone(),
-                size: count(p.size as u64),
-            }));
-            if let Some(inner) = o.inner {
-                opened.lock().await.insert(e.id.clone(), inner);
+            if let Some(inner) = &e.inner {
+                opened.lock().await.insert(e.summary.id.clone(), inner.0.clone());
             }
             Ok(Email {
-                text: if o.locked { String::new() } else { e.text() },
+                text: if sealed.locked { String::new() } else { e.text(TEXT_WIDTH) },
                 attachments,
                 encrypted,
-                locked: o.locked,
-                signed: o.signed,
-                verified: o.verified,
-                id: e.id,
-                from: addresses(e.from),
-                to: addresses(e.to),
+                locked: sealed.locked,
+                signed: sealed.signed,
+                verified: sealed.verified,
+                id: e.summary.id,
+                from: addresses(e.summary.from),
+                to: addresses(e.summary.to),
                 cc: addresses(e.cc),
-                subject: e.subject.unwrap_or_default(),
-                received_at: e.received_at,
+                subject: e.summary.subject.unwrap_or_default(),
+                received_at: e.summary.received_at,
             })
         })
         .await
@@ -326,8 +359,8 @@ impl Kernoid {
     pub async fn send_plan(&self, to: Vec<String>) -> Result<SendPlan, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
         run(async move {
-            let identity = mail::identity(&client, &account).await?;
-            Ok(match e2e.lock().await.plan(&client, &account, &identity, &recipients(&to)).await {
+            let identity = identity(&client, &account).await?;
+            Ok(match e2e.lock().await.plan(&client, &account, &identity, &draft(&to, "", "")).await {
                 Plan::Sealed(_) => SendPlan { encrypted: true, reason: None },
                 Plan::Plain(reason) => SendPlan { encrypted: false, reason: Some(reason) },
             })
@@ -335,8 +368,8 @@ impl Kernoid {
         .await
     }
 
-    /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is the
-    /// app's time for the `Date` field (RFC 5322). Returns whether it went encrypted.
+    /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
+    /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
     pub async fn send(
         &self,
         to: Vec<String>,
@@ -345,18 +378,21 @@ impl Kernoid {
         date: String,
     ) -> Result<bool, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+        let _ = date;
         run(async move {
-            let to = recipients(&to);
-            let identity = mail::identity(&client, &account).await?;
+            let message = draft(&to, &subject, &text);
+            let identity = identity(&client, &account).await?;
+            let boxes = mail::mailboxes(&client, &account).await?;
             let mut e2e = e2e.lock().await;
-            match e2e.plan(&client, &account, &identity, &to).await {
+            match e2e.plan(&client, &account, &identity, &message).await {
                 Plan::Sealed(keys) => {
-                    let message = e2e::Outgoing { to: &to, subject: &subject, text: &text, date: &date };
-                    e2e.send(&client, &account, &identity, message, &keys).await?;
+                    let outgoing =
+                        Outgoing { account: &account, identity: &identity, draft: &message, files: &[], boxes: &boxes };
+                    e2e.send(&client, outgoing, &keys).await?;
                     Ok(true)
                 }
                 Plan::Plain(_) => {
-                    mail::send(&client, &account, &to, &subject, &text).await?;
+                    mail::send(&client, &account, &identity, &message, &boxes).await?;
                     Ok(false)
                 }
             }
@@ -399,7 +435,7 @@ impl Kernoid {
     pub fn file_stores(&self) -> Vec<FileStore> {
         files::stores(&self.client)
             .into_iter()
-            .map(|s| FileStore { account_id: s.account_id, name: s.name, is_personal: s.is_personal })
+            .map(|s| FileStore { is_personal: s.kind == files::StoreKind::Own, account_id: s.id, name: s.name })
             .collect()
     }
 
@@ -415,7 +451,7 @@ impl Kernoid {
                 name: n.name,
                 role: n.role,
                 blob_id: n.blob_id,
-                size: count(n.size),
+                size: count(n.size.unwrap_or_default()),
                 media_type: n.media_type,
                 modified: n.modified,
             })
@@ -438,8 +474,15 @@ impl Kernoid {
         };
         let client = self.client.clone();
         run(async move {
-            let bytes = client.download(&account_id, &blob_id, &name, &media_type).await?;
-            write(&directory, &name, bytes).await
+            let path = unique_path(std::path::Path::new(&directory), &name).await;
+            let mut file = tokio::fs::File::create(&path).await?;
+            let result = client.download(&account_id, &blob_id, &name, &media_type, &mut file, &mut |_, _| {}).await;
+            if let Err(error) = result {
+                drop(file);
+                let _ = tokio::fs::remove_file(&path).await;
+                return Err(error);
+            }
+            Ok(path.to_string_lossy().into_owned())
         })
         .await
     }
@@ -460,7 +503,7 @@ impl Kernoid {
                 .get(&email_id)
                 .cloned()
                 .ok_or_else(|| client::Error::E2e("open the message again: the key was locked".into()))?;
-            let bytes = kernoid_e2e::compose::part(&inner, part_index as usize)?;
+            let bytes = kernoid_e2e::compose::part(&inner, part_index as usize).map_err(client::Error::from)?;
             write(&directory, &name, bytes).await
         })
         .await
@@ -469,7 +512,7 @@ impl Kernoid {
 
 async fn write(directory: &str, name: &str, bytes: Vec<u8>) -> client::Result<String> {
     let path = unique_path(std::path::Path::new(directory), name).await;
-    tokio::fs::write(&path, bytes).await.map_err(|error| client::Error::Network(error.to_string()))?;
+    tokio::fs::write(&path, bytes).await?;
     Ok(path.to_string_lossy().into_owned())
 }
 

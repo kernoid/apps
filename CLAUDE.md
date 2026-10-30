@@ -45,9 +45,11 @@ layout and the checks.
 ## Building – what is not obvious
 
 - Rust is pinned in `rust/rust-toolchain.toml`; cargokit is told the same version in `rust/cargokit.yaml`, else it
-  builds with whatever toolchain it finds.
-- `src/client/` is the forerunner of kernoid's Rust SDK (`kernoid-client`); it moves there (plan, section 3).
-  `kernoid-e2e` comes from kernoid's repository by commit until it is on crates.io.
+  builds with whatever toolchain it finds. It runs `rustup run <version> cargo`, and cargo finds `rustc` on `PATH`: a
+  Rust of Homebrew before `~/.cargo/bin` has no targets for iOS or Android, and the build fails with "can't find crate
+  for `core`". Put `~/.cargo/bin` first.
+- The protocols are kernoid's Rust SDK (`kernoid-client`, with `kernoid-e2e`); both come from kernoid's repository by
+  commit until they are on crates.io. `rust/src/api/` only translates them for Dart.
 - An iOS build needs a `libc` new enough for `backtrace` on iOS – do not set it back below the version in
   `rust/Cargo.lock`.
 - Android in CI builds for arm64 only and without debug info; the runner needs disk space freed first.
