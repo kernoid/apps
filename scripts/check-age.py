@@ -19,12 +19,14 @@ ROOT = next(
     (Path(a.split("=", 1)[1]).resolve() for a in sys.argv[1:] if a.startswith("--dir=")),
     Path(__file__).resolve().parent.parent / "rust",
 )
-# The one exception to the two weeks: the smallest version that fixes a RustSec advisory, with the advisory's id.
+# The exceptions to the two weeks: the smallest version that fixes a RustSec advisory, with the advisory's id – and
+# kernoid's own crates, released together with the apps (OWN).
 SECURITY_FIXES = {
     ("rustls-webpki", "0.103.16"): "RUSTSEC-2026-0382",
     ("webpki-roots", "1.0.10"): "RUSTSEC-2026-0381",
     ("webpki-root-certs", "1.0.10"): "RUSTSEC-2026-0383",
 }
+OWN = {"kernoid-client", "kernoid-e2e", "kernoid-sync"}
 HEADERS = {"User-Agent": "kernoid-apps check-age (https://github.com/kernoid/apps)"}
 
 
@@ -45,7 +47,7 @@ def young(limit):
         if not package.get("source", "").startswith("registry+"):
             continue
         name, version = package["name"], package["version"]
-        if (name, version) in SECURITY_FIXES:
+        if (name, version) in SECURITY_FIXES or name in OWN:
             continue
         published = date(get(f"https://crates.io/api/v1/crates/{name}/{version}")["version"]["created_at"])
         if published > limit:

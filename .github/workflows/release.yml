@@ -1,0 +1,109 @@
+# SPDX-License-Identifier: MIT
+# Release on a version tag (v0.2.0 …): a draft GitHub release with the app for macOS, Windows, Linux (x64, arm64) and
+# Android, each with its SHA-256, and `apps.json` – the feed kernoid's website shows its downloads from. The builds are
+# not signed by a developer account: macOS ad hoc, Android with the runner's throwaway debug key (an update needs the
+# app removed first); iOS installs only signed and is left out. Check the files, then publish the draft. Flutter and
+# Rust as in CI.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: 3.47.8
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: The tag names the version in pubspec.yaml
+        run: |
+          have=$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)
+          [ "${GITHUB_REF_NAME#v}" = "$have" ] || { echo "::error::tag $GITHUB_REF_NAME, pubspec.yaml $have"; exit 1; }
+      - name: Draft release
+        run: |
+          notes=$(awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {on=1; next} /^## \[/ {on=0} on' CHANGELOG.md)
+          gh release create "$GITHUB_REF_NAME" --draft --title "kernoid apps $GITHUB_REF_NAME" \
+            --notes "Not signed by a developer account – for testing. How to open the builds: https://kernoid.org/#apps
+          $notes"
+
+  build:
+    needs: draft
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: macos, runner: macos-latest }
+          - { platform: windows, runner: windows-latest }
+          - { platform: linux-x64, runner: ubuntu-latest }
+          - { platform: linux-arm64, runner: ubuntu-24.04-arm }
+          - { platform: android, runner: ubuntu-latest }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Room on the disk – tools of the runner the build does not use
+        if: matrix.platform == 'android'
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/.ghcup "$AGENT_TOOLSDIRECTORY/CodeQL"
+      - name: Flutter
+        run: |
+          git clone --depth 1 --branch "$FLUTTER_VERSION" https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          if [[ "$RUNNER_OS" == Windows ]]; then echo "FLUTTER=flutter.bat" >> "$GITHUB_ENV"; else echo "FLUTTER=flutter" >> "$GITHUB_ENV"; fi
+      - name: Libraries for Linux – GTK
+        if: runner.os == 'Linux' && matrix.platform != 'android'
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libwebkit2gtk-4.1-dev
+      - name: Rust toolchain from rust-toolchain.toml
+        working-directory: rust
+        run: rustup toolchain install
+      - run: $FLUTTER pub get --enforce-lockfile
+      - name: Build and pack
+        run: |
+          v="${GITHUB_REF_NAME#v}"; name="kernoid-$v-${{ matrix.platform }}"
+          mkdir -p dist
+          case "${{ matrix.platform }}" in
+            macos)
+              "$FLUTTER" build macos --release
+              ditto -c -k --keepParent build/macos/Build/Products/Release/kernoid.app "dist/$name.zip"; file="$name.zip" ;;
+            windows)
+              "$FLUTTER" build windows --release
+              (cd build/windows/x64/runner/Release && 7z a -tzip "$GITHUB_WORKSPACE/dist/$name.zip" . >/dev/null); file="$name.zip" ;;
+            linux-*)
+              "$FLUTTER" build linux --release
+              arch=$([ "${{ matrix.platform }}" = linux-x64 ] && echo x64 || echo arm64)
+              tar -C "build/linux/$arch/release" -czf "dist/$name.tar.gz" --transform "s,^bundle,kernoid-$v," bundle
+              file="$name.tar.gz" ;;
+            android)
+              # arm64 only: the phones of the last years, and room on the runner's disk.
+              "$FLUTTER" build apk --release --target-platform android-arm64
+              cp build/app/outputs/flutter-apk/app-release.apk "dist/$name.apk"; file="$name.apk" ;;
+          esac
+          cd dist
+          if command -v sha256sum >/dev/null; then sha256sum "$file" > "$file.sha256"; else shasum -a 256 "$file" > "$file.sha256"; fi
+          gh release upload "$GITHUB_REF_NAME" "$file" "$file.sha256" --clobber
+
+  feed:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: apps.json – for kernoid's website, copied there once the release is published
+        run: |
+          mkdir dist && cd dist
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern '*.sha256'
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME"
+          jq -n -R --arg v "${GITHUB_REF_NAME#v}" --arg page "https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME" \
+            --arg base "$base" \
+            '{version: $v, page: $page, signed: false, files: [inputs | split("  ") | {
+                name: .[1], url: ($base + "/" + .[1]), sha256: .[0],
+                platform: (.[1] | capture("kernoid-[^-]+-(?<p>.+)\\.(zip|tar\\.gz|apk)$").p) }]}' \
+            *.sha256 > apps.json
+          cat apps.json
+          gh release upload "$GITHUB_REF_NAME" apps.json --repo "$GITHUB_REPOSITORY" --clobber

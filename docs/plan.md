@@ -87,12 +87,12 @@ apps/
 `android`, `windows-sync`).
 
 **The first prototype (2026-10-30)** has a simpler shape: `rust/` is one crate, `kernoid_bridge` – the API Dart sees
-(`src/api/`), on `kernoid-client` from `kernoid/kernoid` by commit until it is on crates.io (its own JMAP client
+(`src/api/`), on `kernoid-client` – by commit at first, from crates.io since 0.2.0 – (its own JMAP client
 before, which became the SDK's); `rust_builder/` is flutter_rust_bridge's plugin with cargokit, which builds `rust/` for each
 platform (changed to build with the exact Rust of `rust/rust-toolchain.toml`). It signs in with an app password
 and does mail (mailboxes, messages, reading, sending plain text) and files (stores, directories, saving).
-End-to-end encrypted mail came the same day, on `kernoid-e2e` (from `kernoid/kernoid` by commit until it is on
-crates.io): the key made in the app with a recovery code shown once (and the tenant's copy when its policy asks),
+End-to-end encrypted mail came the same day, on `kernoid-e2e` (from crates.io
+since 0.2.0): the key made in the app with a recovery code shown once (and the tenant's copy when its policy asks),
 unlocked with that code and kept in memory only, encrypted mail shown as locked until then, read and its signature
 checked on the device, and sent encrypted and signed whenever every recipient has a key – the compose view says so
 beforehand. Unlocking with a passkey (PRF) and a copy in the system's key store, vaults, encrypted calendars and the native

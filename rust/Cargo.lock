@@ -1723,8 +1723,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-client"
-version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=61e691c53001977bd3d6499b522e4cc6616c7593#61e691c53001977bd3d6499b522e4cc6616c7593"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2facabaa18581911906f1f5b4cad170777cb74b51619cfea9c189e172eba8f4c"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1748,8 +1749,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-e2e"
-version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=61e691c53001977bd3d6499b522e4cc6616c7593#61e691c53001977bd3d6499b522e4cc6616c7593"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e44704bf33781c4cf67ce1383ac138cb17c7ba67dc8293edbe23711739ab2ea"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",
@@ -1762,7 +1764,7 @@ dependencies = [
 
 [[package]]
 name = "kernoid_bridge"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "flutter_rust_bridge",

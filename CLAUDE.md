@@ -48,8 +48,9 @@ layout and the checks.
   builds with whatever toolchain it finds. It runs `rustup run <version> cargo`, and cargo finds `rustc` on `PATH`: a
   Rust of Homebrew before `~/.cargo/bin` has no targets for iOS or Android, and the build fails with "can't find crate
   for `core`". Put `~/.cargo/bin` first.
-- The protocols are kernoid's Rust SDK (`kernoid-client`, with `kernoid-e2e`); both come from kernoid's repository by
-  commit until they are on crates.io. `rust/src/api/` only translates them for Dart.
+- The protocols are kernoid's Rust SDK (`kernoid-client`, with `kernoid-e2e`); both come from crates.io in the version of
+  the release – kernoid and the apps are released together (0.2.0) – and are kernoid's own, so not held to the two
+  weeks. `rust/src/api/` only translates them for Dart.
 - Signing in with OpenID Connect goes through flutter_web_auth_2: `dev.kernoid.kernoid:/oauth` on Apple's systems and
   Android (the `CallbackActivity` in `AndroidManifest.xml`), `http://127.0.0.1:<port>/oauth` on desktops. The system's
   browser is out of the integration test's reach; the protocol is tested in kernoid's SDK against a real kernoid.

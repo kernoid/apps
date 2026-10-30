@@ -6,7 +6,7 @@
 
 [package]
 name = "kernoid_bridge"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.94"
 license = "MIT"
@@ -20,10 +20,10 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 [dependencies]
 chrono = { version = "=0.4.45", default-features = false, features = ["clock", "std"] }
 flutter_rust_bridge = "=2.13.0"
-# kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – from kernoid/kernoid until it is on
-# crates.io (docs/plan.md, 1).
-kernoid-client = { git = "https://github.com/kernoid/kernoid", rev = "61e691c53001977bd3d6499b522e4cc6616c7593" }
-kernoid-e2e = { git = "https://github.com/kernoid/kernoid", rev = "61e691c53001977bd3d6499b522e4cc6616c7593" }
+# kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – released with kernoid, the same
+# version as the apps (docs/plan.md, 1).
+kernoid-client = "=0.2.0"
+kernoid-e2e = "=0.2.0"
 # Named only for its feature: prefer the post-quantum key exchange X25519MLKEM768, as kernoid does (RFC 0006, 2).
 rustls = { version = "=0.23.46", default-features = false, features = ["aws-lc-rs", "prefer-post-quantum", "std", "tls12"] }
 serde = { version = "=1.0.228", features = ["derive"] }
