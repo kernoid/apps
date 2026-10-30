@@ -1,0 +1,96 @@
+{
+  "@@locale": "en",
+  "appTitle": "kernoid",
+  "signInTitle": "Sign in to kernoid",
+  "server": "Server",
+  "serverHint": "https://kernoid.example",
+  "address": "Address",
+  "appPassword": "App password",
+  "appPasswordHint": "Make one on your account page. Signing in with a passkey follows.",
+  "signIn": "Sign in",
+  "required": "Required",
+  "mail": "Mail",
+  "files": "Files",
+  "account": "Account",
+  "inbox": "Inbox",
+  "drafts": "Drafts",
+  "sent": "Sent",
+  "archive": "Archive",
+  "junk": "Junk",
+  "trash": "Trash",
+  "noMessages": "No messages",
+  "noSubject": "(no subject)",
+  "selectMessage": "Select a message",
+  "from": "From",
+  "to": "To",
+  "cc": "Cc",
+  "subject": "Subject",
+  "message": "Message",
+  "write": "Write",
+  "send": "Send",
+  "discard": "Discard",
+  "messageSent": "Message sent",
+  "attachments": "Attachments",
+  "save": "Save",
+  "savedTo": "Saved to {path}",
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "loadMore": "Load more",
+  "myFiles": "My files",
+  "folderEmpty": "This folder is empty",
+  "refresh": "Refresh",
+  "signedInAs": "Signed in as",
+  "signOut": "Sign out",
+  "e2eTitle": "End-to-end encryption",
+  "e2eBody": "Coming next: your key is made on this device and unlocked with your passkey. Mail to people with a key is encrypted without a setting, and vaults keep files only you can read.",
+  "error": "Something went wrong: {message}",
+  "@error": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "retry": "Try again",
+  "e2eUnavailable": "This server does not offer end-to-end encryption.",
+  "e2eNoKey": "Your account has no key yet. Make one here: it is made on this device, and the server keeps it only protected – by a recovery code that only you have.",
+  "e2eMakeKey": "Make my key",
+  "e2eLocked": "Your key is locked. Enter your recovery code to read encrypted mail and to send encrypted.",
+  "e2eUnlocked": "Unlocked on this device. Mail to people with a key goes encrypted and signed – without a setting.",
+  "recoveryCode": "Recovery code",
+  "unlock": "Unlock",
+  "lock": "Lock",
+  "fingerprint": "Fingerprint",
+  "postQuantum": "post-quantum (ML-KEM and ML-DSA with Curve25519)",
+  "compatibleKind": "compatible (Curve25519)",
+  "tenantRecovers": "Your organisation can recover your key.",
+  "recoveryTitle": "Your recovery code",
+  "recoveryBody": "Write it down or keep it in your password manager. It is shown only now. Without it – and without a passkey that unlocks your key – mail encrypted to you cannot be read again.",
+  "recoveryKept": "I have kept the code safe",
+  "copy": "Copy",
+  "copied": "Copied",
+  "done": "Done",
+  "encryptedMessage": "Encrypted message",
+  "unlockToRead": "Unlock your key to read it",
+  "lockedEmail": "This message is end-to-end encrypted. Unlock your key to read it.",
+  "e2eEncrypted": "End-to-end encrypted",
+  "signatureVerified": "signature checked",
+  "signatureUnverified": "signature not checked",
+  "notSigned": "not signed",
+  "willEncrypt": "Will be sent end-to-end encrypted and signed.",
+  "wontEncrypt": "Not end-to-end encrypted: {reason}",
+  "@wontEncrypt": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "sentEncrypted": "Sent end-to-end encrypted",
+  "cancel": "Cancel"
+}

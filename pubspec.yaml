@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MIT
+# kernoid's app for macOS, iOS, Linux, Android and Windows (docs/plan.md). Dependencies are exact and at least two
+# weeks old when taken; the Rust side is in rust/, built by cargokit through the plugin in rust_builder/.
+name: kernoid
+description: "kernoid on desktops and phones: mail, calendars, contacts and files."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_rust_bridge: 2.13.0
+  intl: any
+  kernoid_bridge:
+    path: rust_builder
+  path_provider: 2.1.6
+
+dev_dependencies:
+  flutter_lints: 6.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true

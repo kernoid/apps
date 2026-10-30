@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT
+include: package:flutter_lints/flutter.yaml
+
+formatter:
+  page_width: 120
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**
+    - linux/**
+    - rust_builder/cargokit/**
+    - lib/src/rust/**

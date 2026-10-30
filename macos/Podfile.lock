@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - kernoid_bridge (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - kernoid_bridge (from `Flutter/ephemeral/.symlinks/plugins/kernoid_bridge/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  kernoid_bridge:
+    :path: Flutter/ephemeral/.symlinks/plugins/kernoid_bridge/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
+  kernoid_bridge: 9fea492adbdf0fc93b0f2efdf0abf159f872a1c3
+
+PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
+
+COCOAPODS: 1.17.0

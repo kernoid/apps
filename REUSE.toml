@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MIT
+# Licence and copyright of files that cannot carry a header (REUSE specification 3.3). Source files name their own
+# licence in an SPDX header.
+version = 1
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "falkOSS – Falcon Lake Open Source Software gUG (haftungsbeschränkt) i. G. and the kernoid contributors"
+SPDX-License-Identifier = "MIT"
+
+# Documentation prose, so that text can move freely between the repositories.
+[[annotations]]
+path = "docs/**/*.md"
+precedence = "override"
+SPDX-FileCopyrightText = "falkOSS – Falcon Lake Open Source Software gUG (haftungsbeschränkt) i. G. and the kernoid contributors"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Cargokit, which builds rust/ for Flutter – copied by flutter_rust_bridge's `integrate` and changed for an exact Rust
+# version (build_tool/lib/src/options.dart, builder.dart).
+[[annotations]]
+path = "rust_builder/cargokit/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2022 Matej Knopp"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

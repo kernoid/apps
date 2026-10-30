@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - kernoid_bridge (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - kernoid_bridge (from `.symlinks/plugins/kernoid_bridge/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  kernoid_bridge:
+    :path: ".symlinks/plugins/kernoid_bridge/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  kernoid_bridge: 3cd82bb7aa981555f7e4062f2808824c17b0b2bb
+
+PODFILE CHECKSUM: 3ba3a73b1b12adcf321a227a745625fe0888cc82
+
+COCOAPODS: 1.17.0
