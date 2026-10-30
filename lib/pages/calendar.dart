@@ -6,9 +6,10 @@ import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import '../widgets/states.dart';
+import 'event_form.dart';
 
-/// The calendars the account reaches, two weeks at a time as a list of days; an invitation is answered from the event.
-/// **OPEN**: making and changing events, a month view.
+/// The calendars the account reaches, two weeks at a time as a list of days; events are made, changed and deleted, and
+/// an invitation is answered from the event. **OPEN**: one instance of a recurring event on its own, a month view.
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key, required this.account});
 
@@ -83,7 +84,33 @@ class _CalendarPageState extends State<CalendarPage> {
         ],
       ),
       body: _body(l, locale),
+      floatingActionButton: _writable.isEmpty
+          ? null
+          : FloatingActionButton(
+              key: const ValueKey('new-event'),
+              tooltip: l.newEvent,
+              onPressed: _new,
+              child: const Icon(Icons.add),
+            ),
     );
+  }
+
+  List<Calendar> get _writable => _calendars.where((c) => c.writable).toList();
+
+  Future<void> _new() async {
+    final today = _day(DateTime.now());
+    final day = today.isBefore(_from) || !today.isBefore(_from.add(const Duration(days: _span))) ? _from : today;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => EventFormPage(
+          account: widget.account,
+          calendars: _writable,
+          draft: EventFormPage.fresh(_writable.first, day),
+        ),
+      ),
+    );
+    if (saved ?? false) _load();
   }
 
   Widget _body(AppLocalizations l, String locale) {
@@ -134,7 +161,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _open(Event e) async {
     final answered = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => EventPage(account: widget.account, event: e, color: _color(e)),
+        builder: (_) => EventPage(account: widget.account, event: e, color: _color(e), calendars: _writable),
       ),
     );
     if (answered ?? false) _load();
@@ -206,11 +233,14 @@ String _statusText(AppLocalizations l, String? status) => switch (status) {
 
 /// One event: when, where, who, the description – and the answer to an invitation. Pops `true` once answered.
 class EventPage extends StatefulWidget {
-  const EventPage({super.key, required this.account, required this.event, this.color});
+  const EventPage({super.key, required this.account, required this.event, this.color, this.calendars = const []});
 
   final Kernoid account;
   final Event event;
   final Color? color;
+
+  /// The calendars events can be made in – the event can move between them when it is changed.
+  final List<Calendar> calendars;
 
   @override
   State<EventPage> createState() => _EventPageState();
@@ -243,6 +273,60 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
+  Future<void> _edit() async {
+    final e = widget.event;
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
+    try {
+      final draft = await widget.account.eventDraft(accountId: e.accountId, eventId: e.eventId);
+      if (!mounted) return;
+      final calendars = widget.calendars.isEmpty
+          ? [Calendar(id: draft.calendarId, accountId: draft.accountId, name: '', writable: true)]
+          : widget.calendars;
+      final saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) =>
+              EventFormPage(account: widget.account, calendars: calendars, draft: draft, eventId: e.eventId),
+        ),
+      );
+      if ((saved ?? false) && mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l.saved)));
+        Navigator.of(context).pop(true);
+      }
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    }
+  }
+
+  Future<void> _delete() async {
+    final e = widget.event;
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(e.recurring ? l.deleteRecurringConfirm : l.deleteEventConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
+          FilledButton(
+            key: const ValueKey('confirm-delete'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.delete),
+          ),
+        ],
+      ),
+    );
+    if (!(sure ?? false)) return;
+    try {
+      await widget.account.deleteEvent(accountId: e.accountId, eventId: e.eventId);
+      messenger.showSnackBar(SnackBar(content: Text(l.deleted)));
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -256,7 +340,25 @@ class _EventPageState extends State<EventPage> {
         if (!didPop) Navigator.of(context).pop(_answered);
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(e.title.isEmpty ? l.noSubject : e.title)),
+        appBar: AppBar(
+          title: Text(e.title.isEmpty ? l.noSubject : e.title),
+          actions: [
+            if (e.editable) ...[
+              IconButton(
+                key: const ValueKey('edit-event'),
+                tooltip: l.edit,
+                onPressed: _edit,
+                icon: const Icon(Icons.edit_outlined),
+              ),
+              IconButton(
+                key: const ValueKey('delete-event'),
+                tooltip: l.deleteEvent,
+                onPressed: _delete,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
+          ],
+        ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [

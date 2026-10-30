@@ -691,6 +691,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'shared by {name}'**
   String sharedBy(String name);
+
+  /// No description provided for @newEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'New event'**
+  String get newEvent;
+
+  /// No description provided for @editEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Change event'**
+  String get editEvent;
+
+  /// No description provided for @deleteEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete event'**
+  String get deleteEvent;
+
+  /// No description provided for @deleteEventConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this event? Everyone invited hears of it.'**
+  String get deleteEventConfirm;
+
+  /// No description provided for @deleteRecurringConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this event with all its repetitions? Everyone invited hears of it.'**
+  String get deleteRecurringConfirm;
+
+  /// No description provided for @title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get title;
+
+  /// No description provided for @starts.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get starts;
+
+  /// No description provided for @ends.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get ends;
+
+  /// No description provided for @calendarField.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendarField;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @invite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get invite;
+
+  /// No description provided for @inviteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses, separated by commas – they get an invitation by email'**
+  String get inviteHint;
+
+  /// No description provided for @repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats'**
+  String get repeat;
+
+  /// No description provided for @repeatNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get repeatNone;
+
+  /// No description provided for @repeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get repeatDaily;
+
+  /// No description provided for @repeatWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get repeatWeekly;
+
+  /// No description provided for @repeatMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get repeatMonthly;
+
+  /// No description provided for @repeatYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get repeatYearly;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// No description provided for @deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get deleted;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get edit;
+
+  /// No description provided for @endBeforeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'The end is before the start'**
+  String get endBeforeStart;
+
+  /// No description provided for @recurringEditsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes apply to every repetition.'**
+  String get recurringEditsAll;
+
+  /// No description provided for @newContact.
+  ///
+  /// In en, this message translates to:
+  /// **'New contact'**
+  String get newContact;
+
+  /// No description provided for @editContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Change contact'**
+  String get editContact;
+
+  /// No description provided for @deleteContactConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this contact?'**
+  String get deleteContactConfirm;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @emailsField.
+  ///
+  /// In en, this message translates to:
+  /// **'Email addresses'**
+  String get emailsField;
+
+  /// No description provided for @phonesField.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone numbers'**
+  String get phonesField;
+
+  /// No description provided for @onePerLine.
+  ///
+  /// In en, this message translates to:
+  /// **'One per line'**
+  String get onePerLine;
+
+  /// No description provided for @note.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get note;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

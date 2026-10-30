@@ -151,6 +151,8 @@ pub struct Calendar {
     pub id: String,
     pub account_id: String,
     pub name: String,
+    /// Events can be made and changed in it.
+    pub writable: bool,
     /// CSS colour, if the calendar has one.
     pub color: Option<String>,
     /// The owner's name, for a calendar shared with the account.
@@ -188,6 +190,36 @@ pub struct Event {
     /// The account is invited (not the organizer): its key among the participants and its answer so far.
     pub invitation_key: Option<String>,
     pub my_status: Option<String>,
+    /// The account organizes it (or nobody does): it may change and delete it.
+    pub editable: bool,
+}
+
+/// An event as the user writes it – to make one, or to change one (a recurring event as a whole).
+#[derive(Debug, Clone)]
+pub struct EventDraft {
+    pub calendar_id: String,
+    pub account_id: String,
+    pub title: String,
+    pub all_day: bool,
+    /// Local times, `YYYY-MM-DDTHH:MM:SS`, in the device's time zone; for an all-day event the end is its last day.
+    pub start: String,
+    pub end: String,
+    pub location: String,
+    pub description: String,
+    /// Addresses of the people invited – they get an invitation by email.
+    pub participants: Vec<String>,
+    /// `daily`, `weekly`, `monthly`, `yearly` or none.
+    pub repeat: Option<String>,
+}
+
+/// A contact as the user writes it.
+#[derive(Debug, Clone)]
+pub struct ContactDraft {
+    pub name: String,
+    pub organization: String,
+    pub emails: Vec<String>,
+    pub phones: Vec<String>,
+    pub note: String,
 }
 
 /// A contact card of one of the account's address books.
@@ -599,6 +631,7 @@ fn event(e: calendars::Event, own: &[String]) -> Event {
         cancelled: e.is_cancelled(),
         location: e.location(),
         recurring: e.base_event_id.is_some() || e.recurrence_rule.is_some(),
+        editable: e.organized_by(own),
         invitation_key: invitation.as_ref().map(|(key, _)| key.clone()),
         my_status: invitation.and_then(|(_, p)| p.participation_status),
         participants: e
@@ -627,7 +660,14 @@ impl Kernoid {
         let list = run(async move { calendars::calendars(&client).await }).await?;
         Ok(list
             .into_iter()
-            .map(|c| Calendar { id: c.id, account_id: c.account, name: c.name, color: c.color, shared_by: c.shared })
+            .map(|c| Calendar {
+                writable: c.writable(),
+                id: c.id,
+                account_id: c.account,
+                name: c.name,
+                color: c.color,
+                shared_by: c.shared,
+            })
             .collect())
     }
 
@@ -661,6 +701,163 @@ impl Kernoid {
     ) -> Result<(), KernoidError> {
         let client = self.client.clone();
         run(async move { calendars::answer(&client, &account_id, &event_id, &invitation_key, &status).await }).await
+    }
+
+    /// An event as a draft, to change it: for an instance of a recurring event, the event as a whole.
+    pub async fn event_draft(&self, account_id: String, event_id: String) -> Result<EventDraft, KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let own = own_addresses(&client).await;
+            let event = calendars::event(&client, &account_id, &event_id)
+                .await?
+                .ok_or_else(|| client::Error::Protocol("the event is gone".into()))?;
+            let form = calendars::EventForm::of(&event, &own)
+                .ok_or_else(|| client::Error::Protocol("the event has no start".into()))?;
+            let local = |time: chrono::NaiveDateTime| time.format("%Y-%m-%dT%H:%M:%S").to_string();
+            Ok(EventDraft {
+                calendar_id: event.calendar_ids.keys().next().cloned().unwrap_or_default(),
+                account_id,
+                title: form.title,
+                all_day: form.all_day,
+                start: local(form.start),
+                end: local(form.end),
+                location: form.location,
+                description: form.description,
+                participants: form.participants,
+                repeat: form.repeat,
+            })
+        })
+        .await
+    }
+
+    /// Makes an event, or – with `event_id` – changes one; the people invited hear of it by email. The time zone is the
+    /// device's.
+    pub async fn save_event(&self, event_id: Option<String>, draft: EventDraft) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let calendar = calendars::calendars(&client)
+                .await?
+                .into_iter()
+                .find(|c| c.id == draft.calendar_id && c.account == draft.account_id)
+                .ok_or_else(|| client::Error::Protocol("the calendar is gone".into()))?;
+            let time = |text: &str| {
+                chrono::NaiveDateTime::parse_from_str(text, "%Y-%m-%dT%H:%M:%S")
+                    .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
+            };
+            let own = own_addresses(&client).await;
+            // A change keeps the answers given, as long as the time stays (RFC 5546, 2.1.4).
+            let earlier = match &event_id {
+                Some(id) => calendars::event(&client, &calendar.account, id)
+                    .await?
+                    .and_then(|event| calendars::EventForm::of(&event, &own)),
+                None => None,
+            };
+            let form = calendars::EventForm {
+                title: draft.title.trim().to_owned(),
+                all_day: draft.all_day,
+                start: time(&draft.start)?,
+                end: time(&draft.end)?,
+                time_zone: if draft.all_day { None } else { calendars::local_time_zone() },
+                location: draft.location.trim().to_owned(),
+                description: draft.description,
+                participants: draft
+                    .participants
+                    .iter()
+                    .map(|a| a.trim().to_owned())
+                    .filter(|a| a.contains('@'))
+                    .collect(),
+                repeat: draft.repeat.filter(|r| !r.is_empty()),
+                answers: earlier.as_ref().map(|form| form.answers.clone()).unwrap_or_default(),
+                was: earlier.map(|form| (form.start, form.end, form.all_day)),
+            };
+            if form.end < form.start {
+                return Err(client::Error::Protocol("the end is before the start".into()));
+            }
+            let organizer = client.session.username.clone();
+            match event_id {
+                Some(id) => calendars::update(&client, &calendar, &id, &form, &organizer).await,
+                None => calendars::create(&client, &calendar, &form, &organizer).await.map(|_| ()),
+            }
+        })
+        .await
+    }
+
+    /// Deletes an event – a recurring one as a whole; the people invited hear of it by email.
+    pub async fn delete_event(&self, account_id: String, event_id: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { calendars::destroy(&client, &account_id, &event_id).await }).await
+    }
+
+    /// Makes a contact in the account's default address book, or – with `account_id` and `contact_id` – changes one.
+    /// Addresses and numbers that stay keep their labels (work, home, mobile …).
+    pub async fn save_contact(
+        &self,
+        account_id: Option<String>,
+        contact_id: Option<String>,
+        draft: ContactDraft,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let books = contacts::address_books(&client).await?;
+            let earlier = match (&account_id, &contact_id) {
+                (Some(account), Some(id)) => contacts::cards(&client, "")
+                    .await?
+                    .into_iter()
+                    .find(|c| &c.account == account && &c.id == id)
+                    .map(|card| (contacts::CardForm::of(&card), card.address_book_ids.keys().next().cloned())),
+                _ => None,
+            };
+            let labelled = |values: &[String], before: Option<&Vec<contacts::Labelled>>| -> Vec<contacts::Labelled> {
+                values
+                    .iter()
+                    .map(|v| v.trim())
+                    .filter(|v| !v.is_empty())
+                    .map(|value| {
+                        let labels = before
+                            .and_then(|list| list.iter().find(|l| l.value == value))
+                            .map(|l| l.labels.clone())
+                            .unwrap_or_default();
+                        contacts::Labelled { value: value.to_owned(), labels }
+                    })
+                    .collect()
+            };
+            let form = contacts::CardForm {
+                name: draft.name.trim().to_owned(),
+                emails: labelled(&draft.emails, earlier.as_ref().map(|(form, _)| &form.emails)),
+                phones: labelled(&draft.phones, earlier.as_ref().map(|(form, _)| &form.phones)),
+                organizations: Some(draft.organization.trim().to_owned())
+                    .filter(|o| !o.is_empty())
+                    .into_iter()
+                    .collect(),
+                note: draft.note.trim().to_owned(),
+            };
+            match (account_id, contact_id, earlier) {
+                (Some(account), Some(id), Some((_, book))) => {
+                    let book = books
+                        .iter()
+                        .find(|b| b.account == account && Some(&b.id) == book.as_ref())
+                        .ok_or_else(|| client::Error::Protocol("the address book is gone".into()))?;
+                    contacts::update(&client, book, &id, &form).await
+                }
+                (Some(_), Some(_), None) => Err(client::Error::Protocol("the contact is gone".into())),
+                _ => {
+                    let own = client.session.primary(client::CONTACTS);
+                    let book = books
+                        .iter()
+                        .filter(|b| b.writable())
+                        .find(|b| Some(b.account.as_str()) == own && b.is_default)
+                        .or_else(|| books.iter().find(|b| b.writable()))
+                        .ok_or_else(|| client::Error::Protocol("there is no address book to write to".into()))?;
+                    contacts::create(&client, book, &form).await
+                }
+            }
+        })
+        .await
+    }
+
+    pub async fn delete_contact(&self, account_id: String, contact_id: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { contacts::destroy(&client, &account_id, &contact_id).await }).await
     }
 
     /// The contacts of every address book, `search` searching them; by name.

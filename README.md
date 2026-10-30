@@ -6,8 +6,9 @@ under **MIT**.
 
 > **Status: first prototype.** Signing in with an app password, mail (mailboxes, messages, reading, sending plain
 > text) with end-to-end encryption (the key made here, unlocked with the recovery code; encrypted and signed whenever
-> every recipient has a key), calendars (two weeks as a list of days, answering invitations), contacts (search, writing
-> to one) and files (stores, directories, saving a file) on macOS, iOS, Linux, Android and Windows.
+> every recipient has a key), calendars (two weeks as a list of days; events made, changed, deleted and answered),
+> contacts (search; made, changed, deleted; writing to one) and files (stores, directories, saving a file) on macOS,
+> iOS, Linux, Android and Windows.
 > Nothing to install yet. What the apps will be and how they are built is in [docs/plan.md](docs/plan.md).
 
 ## What they are

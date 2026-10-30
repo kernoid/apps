@@ -7,10 +7,12 @@ import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import '../widgets/states.dart';
+import '../app/format.dart';
 import 'compose.dart';
+import 'contact_form.dart';
 
-/// The contacts of every address book the account reaches, with search; a contact's addresses start an email.
-/// **OPEN**: making and changing contacts.
+/// The contacts of every address book the account reaches, with search; contacts are made, changed and deleted, and a
+/// contact's addresses start an email.
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key, required this.account});
 
@@ -78,7 +80,20 @@ class _ContactsPageState extends State<ContactsPage> {
         ),
       ),
       body: _body(l),
+      floatingActionButton: FloatingActionButton(
+        key: const ValueKey('new-contact'),
+        tooltip: l.newContact,
+        onPressed: () => _show(ContactFormPage(account: widget.account), dialog: true),
+        child: const Icon(Icons.person_add_outlined),
+      ),
     );
+  }
+
+  /// Opens a page; anything saved or deleted there loads the list again.
+  Future<void> _show(Widget page, {bool dialog = false}) async {
+    final changed = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(fullscreenDialog: dialog, builder: (_) => page));
+    if (changed ?? false) _load();
   }
 
   Widget _body(AppLocalizations l) {
@@ -97,11 +112,7 @@ class _ContactsPageState extends State<ContactsPage> {
             leading: CircleAvatar(child: Text(_initials(c.name))),
             title: Text(c.name),
             subtitle: details == null ? null : Text(details),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ContactPage(account: widget.account, contact: c),
-              ),
-            ),
+            onTap: () => _show(ContactPage(account: widget.account, contact: c)),
           );
         },
       ),
@@ -116,7 +127,8 @@ String _initials(String name) {
   return words.length > 1 ? '$first${words.last.characters.first}'.toUpperCase() : first.toUpperCase();
 }
 
-/// One contact: organisation, addresses – each starts an email –, phone numbers to copy, notes.
+/// One contact: organisation, addresses – each starts an email –, phone numbers to copy, notes. Pops `true` when it
+/// was changed or deleted.
 class ContactPage extends StatelessWidget {
   const ContactPage({super.key, required this.account, required this.contact});
 
@@ -128,8 +140,60 @@ class ContactPage extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final c = contact;
+    Future<void> edit() async {
+      final saved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => ContactFormPage(account: account, contact: c),
+        ),
+      );
+      if ((saved ?? false) && context.mounted) Navigator.of(context).pop(true);
+    }
+
+    Future<void> delete() async {
+      final messenger = ScaffoldMessenger.of(context);
+      final sure = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(l.deleteContactConfirm),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
+            FilledButton(
+              key: const ValueKey('confirm-delete'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l.delete),
+            ),
+          ],
+        ),
+      );
+      if (!(sure ?? false)) return;
+      try {
+        await account.deleteContact(accountId: c.accountId, contactId: c.id);
+        messenger.showSnackBar(SnackBar(content: Text(l.deleted)));
+        if (context.mounted) Navigator.of(context).pop(true);
+      } catch (error) {
+        messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      }
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text(c.name)),
+      appBar: AppBar(
+        title: Text(c.name),
+        actions: [
+          IconButton(
+            key: const ValueKey('edit-contact'),
+            tooltip: l.edit,
+            onPressed: edit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            key: const ValueKey('delete-contact'),
+            tooltip: l.delete,
+            onPressed: delete,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -148,7 +212,7 @@ class ContactPage extends StatelessWidget {
               trailing: IconButton(
                 key: ValueKey('write-to-$email'),
                 tooltip: l.writeEmail,
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(Icons.send_outlined),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     fullscreenDialog: true,

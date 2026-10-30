@@ -45,6 +45,18 @@ Future<void> waitFor(WidgetTester tester, Finder finder, {Duration timeout = con
   throw TestFailure('not found in time: $finder');
 }
 
+/// Waits until `finder` finds nothing – a list reloads after a deletion.
+Future<void> waitGone(WidgetTester tester, Finder finder, {Duration timeout = const Duration(seconds: 20)}) async {
+  final end = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(end)) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pump();
+    if (finder.evaluate().isEmpty) return;
+  }
+  await shoot(tester, 'failed-${DateTime.now().millisecondsSinceEpoch}');
+  throw TestFailure('still there: $finder');
+}
+
 /// Pictures go to KERNOID_TEST_SCREENSHOTS, or – in the sandbox of macOS, which may not write elsewhere – to
 /// `kernoid-screenshots` in the app's temporary directory.
 Future<void> shoot(WidgetTester tester, String name) async {
@@ -168,6 +180,79 @@ void main() {
     });
   }
 
+  testWidgets('events and contacts are made, changed and deleted', (tester) async {
+    if (server.isEmpty || invitation.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_INVITATION');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+
+    // An event made for the next hour, inviting someone; changed; deleted.
+    await settledTap(tester, find.byIcon(Icons.calendar_month_outlined));
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+    await settledTap(tester, find.byKey(const ValueKey('new-event')));
+    await waitFor(tester, find.byKey(const ValueKey('event-title')));
+    await tester.enterText(find.byKey(const ValueKey('event-title')), 'Probe $stamp');
+    await tester.enterText(find.byKey(const ValueKey('event-location')), 'Raum 1');
+    await tester.enterText(find.byKey(const ValueKey('event-invite')), 'dora@beispiel.example');
+    await shoot(tester, 'event-form');
+    await settledTap(tester, find.byKey(const ValueKey('save-event')));
+    await waitFor(tester, inList('Probe $stamp'));
+    await shoot(tester, 'event-made');
+    await settledTap(tester, inList('Probe $stamp'));
+    await waitFor(tester, find.byKey(const ValueKey('edit-event')));
+    expect(find.text('dora@beispiel.example'), findsOneWidget);
+    await settledTap(tester, find.byKey(const ValueKey('edit-event')));
+    await waitFor(tester, find.byKey(const ValueKey('event-title')));
+    await tester.enterText(find.byKey(const ValueKey('event-title')), 'Probe $stamp geändert');
+    await settledTap(tester, find.byKey(const ValueKey('save-event')));
+    await waitFor(tester, inList('Probe $stamp geändert'));
+    await settledTap(tester, inList('Probe $stamp geändert'));
+    await waitFor(tester, find.byKey(const ValueKey('delete-event')));
+    await settledTap(tester, find.byKey(const ValueKey('delete-event')));
+    await waitFor(tester, find.byKey(const ValueKey('confirm-delete')));
+    await settledTap(tester, find.byKey(const ValueKey('confirm-delete')));
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+    await waitGone(tester, find.descendant(of: find.byType(ListTile), matching: find.textContaining('Probe $stamp')));
+    // The snack bar that says so covers the button of the next page until it has gone.
+    await waitGone(tester, find.byType(SnackBar));
+
+    // A contact made, changed and deleted.
+    await settledTap(tester, find.byIcon(Icons.contacts_outlined));
+    await waitFor(tester, find.byKey(const ValueKey('new-contact')));
+    await settledTap(tester, find.byKey(const ValueKey('new-contact')));
+    await waitFor(tester, find.byKey(const ValueKey('contact-name')));
+    await tester.enterText(find.byKey(const ValueKey('contact-name')), 'Erika Probe $stamp');
+    await tester.enterText(find.byKey(const ValueKey('contact-emails')), 'erika@probe.example');
+    await tester.enterText(find.byKey(const ValueKey('contact-phones')), '+49 40 1');
+    await settledTap(tester, find.byKey(const ValueKey('save-contact')));
+    await waitFor(tester, inList('Erika Probe $stamp'));
+    await settledTap(tester, inList('Erika Probe $stamp'));
+    await waitFor(tester, find.byKey(const ValueKey('edit-contact')));
+    await settledTap(tester, find.byKey(const ValueKey('edit-contact')));
+    await waitFor(tester, find.byKey(const ValueKey('contact-organization')));
+    await tester.enterText(find.byKey(const ValueKey('contact-organization')), 'Probe AG');
+    await settledTap(tester, find.byKey(const ValueKey('save-contact')));
+    await waitFor(
+      tester,
+      find.descendant(
+        of: find.ancestor(of: find.text('Erika Probe $stamp'), matching: find.byType(ListTile)),
+        matching: find.text('Probe AG'),
+      ),
+    );
+    await shoot(tester, 'contact-changed');
+    await settledTap(tester, inList('Erika Probe $stamp'));
+    await waitFor(tester, find.byKey(const ValueKey('delete-contact')));
+    await settledTap(tester, find.byKey(const ValueKey('delete-contact')));
+    await waitFor(tester, find.byKey(const ValueKey('confirm-delete')));
+    await settledTap(tester, find.byKey(const ValueKey('confirm-delete')));
+    await waitFor(tester, find.byKey(const ValueKey('new-contact')));
+    await waitGone(tester, inList('Erika Probe $stamp'));
+  });
+
   testWidgets('a key is made in the app', (tester) async {
     if (server.isEmpty || newAddress.isEmpty) {
       markTestSkipped('no KERNOID_TEST_NEW_ADDRESS');
@@ -234,6 +319,23 @@ void main() {
     await waitFor(tester, find.text('Aus der App'));
     await shoot(tester, 'e2e-sent');
   });
+}
+
+/// A text in a list entry – not the same text in a field of a form still open.
+Finder inList(String text) => find.descendant(of: find.byType(ListTile), matching: find.text(text));
+
+/// Taps once the target stopped moving – pages sliding in or out, a button lifted by a snack bar: a tap during a
+/// movement lands on something else.
+Future<void> settledTap(WidgetTester tester, Finder finder) async {
+  Offset? last;
+  for (var i = 0; i < 40; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final now = tester.getCenter(finder.first);
+    if (now == last) break;
+    last = now;
+  }
+  await tester.pump(const Duration(milliseconds: 100));
+  await tester.tap(finder.first);
 }
 
 Future<void> signIn(WidgetTester tester, String address, String password) async {

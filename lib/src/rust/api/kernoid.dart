@@ -8,7 +8,7 @@ import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `own_addresses`, `recipients`, `run`, `status`, `unique_path`, `write`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -26,6 +26,11 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// The contacts of every address book, `search` searching them; by name.
   Future<List<Contact>> contacts({required String search});
 
+  Future<void> deleteContact({required String accountId, required String contactId});
+
+  /// Deletes an event – a recurring one as a whole; the people invited hear of it by email.
+  Future<void> deleteEvent({required String accountId, required String eventId});
+
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
   Future<String> download({
@@ -41,6 +46,9 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// A page of a mailbox; encrypted emails with their summary decrypted, when the key is unlocked.
   Future<EmailPage> emails({required String mailboxId, required int position, required int limit});
+
+  /// An event as a draft, to change it: for an instance of a recurring event, the event as a whole.
+  Future<EventDraft> eventDraft({required String accountId, required String eventId});
 
   /// The events of the visible calendars between `from` and `to` (RFC 3339) – recurring ones as their instances,
   /// by start.
@@ -65,6 +73,14 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey();
+
+  /// Makes a contact in the account's default address book, or – with `account_id` and `contact_id` – changes one.
+  /// Addresses and numbers that stay keep their labels (work, home, mobile …).
+  Future<void> saveContact({String? accountId, String? contactId, required ContactDraft draft});
+
+  /// Makes an event, or – with `event_id` – changes one; the people invited hear of it by email. The time zone is the
+  /// device's.
+  Future<void> saveEvent({String? eventId, required EventDraft draft});
 
   /// Saves an attachment of a decrypted message – read from the message decrypted here, never from the server.
   Future<String> savePart({
@@ -136,16 +152,27 @@ class Calendar {
   final String accountId;
   final String name;
 
+  /// Events can be made and changed in it.
+  final bool writable;
+
   /// CSS colour, if the calendar has one.
   final String? color;
 
   /// The owner's name, for a calendar shared with the account.
   final String? sharedBy;
 
-  const Calendar({required this.id, required this.accountId, required this.name, this.color, this.sharedBy});
+  const Calendar({
+    required this.id,
+    required this.accountId,
+    required this.name,
+    required this.writable,
+    this.color,
+    this.sharedBy,
+  });
 
   @override
-  int get hashCode => id.hashCode ^ accountId.hashCode ^ name.hashCode ^ color.hashCode ^ sharedBy.hashCode;
+  int get hashCode =>
+      id.hashCode ^ accountId.hashCode ^ name.hashCode ^ writable.hashCode ^ color.hashCode ^ sharedBy.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -155,6 +182,7 @@ class Calendar {
           id == other.id &&
           accountId == other.accountId &&
           name == other.name &&
+          writable == other.writable &&
           color == other.color &&
           sharedBy == other.sharedBy;
 }
@@ -201,6 +229,37 @@ class Contact {
           emails == other.emails &&
           phones == other.phones &&
           notes == other.notes;
+}
+
+/// A contact as the user writes it.
+class ContactDraft {
+  final String name;
+  final String organization;
+  final List<String> emails;
+  final List<String> phones;
+  final String note;
+
+  const ContactDraft({
+    required this.name,
+    required this.organization,
+    required this.emails,
+    required this.phones,
+    required this.note,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ organization.hashCode ^ emails.hashCode ^ phones.hashCode ^ note.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ContactDraft &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          organization == other.organization &&
+          emails == other.emails &&
+          phones == other.phones &&
+          note == other.note;
 }
 
 /// Where end-to-end encryption stands for this account (RFC 0006).
@@ -423,6 +482,9 @@ class Event {
   final String? invitationKey;
   final String? myStatus;
 
+  /// The account organizes it (or nobody does): it may change and delete it.
+  final bool editable;
+
   const Event({
     required this.id,
     required this.eventId,
@@ -439,6 +501,7 @@ class Event {
     required this.participants,
     this.invitationKey,
     this.myStatus,
+    required this.editable,
   });
 
   @override
@@ -457,7 +520,8 @@ class Event {
       recurring.hashCode ^
       participants.hashCode ^
       invitationKey.hashCode ^
-      myStatus.hashCode;
+      myStatus.hashCode ^
+      editable.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -478,7 +542,70 @@ class Event {
           recurring == other.recurring &&
           participants == other.participants &&
           invitationKey == other.invitationKey &&
-          myStatus == other.myStatus;
+          myStatus == other.myStatus &&
+          editable == other.editable;
+}
+
+/// An event as the user writes it – to make one, or to change one (a recurring event as a whole).
+class EventDraft {
+  final String calendarId;
+  final String accountId;
+  final String title;
+  final bool allDay;
+
+  /// Local times, `YYYY-MM-DDTHH:MM:SS`, in the device's time zone; for an all-day event the end is its last day.
+  final String start;
+  final String end;
+  final String location;
+  final String description;
+
+  /// Addresses of the people invited – they get an invitation by email.
+  final List<String> participants;
+
+  /// `daily`, `weekly`, `monthly`, `yearly` or none.
+  final String? repeat;
+
+  const EventDraft({
+    required this.calendarId,
+    required this.accountId,
+    required this.title,
+    required this.allDay,
+    required this.start,
+    required this.end,
+    required this.location,
+    required this.description,
+    required this.participants,
+    this.repeat,
+  });
+
+  @override
+  int get hashCode =>
+      calendarId.hashCode ^
+      accountId.hashCode ^
+      title.hashCode ^
+      allDay.hashCode ^
+      start.hashCode ^
+      end.hashCode ^
+      location.hashCode ^
+      description.hashCode ^
+      participants.hashCode ^
+      repeat.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EventDraft &&
+          runtimeType == other.runtimeType &&
+          calendarId == other.calendarId &&
+          accountId == other.accountId &&
+          title == other.title &&
+          allDay == other.allDay &&
+          start == other.start &&
+          end == other.end &&
+          location == other.location &&
+          description == other.description &&
+          participants == other.participants &&
+          repeat == other.repeat;
 }
 
 class FileNode {

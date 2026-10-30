@@ -322,4 +322,101 @@ class AppLocalizationsDe extends AppLocalizations {
   String sharedBy(String name) {
     return 'geteilt von $name';
   }
+
+  @override
+  String get newEvent => 'Neuer Termin';
+
+  @override
+  String get editEvent => 'Termin ändern';
+
+  @override
+  String get deleteEvent => 'Termin löschen';
+
+  @override
+  String get deleteEventConfirm => 'Diesen Termin löschen? Alle Eingeladenen erfahren davon.';
+
+  @override
+  String get deleteRecurringConfirm =>
+      'Diesen Termin mit allen Wiederholungen löschen? Alle Eingeladenen erfahren davon.';
+
+  @override
+  String get title => 'Titel';
+
+  @override
+  String get starts => 'Beginn';
+
+  @override
+  String get ends => 'Ende';
+
+  @override
+  String get calendarField => 'Kalender';
+
+  @override
+  String get description => 'Beschreibung';
+
+  @override
+  String get invite => 'Einladen';
+
+  @override
+  String get inviteHint => 'Adressen, durch Komma getrennt – sie bekommen eine Einladung per E-Mail';
+
+  @override
+  String get repeat => 'Wiederholung';
+
+  @override
+  String get repeatNone => 'Nie';
+
+  @override
+  String get repeatDaily => 'Täglich';
+
+  @override
+  String get repeatWeekly => 'Wöchentlich';
+
+  @override
+  String get repeatMonthly => 'Monatlich';
+
+  @override
+  String get repeatYearly => 'Jährlich';
+
+  @override
+  String get saved => 'Gespeichert';
+
+  @override
+  String get deleted => 'Gelöscht';
+
+  @override
+  String get delete => 'Löschen';
+
+  @override
+  String get edit => 'Ändern';
+
+  @override
+  String get endBeforeStart => 'Das Ende liegt vor dem Beginn';
+
+  @override
+  String get recurringEditsAll => 'Änderungen gelten für alle Wiederholungen.';
+
+  @override
+  String get newContact => 'Neuer Kontakt';
+
+  @override
+  String get editContact => 'Kontakt ändern';
+
+  @override
+  String get deleteContactConfirm => 'Diesen Kontakt löschen?';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get emailsField => 'E-Mail-Adressen';
+
+  @override
+  String get phonesField => 'Telefonnummern';
+
+  @override
+  String get onePerLine => 'Eine pro Zeile';
+
+  @override
+  String get note => 'Notiz';
 }

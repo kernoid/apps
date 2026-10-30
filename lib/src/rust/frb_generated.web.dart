@@ -48,6 +48,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  ContactDraft dco_decode_box_autoadd_contact_draft(dynamic raw);
+
+  @protected
+  EventDraft dco_decode_box_autoadd_event_draft(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -55,6 +61,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Contact dco_decode_contact(dynamic raw);
+
+  @protected
+  ContactDraft dco_decode_contact_draft(dynamic raw);
 
   @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw);
@@ -70,6 +79,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Event dco_decode_event(dynamic raw);
+
+  @protected
+  EventDraft dco_decode_event_draft(dynamic raw);
 
   @protected
   FileNode dco_decode_file_node(dynamic raw);
@@ -174,6 +186,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  ContactDraft sse_decode_box_autoadd_contact_draft(SseDeserializer deserializer);
+
+  @protected
+  EventDraft sse_decode_box_autoadd_event_draft(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
@@ -181,6 +199,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Contact sse_decode_contact(SseDeserializer deserializer);
+
+  @protected
+  ContactDraft sse_decode_contact_draft(SseDeserializer deserializer);
 
   @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer);
@@ -196,6 +217,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Event sse_decode_event(SseDeserializer deserializer);
+
+  @protected
+  EventDraft sse_decode_event_draft(SseDeserializer deserializer);
 
   @protected
   FileNode sse_decode_file_node(SseDeserializer deserializer);
@@ -306,6 +330,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_contact_draft(ContactDraft self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_event_draft(EventDraft self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
@@ -313,6 +343,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_contact(Contact self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_contact_draft(ContactDraft self, SseSerializer serializer);
 
   @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer);
@@ -328,6 +361,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_event(Event self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_event_draft(EventDraft self, SseSerializer serializer);
 
   @protected
   void sse_encode_file_node(FileNode self, SseSerializer serializer);

@@ -320,4 +320,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String sharedBy(String name) {
     return 'shared by $name';
   }
+
+  @override
+  String get newEvent => 'New event';
+
+  @override
+  String get editEvent => 'Change event';
+
+  @override
+  String get deleteEvent => 'Delete event';
+
+  @override
+  String get deleteEventConfirm => 'Delete this event? Everyone invited hears of it.';
+
+  @override
+  String get deleteRecurringConfirm => 'Delete this event with all its repetitions? Everyone invited hears of it.';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get starts => 'Starts';
+
+  @override
+  String get ends => 'Ends';
+
+  @override
+  String get calendarField => 'Calendar';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get invite => 'Invite';
+
+  @override
+  String get inviteHint => 'Addresses, separated by commas – they get an invitation by email';
+
+  @override
+  String get repeat => 'Repeats';
+
+  @override
+  String get repeatNone => 'Never';
+
+  @override
+  String get repeatDaily => 'Daily';
+
+  @override
+  String get repeatWeekly => 'Weekly';
+
+  @override
+  String get repeatMonthly => 'Monthly';
+
+  @override
+  String get repeatYearly => 'Yearly';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get deleted => 'Deleted';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get edit => 'Change';
+
+  @override
+  String get endBeforeStart => 'The end is before the start';
+
+  @override
+  String get recurringEditsAll => 'Changes apply to every repetition.';
+
+  @override
+  String get newContact => 'New contact';
+
+  @override
+  String get editContact => 'Change contact';
+
+  @override
+  String get deleteContactConfirm => 'Delete this contact?';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get emailsField => 'Email addresses';
+
+  @override
+  String get phonesField => 'Phone numbers';
+
+  @override
+  String get onePerLine => 'One per line';
+
+  @override
+  String get note => 'Note';
 }

@@ -127,5 +127,37 @@
         "type": "String"
       }
     }
-  }
+  },
+  "newEvent": "New event",
+  "editEvent": "Change event",
+  "deleteEvent": "Delete event",
+  "deleteEventConfirm": "Delete this event? Everyone invited hears of it.",
+  "deleteRecurringConfirm": "Delete this event with all its repetitions? Everyone invited hears of it.",
+  "title": "Title",
+  "starts": "Starts",
+  "ends": "Ends",
+  "calendarField": "Calendar",
+  "description": "Description",
+  "invite": "Invite",
+  "inviteHint": "Addresses, separated by commas – they get an invitation by email",
+  "repeat": "Repeats",
+  "repeatNone": "Never",
+  "repeatDaily": "Daily",
+  "repeatWeekly": "Weekly",
+  "repeatMonthly": "Monthly",
+  "repeatYearly": "Yearly",
+  "saved": "Saved",
+  "deleted": "Deleted",
+  "delete": "Delete",
+  "edit": "Change",
+  "endBeforeStart": "The end is before the start",
+  "recurringEditsAll": "Changes apply to every repetition.",
+  "newContact": "New contact",
+  "editContact": "Change contact",
+  "deleteContactConfirm": "Delete this contact?",
+  "name": "Name",
+  "emailsField": "Email addresses",
+  "phonesField": "Phone numbers",
+  "onePerLine": "One per line",
+  "note": "Note"
 }

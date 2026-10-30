@@ -98,8 +98,9 @@ checked on the device, and sent encrypted and signed whenever every recipient ha
 beforehand. Unlocking with a passkey (PRF) and a copy in the system's key store, vaults, encrypted calendars and the native
 shells follow. Calendars and contacts came on the SDK (2026-10-30): the
 calendars as two weeks of days with recurring events as their instances and all-day events as dates, invitations
-answered from the event; contacts with search and an email started from an address (OPEN: making and changing
-events and contacts, a month view).
+answered from the event, events made, changed and deleted (inviting people by address); contacts with search,
+made, changed and deleted, an email started from an address (OPEN: one instance of a recurring event on its own,
+a month view, labels of addresses and numbers in the form).
 
 ## 5. Files in the operating system
 
