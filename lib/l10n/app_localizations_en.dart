@@ -28,7 +28,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appPassword => 'App password';
 
   @override
-  String get appPasswordHint => 'Make one on your account page. Signing in with a passkey follows.';
+  String get appPasswordHint => 'Make one on your account page.';
 
   @override
   String get signIn => 'Sign in';
@@ -416,4 +416,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get note => 'Note';
+
+  @override
+  String get signInBrowser => 'Sign in with kernoid';
+
+  @override
+  String get signInBrowserHint =>
+      'In your browser – with a passkey, a password or a second factor, as your organisation has it.';
+
+  @override
+  String get orAppPassword => 'or with an app password';
+
+  @override
+  String get signInAppPassword => 'Sign in with the app password';
+
+  @override
+  String get signInCancelled => 'Sign-in cancelled';
 }

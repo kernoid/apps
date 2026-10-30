@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `own_addresses`, `recipients`, `run`, `status`, `unique_path`, `write`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `status`, `unique_path`, `write`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -19,6 +19,13 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String invitationKey,
     required String status,
   });
+
+  /// Begins a login with OpenID Connect at `server`: kernoid's login page in the system's browser, with a passkey,
+  /// a password or a second factor – whatever the account and its tenant use. `redirect_uri` is where the browser
+  /// comes back: `dev.kernoid.kernoid:/oauth` on Apple's systems and Android, `http://127.0.0.1:<port>/oauth` on
+  /// desktops.
+  static Future<OidcLogin> beginLogin({required String server, required String redirectUri, String? address}) =>
+      RustLib.instance.api.crateApiKernoidKernoidBeginLogin(server: server, redirectUri: redirectUri, address: address);
 
   /// The calendars of every account with calendars – the own ones first.
   Future<List<Calendar>> calendars();
@@ -58,6 +65,12 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// The nodes of a directory, or of the top of the store for `None`.
   Future<List<FileNode>> files({required String accountId, String? parentId});
+
+  /// Finishes a login with the URL the browser came back to. The access token is renewed in the background before
+  /// it expires; the app stays logged in while it runs (**OPEN**: the refresh token in the system's key store,
+  /// for the next start).
+  static Future<Kernoid> finishLogin({required OidcLogin login, required String callback}) =>
+      RustLib.instance.api.crateApiKernoidKernoidFinishLogin(login: login, callback: callback);
 
   Future<E2eStatus> keyStatus();
 
@@ -104,6 +117,11 @@ abstract class Kernoid implements RustOpaqueInterface {
   Future<E2eStatus> unlockKey({required String code});
 
   String get username;
+}
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<OidcLogin>>
+abstract class OidcLogin implements RustOpaqueInterface {
+  String get url;
 }
 
 class Address {

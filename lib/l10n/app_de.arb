@@ -6,7 +6,7 @@
   "serverHint": "https://kernoid.example",
   "address": "Adresse",
   "appPassword": "App-Passwort",
-  "appPasswordHint": "Lege eines auf deiner Kontoseite an. Anmelden mit Passkey folgt.",
+  "appPasswordHint": "Lege eines auf deiner Kontoseite an.",
   "signIn": "Anmelden",
   "required": "Pflichtfeld",
   "mail": "Mail",
@@ -131,5 +131,10 @@
   "emailsField": "E-Mail-Adressen",
   "phonesField": "Telefonnummern",
   "onePerLine": "Eine pro Zeile",
-  "note": "Notiz"
+  "note": "Notiz",
+  "signInBrowser": "Mit kernoid anmelden",
+  "signInBrowserHint": "Im Browser – mit Passkey, Passwort oder zweitem Faktor, wie es deine Organisation vorsieht.",
+  "orAppPassword": "oder mit einem App-Passwort",
+  "signInAppPassword": "Mit App-Passwort anmelden",
+  "signInCancelled": "Anmeldung abgebrochen"
 }

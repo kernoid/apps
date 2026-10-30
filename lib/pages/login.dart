@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 
-/// Signing in with an address and an app password. **OPEN**: OpenID Connect with a passkey, the token in the
-/// system's key store (docs/plan.md, 6 and 7).
+/// Signing in: with OpenID Connect in the system's browser – kernoid's login page, with a passkey, a password or a
+/// second factor –, or with an address and an app password. **OPEN**: the refresh token in the system's key store, so
+/// that the app stays signed in across starts (docs/plan.md, 7).
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.onSignedIn});
 
@@ -32,8 +38,52 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  /// Where the browser comes back: the app's own scheme on Apple's systems and Android, a loopback address on a port
+  /// of our choosing on desktops (RFC 8252, 7.1 and 7.3).
+  (String, String) _redirect() {
+    if (Platform.isIOS || Platform.isMacOS || Platform.isAndroid) {
+      return ('dev.kernoid.kernoid:/oauth', 'dev.kernoid.kernoid');
+    }
+    final port = 49152 + Random.secure().nextInt(16000);
+    return ('http://127.0.0.1:$port/oauth', 'http://127.0.0.1:$port');
+  }
+
+  Future<void> _signInWithBrowser() async {
+    final l = AppLocalizations.of(context);
+    if (_server.text.trim().isEmpty) {
+      setState(() => _error = '${l.server}: ${l.required}');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final (redirect, scheme) = _redirect();
+      final address = _address.text.trim();
+      final login = await Kernoid.beginLogin(
+        server: _server.text,
+        redirectUri: redirect,
+        address: address.isEmpty ? null : address,
+      );
+      final callback = await FlutterWebAuth2.authenticate(url: login.url, callbackUrlScheme: scheme);
+      final account = await Kernoid.finishLogin(login: login, callback: callback);
+      widget.onSignedIn(account);
+    } on PlatformException catch (error) {
+      setState(() => _error = error.code == 'CANCELED' ? l.signInCancelled : error.message ?? error.code);
+    } catch (error) {
+      setState(() => _error = errorText(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _signIn() async {
     if (!_form.currentState!.validate()) return;
+    if (_address.text.trim().isEmpty) {
+      setState(() => _error = '${AppLocalizations.of(context).address}: ${AppLocalizations.of(context).required}');
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -93,7 +143,28 @@ class _LoginPageState extends State<LoginPage> {
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       autofillHints: const [AutofillHints.username, AutofillHints.email],
-                      validator: required,
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      key: const ValueKey('sign-in-browser'),
+                      onPressed: _busy ? null : _signInWithBrowser,
+                      icon: _busy
+                          ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.key_outlined),
+                      label: Text(l.signInBrowser),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(l.signInBrowserHint, style: theme.textTheme.bodySmall),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(l.orAppPassword, style: theme.textTheme.bodySmall),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -114,12 +185,10 @@ class _LoginPageState extends State<LoginPage> {
                       Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
                     ],
                     const SizedBox(height: 24),
-                    FilledButton(
+                    OutlinedButton(
                       key: const ValueKey('sign-in'),
                       onPressed: _busy ? null : _signIn,
-                      child: _busy
-                          ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(l.signIn),
+                      child: Text(l.signInAppPassword),
                     ),
                   ],
                 ),

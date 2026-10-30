@@ -1724,13 +1724,14 @@ dependencies = [
 [[package]]
 name = "kernoid-client"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=1e65d76be1033885fc4963afa266290597657edb#1e65d76be1033885fc4963afa266290597657edb"
+source = "git+https://github.com/kernoid/kernoid?rev=4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5#4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5"
 dependencies = [
  "base64 0.22.1",
  "bytes",
  "calcard",
  "chrono",
  "futures-util",
+ "getrandom 0.3.4",
  "hickory-proto",
  "html2text",
  "iana-time-zone",
@@ -1739,14 +1740,16 @@ dependencies = [
  "rustls",
  "serde",
  "serde_json",
+ "sha2",
  "tokio",
  "tokio-util",
+ "url",
 ]
 
 [[package]]
 name = "kernoid-e2e"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=1e65d76be1033885fc4963afa266290597657edb#1e65d76be1033885fc4963afa266290597657edb"
+source = "git+https://github.com/kernoid/kernoid?rev=4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5#4aa749f5da39b7d0ede0bc8d5383c328ecd3dcc5"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",

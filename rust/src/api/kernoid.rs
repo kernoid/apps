@@ -58,6 +58,35 @@ pub struct Kernoid {
     e2e: Arc<Mutex<E2e>>,
     /// Decrypted messages by email id, for saving their attachments; forgotten when the key is locked.
     opened: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+    /// For a login with OpenID Connect: the task that renews the access token before it expires.
+    renewal: Option<tokio::task::JoinHandle<()>>,
+}
+
+impl Drop for Kernoid {
+    fn drop(&mut self) {
+        if let Some(renewal) = self.renewal.take() {
+            renewal.abort();
+        }
+    }
+}
+
+/// A login with OpenID Connect begun: the URL to open in the system's browser, and what finishing it needs.
+#[frb(opaque)]
+#[derive(Debug)]
+pub struct OidcLogin {
+    login: client::oidc::Login,
+    server: String,
+}
+
+impl OidcLogin {
+    #[frb(sync, getter)]
+    pub fn url(&self) -> String {
+        self.login.url.clone()
+    }
+}
+
+fn options() -> client::Options {
+    client::Options { allow_http: false, user_agent: concat!("kernoid-app/", env!("CARGO_PKG_VERSION")).into() }
 }
 
 #[derive(Debug, Clone)]
@@ -319,17 +348,46 @@ impl Kernoid {
     pub async fn login(server: String, address: String, password: String) -> Result<Kernoid, KernoidError> {
         let (client, e2e) = run(async move {
             let url = client::session_url(Some(server.trim()), address.trim())?;
-            let options = client::Options {
-                allow_http: false,
-                user_agent: concat!("kernoid-app/", env!("CARGO_PKG_VERSION")).into(),
-            };
-            let client = Client::connect(&url, address.trim(), &password, &options).await?;
+            let client = Client::connect(&url, address.trim(), &password, &options()).await?;
             // A server without the extension, or one that fails to answer it, is mail without end-to-end encryption.
             let e2e = E2e::load(&client).await.unwrap_or_default();
             Ok((client, e2e))
         })
         .await?;
-        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default() })
+        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), renewal: None })
+    }
+
+    /// Begins a login with OpenID Connect at `server`: kernoid's login page in the system's browser, with a passkey,
+    /// a password or a second factor – whatever the account and its tenant use. `redirect_uri` is where the browser
+    /// comes back: `dev.kernoid.kernoid:/oauth` on Apple's systems and Android, `http://127.0.0.1:<port>/oauth` on
+    /// desktops.
+    pub async fn begin_login(
+        server: String,
+        redirect_uri: String,
+        address: Option<String>,
+    ) -> Result<OidcLogin, KernoidError> {
+        run(async move {
+            let login = client::oidc::begin(server.trim(), &redirect_uri, address.as_deref(), &options()).await?;
+            Ok(OidcLogin { login, server: server.trim().to_owned() })
+        })
+        .await
+    }
+
+    /// Finishes a login with the URL the browser came back to. The access token is renewed in the background before
+    /// it expires; the app stays logged in while it runs (**OPEN**: the refresh token in the system's key store,
+    /// for the next start).
+    pub async fn finish_login(login: &OidcLogin, callback: String) -> Result<Kernoid, KernoidError> {
+        let (inner, server) = (login.login.clone(), login.server.clone());
+        let (client, e2e, tokens) = run(async move {
+            let tokens = client::oidc::finish(&inner, &callback, &options()).await?;
+            let url = client::session_url(Some(&server), "")?;
+            let client = Client::connect_with_token(&url, &tokens.access_token, &options()).await?;
+            let e2e = E2e::load(&client).await.unwrap_or_default();
+            Ok((client, e2e, tokens))
+        })
+        .await?;
+        let renewal = RUNTIME.spawn(renew(client.clone(), tokens));
+        Ok(Kernoid { client, e2e: Arc::new(Mutex::new(e2e)), opened: Arc::default(), renewal: Some(renewal) })
     }
 
     #[frb(sync, getter)]
@@ -596,6 +654,25 @@ impl Kernoid {
             write(&directory, &name, bytes).await
         })
         .await
+    }
+}
+
+/// Renews the access token a minute before it expires, as long as the refresh token is good.
+async fn renew(client: Client, mut tokens: client::oidc::Tokens) {
+    loop {
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+        let wait = tokens.expires_at.saturating_sub(now).saturating_sub(60).max(10);
+        tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
+        match client::oidc::refresh(&tokens, &options()).await {
+            Ok(new) => {
+                client.set_access_token(&new.access_token);
+                tokens = new;
+            }
+            // Logged out, or the refresh token revoked: calls fail with "unauthorized", and the app asks again.
+            Err(client::Error::Unauthorized) => return,
+            // Offline for now: try again shortly.
+            Err(_) => tokens.expires_at = now + 120,
+        }
     }
 }
 

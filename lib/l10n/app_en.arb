@@ -6,7 +6,7 @@
   "serverHint": "https://kernoid.example",
   "address": "Address",
   "appPassword": "App password",
-  "appPasswordHint": "Make one on your account page. Signing in with a passkey follows.",
+  "appPasswordHint": "Make one on your account page.",
   "signIn": "Sign in",
   "required": "Required",
   "mail": "Mail",
@@ -159,5 +159,10 @@
   "emailsField": "Email addresses",
   "phonesField": "Phone numbers",
   "onePerLine": "One per line",
-  "note": "Note"
+  "note": "Note",
+  "signInBrowser": "Sign in with kernoid",
+  "signInBrowserHint": "In your browser – with a passkey, a password or a second factor, as your organisation has it.",
+  "orAppPassword": "or with an app password",
+  "signInAppPassword": "Sign in with the app password",
+  "signInCancelled": "Sign-in cancelled"
 }

@@ -4,7 +4,8 @@
 The **first-party apps** of [kernoid](https://kernoid.dev) – one sovereign core for mail, identity and files – licensed
 under **MIT**.
 
-> **Status: first prototype.** Signing in with an app password, mail (mailboxes, messages, reading, sending plain
+> **Status: first prototype.** Signing in with kernoid's login page in the system's browser (OpenID Connect – a
+> passkey, a password or a second factor) or with an app password, mail (mailboxes, messages, reading, sending plain
 > text) with end-to-end encryption (the key made here, unlocked with the recovery code; encrypted and signed whenever
 > every recipient has a key), calendars (two weeks as a list of days; events made, changed, deleted and answered),
 > contacts (search; made, changed, deleted; writing to one) and files (stores, directories, saving a file) on macOS,

@@ -26,14 +26,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_KernoidPtr =>
       wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid;
 
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_OidcLoginPtr =>
+      wire.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin;
+
   @protected
   Kernoid dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(dynamic raw);
+
+  @protected
+  OidcLogin dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(dynamic raw);
 
   @protected
   Kernoid dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(dynamic raw);
 
   @protected
+  OidcLogin dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(dynamic raw);
+
+  @protected
   Kernoid dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(dynamic raw);
+
+  @protected
+  OidcLogin dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(dynamic raw);
 
   @protected
   String dco_decode_String(dynamic raw);
@@ -164,12 +176,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  OidcLogin sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Kernoid sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
     SseDeserializer deserializer,
   );
 
   @protected
+  OidcLogin sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Kernoid sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OidcLogin sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
     SseDeserializer deserializer,
   );
 
@@ -306,14 +333,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    OidcLogin self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
     Kernoid self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    OidcLogin self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
     Kernoid self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    OidcLogin self,
     SseSerializer serializer,
   );
 
@@ -458,6 +503,16 @@ class RustLibWire implements BaseWire {
       wasmModule.rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
         ptr,
       );
+
+  void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(ptr);
+
+  void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(ptr);
 }
 
 @JS('wasm_bindgen')
@@ -471,6 +526,14 @@ extension type RustLibWasmModule._(JSObject _) implements JSObject {
   );
 
   external void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(
+    int ptr,
+  );
+
+  external void rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
+    int ptr,
+  );
+
+  external void rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(
     int ptr,
   );
 }

@@ -28,7 +28,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get appPassword => 'App-Passwort';
 
   @override
-  String get appPasswordHint => 'Lege eines auf deiner Kontoseite an. Anmelden mit Passkey folgt.';
+  String get appPasswordHint => 'Lege eines auf deiner Kontoseite an.';
 
   @override
   String get signIn => 'Anmelden';
@@ -419,4 +419,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get note => 'Notiz';
+
+  @override
+  String get signInBrowser => 'Mit kernoid anmelden';
+
+  @override
+  String get signInBrowserHint =>
+      'Im Browser – mit Passkey, Passwort oder zweitem Faktor, wie es deine Organisation vorsieht.';
+
+  @override
+  String get orAppPassword => 'oder mit einem App-Passwort';
+
+  @override
+  String get signInAppPassword => 'Mit App-Passwort anmelden';
+
+  @override
+  String get signInCancelled => 'Anmeldung abgebrochen';
 }

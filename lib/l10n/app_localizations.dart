@@ -131,7 +131,7 @@ abstract class AppLocalizations {
   /// No description provided for @appPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'Make one on your account page. Signing in with a passkey follows.'**
+  /// **'Make one on your account page.'**
   String get appPasswordHint;
 
   /// No description provided for @signIn.
@@ -883,6 +883,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get note;
+
+  /// No description provided for @signInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with kernoid'**
+  String get signInBrowser;
+
+  /// No description provided for @signInBrowserHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In your browser – with a passkey, a password or a second factor, as your organisation has it.'**
+  String get signInBrowserHint;
+
+  /// No description provided for @orAppPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'or with an app password'**
+  String get orAppPassword;
+
+  /// No description provided for @signInAppPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the app password'**
+  String get signInAppPassword;
+
+  /// No description provided for @signInCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in cancelled'**
+  String get signInCancelled;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

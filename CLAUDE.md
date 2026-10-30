@@ -50,6 +50,9 @@ layout and the checks.
   for `core`". Put `~/.cargo/bin` first.
 - The protocols are kernoid's Rust SDK (`kernoid-client`, with `kernoid-e2e`); both come from kernoid's repository by
   commit until they are on crates.io. `rust/src/api/` only translates them for Dart.
+- Signing in with OpenID Connect goes through flutter_web_auth_2: `dev.kernoid.kernoid:/oauth` on Apple's systems and
+  Android (the `CallbackActivity` in `AndroidManifest.xml`), `http://127.0.0.1:<port>/oauth` on desktops. The system's
+  browser is out of the integration test's reach; the protocol is tested in kernoid's SDK against a real kernoid.
 - An iOS build needs a `libc` new enough for `backtrace` on iOS – do not set it back below the version in
   `rust/Cargo.lock`.
 - Android in CI builds for arm64 only and without debug info; the runner needs disk space freed first.
