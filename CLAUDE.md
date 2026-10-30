@@ -55,7 +55,7 @@ layout and the checks.
   browser is out of the integration test's reach; the protocol is tested in kernoid's SDK against a real kernoid.
 - The login is kept with flutter_secure_storage (`app/kept_login.dart`): Keychain on Apple's systems – on macOS the
   login keychain, as the data protection keychain needs a signing team's entitlement –, Android Keystore, Windows
-  Credential Manager, Secret Service on Linux (`libsecret-1-dev` to build). Every renewal rotates the refresh token
+  Credential Manager, Secret Service on Linux (`libsecret-1-dev` to build; flutter_web_auth_2 needs `libwebkit2gtk-4.1-dev`). Every renewal rotates the refresh token
   and is kept again; one used before ends the login at the server.
 - Files are attached through file_selector: the macOS sandbox lets the app read what the user picked
   (`com.apple.security.files.user-selected.read-only`); a widget test cannot drive the system's dialog, so

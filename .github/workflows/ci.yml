@@ -92,7 +92,7 @@ jobs:
           if [[ "$RUNNER_OS" == Windows ]]; then echo "FLUTTER=flutter.bat" >> "$GITHUB_ENV"; else echo "FLUTTER=flutter" >> "$GITHUB_ENV"; fi
       - name: Libraries for Linux – GTK
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libwebkit2gtk-4.1-dev
       - name: Rust toolchain from rust-toolchain.toml
         working-directory: rust
         run: rustup toolchain install

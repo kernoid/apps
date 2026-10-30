@@ -28,7 +28,7 @@ under **MIT**.
 
 [Flutter](https://docs.flutter.dev/get-started/install) 3.47.8 and [rustup](https://rustup.rs) – the Rust version and
 targets come from `rust/rust-toolchain.toml`. Then `flutter run -d macos` (or `ios`, `linux`, `android`, `windows`);
-the first build compiles the Rust side, later ones only what changed. Linux needs `libgtk-3-dev` and `libsecret-1-dev`.
+the first build compiles the Rust side, later ones only what changed. Linux needs `libgtk-3-dev`, `libsecret-1-dev` and `libwebkit2gtk-4.1-dev`.
 
 | Path | Content |
 |---|---|
