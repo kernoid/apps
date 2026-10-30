@@ -94,6 +94,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # A line of sha256sum is `<hash>  <name>`, or `<hash> *<name>` on Windows (binary mode).
       - name: apps.json – for kernoid's website, copied there once the release is published
         run: |
           mkdir dist && cd dist
@@ -101,9 +102,9 @@ jobs:
           base="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME"
           jq -n -R --arg v "${GITHUB_REF_NAME#v}" --arg page "https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME" \
             --arg base "$base" \
-            '{version: $v, page: $page, signed: false, files: [inputs | split("  ") | {
-                name: .[1], url: ($base + "/" + .[1]), sha256: .[0],
-                platform: (.[1] | capture("kernoid-[^-]+-(?<p>.+)\\.(zip|tar\\.gz|apk)$").p) }]}' \
+            '{version: $v, page: $page, signed: false, files: [inputs | capture("^(?<sha256>[0-9a-f]{64}) [ *](?<name>.+)$") | . + {
+                url: ($base + "/" + .name),
+                platform: (.name | capture("kernoid-[^-]+-(?<p>.+)\\.(zip|tar\\.gz|apk)$").p) }]}' \
             *.sha256 > apps.json
           cat apps.json
           gh release upload "$GITHUB_REF_NAME" apps.json --repo "$GITHUB_REPOSITORY" --clobber
