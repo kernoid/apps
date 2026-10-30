@@ -104,7 +104,11 @@ signing out revokes it. Calendars and contacts came on the SDK (2026-10-30): the
 calendars as two weeks of days with recurring events as their instances and all-day events as dates, invitations
 answered from the event, events made, changed and deleted (inviting people by address); contacts with search,
 made, changed and deleted, an email started from an address (OPEN: one instance of a recurring event on its own,
-a month view, labels of addresses and numbers in the form).
+a month view, labels of addresses and numbers in the form). Writing mail grew the same day: replies, replies to all
+(without the user's own addresses) and forwards – quoted in the user's language, the thread kept, a forward carrying
+its attachments – on the SDK's `reply` (shared with the terminal app), Cc and Bcc, and files of the device attached
+through file_selector – inside the encrypted message when it goes end-to-end encrypted, uploaded otherwise (OPEN:
+forwarding the attachments of an encrypted message, HTML mail).
 
 ## 5. Files in the operating system
 

@@ -1724,7 +1724,7 @@ dependencies = [
 [[package]]
 name = "kernoid-client"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=5c64e18e4e7d27a909e83fdbf368e62f753c4e11#5c64e18e4e7d27a909e83fdbf368e62f753c4e11"
+source = "git+https://github.com/kernoid/kernoid?rev=61e691c53001977bd3d6499b522e4cc6616c7593#61e691c53001977bd3d6499b522e4cc6616c7593"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1749,7 +1749,7 @@ dependencies = [
 [[package]]
 name = "kernoid-e2e"
 version = "0.1.0"
-source = "git+https://github.com/kernoid/kernoid?rev=5c64e18e4e7d27a909e83fdbf368e62f753c4e11#5c64e18e4e7d27a909e83fdbf368e62f753c4e11"
+source = "git+https://github.com/kernoid/kernoid?rev=61e691c53001977bd3d6499b522e4cc6616c7593#61e691c53001977bd3d6499b522e4cc6616c7593"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",

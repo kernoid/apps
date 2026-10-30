@@ -213,12 +213,7 @@ class ContactPage extends StatelessWidget {
                 key: ValueKey('write-to-$email'),
                 tooltip: l.writeEmail,
                 icon: const Icon(Icons.send_outlined),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    fullscreenDialog: true,
-                    builder: (_) => ComposePage(account: account, to: email),
-                  ),
-                ),
+                onPressed: () => writeMessage(context, account, to: email),
               ),
             ),
           for (final phone in c.phones)

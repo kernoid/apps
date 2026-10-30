@@ -256,6 +256,62 @@ void main() {
     await waitGone(tester, inList('Erika Probe $stamp'));
   });
 
+  testWidgets('a message is written, answered and forwarded', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    final subject = 'Rückfrage ${DateTime.now().millisecondsSinceEpoch % 100000}';
+
+    // To the account itself, with a copy: Cc and Bcc are shown when asked for.
+    await settledTap(tester, find.byKey(const ValueKey('write')));
+    await waitFor(tester, find.byKey(const ValueKey('show-cc')));
+    await tester.enterText(find.byKey(const ValueKey('to')), address);
+    await settledTap(tester, find.byKey(const ValueKey('show-cc')));
+    await waitFor(tester, find.byKey(const ValueKey('cc')));
+    await tester.enterText(find.byKey(const ValueKey('cc')), 'carol@example.org');
+    await tester.enterText(find.byKey(const ValueKey('subject')), subject);
+    await tester.enterText(find.byKey(const ValueKey('text')), 'Passt der Termin?');
+    await shoot(tester, 'compose-copies');
+    await settledTap(tester, find.byKey(const ValueKey('send')));
+    await waitFor(tester, find.byKey(const ValueKey('write')));
+    await waitGone(tester, find.byType(SnackBar));
+
+    // Found in Sent and answered to all: the user is not among the copies, the text quoted.
+    await settledTap(tester, find.byIcon(Icons.send_outlined).first);
+    await waitFor(tester, inList(subject));
+    await settledTap(tester, inList(subject));
+    await waitFor(tester, find.byKey(const ValueKey('replyAll')));
+    await shoot(tester, 'message-actions');
+    await settledTap(tester, find.byKey(const ValueKey('replyAll')));
+    await waitFor(tester, find.byKey(const ValueKey('cc')));
+    String field(String key) => tester.widget<TextFormField>(find.byKey(ValueKey(key))).controller!.text;
+    expect(field('subject'), 'Re: $subject');
+    expect(field('to'), contains(address));
+    expect(field('cc'), 'carol@example.org');
+    expect(field('text'), contains('> Passt der Termin?'));
+    await shoot(tester, 'compose-reply');
+    await settledTap(tester, find.byKey(const ValueKey('send')));
+    await waitFor(tester, inList('Re: $subject'));
+    await waitGone(tester, find.byType(SnackBar));
+
+    // Forwarded: the original below the user's words, the recipients left to the user.
+    await settledTap(tester, inList(subject));
+    await waitFor(tester, find.byKey(const ValueKey('forward')));
+    await settledTap(tester, find.byKey(const ValueKey('forward')));
+    await waitFor(tester, find.byKey(const ValueKey('attach')));
+    await waitFor(tester, find.textContaining('Fwd: $subject'));
+    expect(field('to'), isEmpty);
+    expect(field('text'), contains('Passt der Termin?'));
+    await tester.enterText(find.byKey(const ValueKey('to')), address);
+    await shoot(tester, 'compose-forward');
+    await settledTap(tester, find.byKey(const ValueKey('send')));
+    await waitFor(tester, inList('Fwd: $subject'));
+  });
+
   testWidgets('a login with OpenID Connect is kept and resumed', (tester) async {
     if (server.isEmpty) {
       markTestSkipped('no KERNOID_TEST_SERVER');

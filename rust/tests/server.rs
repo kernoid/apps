@@ -155,3 +155,94 @@ async fn mail_is_encrypted_end_to_end() {
     let locked = e2e.open(&client, &account, email).await.expect("open locked");
     assert!(locked.sealed.expect("sealed").locked && locked.text_body.is_empty());
 }
+
+/// Writing as the app does (`api::kernoid`): a message with a file of the device and a copy, sent to the account
+/// itself; a reply to it in the user's words, keeping the thread; a forward carrying its attachment along.
+#[tokio::test]
+async fn messages_are_written_replied_to_and_forwarded() {
+    use kernoid_bridge::api::kernoid::{EmailDraft, Kernoid, ReplyPhrases};
+
+    let (Ok(server), Ok(address), Ok(password)) = (
+        std::env::var("KERNOID_TEST_SERVER"),
+        std::env::var("KERNOID_TEST_ADDRESS"),
+        std::env::var("KERNOID_TEST_PASSWORD"),
+    ) else {
+        eprintln!("no KERNOID_TEST_SERVER: skipped");
+        return;
+    };
+    let app = Kernoid::login(server, address.clone(), password).await.expect("login");
+    let sent_box = app
+        .mailboxes()
+        .await
+        .expect("mailboxes")
+        .into_iter()
+        .find(|b| b.role.as_deref() == Some("sent"))
+        .expect("sent")
+        .id;
+    let in_sent = async |subject: &str| {
+        let page = app.emails(sent_box.clone(), 0, 50).await.expect("sent");
+        let found = page.emails.into_iter().find(|e| e.subject == subject).expect(subject);
+        app.email(found.id).await.expect("email")
+    };
+
+    let file = std::env::temp_dir().join(format!("kernoid-plan-{}.txt", std::process::id()));
+    std::fs::write(&file, "Der Plan.\n").expect("file");
+    let subject = format!("Written {}", std::process::id());
+    let draft = EmailDraft {
+        to: format!("Ich <{address}>"),
+        cc: "carol@example.org".into(),
+        bcc: String::new(),
+        subject: subject.clone(),
+        text: "Mit Anhang.".into(),
+        in_reply_to: Vec::new(),
+        references: Vec::new(),
+        attachments: Vec::new(),
+        files: vec![file.to_string_lossy().into_owned()],
+    };
+    assert!(!app.send_draft(draft).await.expect("send"), "the key is locked: plain");
+    let written = in_sent(&subject).await;
+    assert_eq!(written.cc.first().map(|a| a.email.as_str()), Some("carol@example.org"));
+    let attached = written.attachments.first().expect("the file");
+    assert!(attached.name.starts_with("kernoid-plan-"), "{}", attached.name);
+
+    let phrases = ReplyPhrases {
+        wrote: "Am {date} schrieb {who}:".into(),
+        forwarded: "---------- Weitergeleitete Nachricht ----------".into(),
+        from: "Von".into(),
+        date: "Datum".into(),
+        subject: "Betreff".into(),
+        to: "An".into(),
+        date_format: "%d.%m.%Y %H:%M".into(),
+    };
+    let reply = app.reply_draft(written.id.clone(), "replyAll".into(), phrases.clone()).await.expect("reply");
+    assert_eq!(reply.subject, format!("Re: {subject}"));
+    assert!(reply.to.contains(&address), "{}", reply.to);
+    assert_eq!(reply.cc, "carol@example.org", "the user is not asked twice");
+    assert!(reply.text.contains(&format!("<{address}>:\n> Mit Anhang.")), "{}", reply.text);
+    assert!(reply.text.contains(" schrieb "), "{}", reply.text);
+    assert_eq!(reply.in_reply_to.len(), 1);
+    assert!(reply.attachments.is_empty());
+
+    let forward = app.reply_draft(written.id.clone(), "forward".into(), phrases).await.expect("forward");
+    assert_eq!(forward.subject, format!("Fwd: {subject}"));
+    assert!(forward.text.contains("Weitergeleitete Nachricht ----------\nVon: "), "{}", forward.text);
+    assert_eq!(forward.attachments.len(), 1);
+    let forward = EmailDraft { to: address.clone(), cc: String::new(), ..forward };
+    app.send_draft(forward).await.expect("forward");
+    let forwarded = in_sent(&format!("Fwd: {subject}")).await;
+    assert_eq!(forwarded.attachments.first().map(|a| a.name.as_str()), Some(attached.name.as_str()));
+    assert!(app.reply_draft(written.id, "sideways".into(), reply_phrases()).await.is_err());
+    let _ = std::fs::remove_file(file);
+}
+
+fn reply_phrases() -> kernoid_bridge::api::kernoid::ReplyPhrases {
+    kernoid_bridge::api::kernoid::ReplyPhrases {
+        wrote: String::new(),
+        forwarded: String::new(),
+        from: String::new(),
+        date: String::new(),
+        subject: String::new(),
+        to: String::new(),
+        date_format: String::new(),
+    }
+}

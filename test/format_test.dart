@@ -18,9 +18,13 @@ void main() {
     expect(bytes(25000000), '25 MB');
   });
 
-  test('a message date is RFC 5322 in English with the zone', () {
-    final at = DateTime(2026, 10, 30, 17, 5, 9);
-    expect(rfc5322Date(at), matches(RegExp(r'^Fri, 30 Oct 2026 17:05:09 [+-]\d{4}$')));
+  test('addresses are found in what was typed', () {
+    expect(addresses('Bob <bob@x.example>, carol@x.example; "d@x" <d@x.example>, "Doe, J." <j@x.example>, no'), [
+      'bob@x.example',
+      'carol@x.example',
+      'd@x.example',
+      'j@x.example',
+    ]);
   });
 
   test('fingerprints are grouped by four', () {

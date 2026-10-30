@@ -5,8 +5,8 @@ The **first-party apps** of [kernoid](https://kernoid.dev) – one sovereign cor
 under **MIT**.
 
 > **Status: first prototype.** Signing in with kernoid's login page in the system's browser (OpenID Connect – a
-> passkey, a password or a second factor; kept in the system's key store) or with an app password, mail (mailboxes, messages, reading, sending plain
-> text) with end-to-end encryption (the key made here, unlocked with the recovery code; encrypted and signed whenever
+> passkey, a password or a second factor; kept in the system's key store) or with an app password, mail (mailboxes, messages, reading; writing plain
+> text with Cc and Bcc, replies, forwards and files attached) with end-to-end encryption (the key made here, unlocked with the recovery code; encrypted and signed whenever
 > every recipient has a key), calendars (two weeks as a list of days; events made, changed, deleted and answered),
 > contacts (search; made, changed, deleted; writing to one) and files (stores, directories, saving a file) on macOS,
 > iOS, Linux, Android and Windows.

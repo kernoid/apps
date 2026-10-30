@@ -12,7 +12,7 @@ use crate::frb_generated::StreamSink;
 use tokio::sync::Mutex;
 
 use kernoid_client::e2e::{E2e, Outgoing, Plan};
-use kernoid_client::{self as client, Client, calendars, contacts, files, mail};
+use kernoid_client::{self as client, Client, calendars, contacts, files, mail, reply};
 
 static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
     tokio::runtime::Builder::new_multi_thread()
@@ -207,6 +207,45 @@ pub struct FileNode {
     pub size: i64,
     pub media_type: Option<String>,
     pub modified: Option<String>,
+}
+
+/// A message being written: to whom, about what, the text, the thread it answers, and what is attached – files of
+/// another message (forwarding) and files of the device.
+#[derive(Debug, Clone)]
+pub struct EmailDraft {
+    /// Addresses as people type them: `Name <a@b>, c@d`.
+    pub to: String,
+    pub cc: String,
+    pub bcc: String,
+    pub subject: String,
+    pub text: String,
+    pub in_reply_to: Vec<String>,
+    pub references: Vec<String>,
+    /// On the server already: the attachments of a message forwarded.
+    pub attachments: Vec<DraftAttachment>,
+    /// Paths of files on the device.
+    pub files: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DraftAttachment {
+    pub blob_id: String,
+    pub name: String,
+    pub media_type: String,
+    pub size: i64,
+}
+
+/// The words around a quote, in the user's language: `{date}` and `{who}` are filled in.
+#[derive(Debug, Clone)]
+pub struct ReplyPhrases {
+    pub wrote: String,
+    pub forwarded: String,
+    pub from: String,
+    pub date: String,
+    pub subject: String,
+    pub to: String,
+    /// chrono's format of a date, e.g. `%d.%m.%Y %H:%M`.
+    pub date_format: String,
 }
 
 /// A calendar the account reaches: its own or one shared with it.
@@ -591,8 +630,8 @@ impl Kernoid {
         .await
     }
 
-    /// How a message to `to` would go out: end-to-end encrypted when the key is unlocked and every recipient has a
-    /// key, else as before – with the reason.
+    /// How a message to `to` (every recipient, Cc and Bcc as well) would go out: end-to-end encrypted when the key is
+    /// unlocked and every recipient has a key, else as before – with the reason.
     pub async fn send_plan(&self, to: Vec<String>) -> Result<SendPlan, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
         run(async move {
@@ -605,30 +644,113 @@ impl Kernoid {
         .await
     }
 
-    /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
-    /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
-    pub async fn send(
+    /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
+    /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
+    pub async fn reply_draft(
         &self,
-        to: Vec<String>,
-        subject: String,
-        text: String,
-        date: String,
-    ) -> Result<bool, KernoidError> {
+        email_id: String,
+        kind: String,
+        phrases: ReplyPhrases,
+    ) -> Result<EmailDraft, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
-        let _ = date;
         run(async move {
-            let message = draft(&to, &subject, &text);
+            let kind = match kind.as_str() {
+                "reply" => reply::Kind::Reply,
+                "replyAll" => reply::Kind::ReplyAll,
+                "forward" => reply::Kind::Forward,
+                other => return Err(client::Error::Protocol(format!("not a kind of reply: {other}"))),
+            };
+            let email = mail::full(&client, &account, &[email_id.as_str()])
+                .await?
+                .into_iter()
+                .next()
+                .ok_or_else(|| client::Error::Protocol("the email is gone".into()))?;
+            let email = e2e.lock().await.open(&client, &account, email).await?;
+            let text = email.text(TEXT_WIDTH);
+            let identities = mail::identities(&client, &account).await?;
+            let phrases = reply::Phrases {
+                wrote: phrases.wrote,
+                forwarded: phrases.forwarded,
+                from: phrases.from,
+                date: phrases.date,
+                subject: phrases.subject,
+                to: phrases.to,
+                date_format: phrases.date_format,
+            };
+            let draft = reply::start(kind, Some((&email, &text)), &identities, &phrases);
+            Ok(EmailDraft {
+                to: mail::format_addresses(&draft.to),
+                cc: mail::format_addresses(&draft.cc),
+                bcc: String::new(),
+                subject: draft.subject,
+                text: draft.body,
+                in_reply_to: draft.in_reply_to,
+                references: draft.references,
+                attachments: draft
+                    .attachments
+                    .into_iter()
+                    .map(|a| DraftAttachment {
+                        blob_id: a.blob_id,
+                        name: a.name,
+                        media_type: a.kind,
+                        size: count(a.size),
+                    })
+                    .collect(),
+                files: Vec::new(),
+            })
+        })
+        .await
+    }
+
+    /// Sends a message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3): then the files go inside
+    /// the encrypted message and nothing of them reaches the server as it is; else they are uploaded and attached.
+    /// Returns whether it went encrypted.
+    pub async fn send_draft(&self, draft: EmailDraft) -> Result<bool, KernoidError> {
+        let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+        run(async move {
+            let mut message = mail::Draft {
+                from: None,
+                to: mail::parse_addresses(&draft.to),
+                cc: mail::parse_addresses(&draft.cc),
+                bcc: mail::parse_addresses(&draft.bcc),
+                subject: draft.subject.trim().to_owned(),
+                body: draft.text,
+                in_reply_to: draft.in_reply_to,
+                references: draft.references,
+                attachments: draft
+                    .attachments
+                    .into_iter()
+                    .map(|a| mail::Attachment {
+                        blob_id: a.blob_id,
+                        kind: a.media_type,
+                        name: a.name,
+                        size: u64::try_from(a.size).unwrap_or_default(),
+                    })
+                    .collect(),
+            };
+            if message.to.is_empty() && message.cc.is_empty() && message.bcc.is_empty() {
+                return Err(client::Error::Protocol("the message has no recipient".into()));
+            }
+            let files: Vec<std::path::PathBuf> = draft.files.iter().map(std::path::PathBuf::from).collect();
             let identity = identity(&client, &account).await?;
             let boxes = mail::mailboxes(&client, &account).await?;
             let mut e2e = e2e.lock().await;
             match e2e.plan(&client, &account, &identity, &message).await {
                 Plan::Sealed(keys) => {
-                    let outgoing =
-                        Outgoing { account: &account, identity: &identity, draft: &message, files: &[], boxes: &boxes };
+                    let outgoing = Outgoing {
+                        account: &account,
+                        identity: &identity,
+                        draft: &message,
+                        files: &files,
+                        boxes: &boxes,
+                    };
                     e2e.send(&client, outgoing, &keys).await?;
                     Ok(true)
                 }
                 Plan::Plain(_) => {
+                    for path in &files {
+                        message.attachments.push(mail::attach(&client, &account, path).await?);
+                    }
                     mail::send(&client, &account, &identity, &message, &boxes).await?;
                     Ok(false)
                 }

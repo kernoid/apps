@@ -87,14 +87,7 @@ class _MailPageState extends State<MailPage> {
   }
 
   Future<void> _write() async {
-    final sent = await Navigator.of(context)
-        .push<Sent>(MaterialPageRoute(fullscreenDialog: true, builder: (_) => ComposePage(account: widget.account)));
-    if (sent != null && mounted) {
-      final l = AppLocalizations.of(context);
-      final text = sent == Sent.encrypted ? l.sentEncrypted : l.messageSent;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-      _loadMailboxes();
-    }
+    if (await writeMessage(context, widget.account) && mounted) _loadMailboxes();
   }
 
   void _openEmail(EmailSummary email, bool wide) {
@@ -105,7 +98,12 @@ class _MailPageState extends State<MailPage> {
         MaterialPageRoute(
           builder: (_) => Scaffold(
             appBar: AppBar(),
-            body: EmailView(account: widget.account, id: email.id, onUnlocked: () => _loadEmails(reset: true)),
+            body: EmailView(
+              account: widget.account,
+              id: email.id,
+              onUnlocked: () => _loadEmails(reset: true),
+              onSent: _loadMailboxes,
+            ),
           ),
         ),
       );
@@ -176,6 +174,7 @@ class _MailPageState extends State<MailPage> {
                     account: widget.account,
                     id: _open!,
                     onUnlocked: () => _loadEmails(reset: true),
+                    onSent: _loadMailboxes,
                   ),
           ),
         ],
@@ -322,13 +321,16 @@ class _EmailList extends StatelessWidget {
 
 /// One message, as text – an end-to-end encrypted one decrypted on this device, with how it was signed.
 class EmailView extends StatefulWidget {
-  const EmailView({super.key, required this.account, required this.id, this.onUnlocked});
+  const EmailView({super.key, required this.account, required this.id, this.onUnlocked, this.onSent});
 
   final Kernoid account;
   final String id;
 
   /// The key was unlocked here: lists can show what they could not.
   final VoidCallback? onUnlocked;
+
+  /// A reply or forward was sent from here.
+  final VoidCallback? onSent;
 
   @override
   State<EmailView> createState() => _EmailViewState();
@@ -394,6 +396,28 @@ class _EmailViewState extends State<EmailView> {
               if (e.cc.isNotEmpty) _Line(l.cc, people(e.cc)),
               Text(longDate(context, e.receivedAt), style: theme.textTheme.bodySmall),
               if (e.encrypted) ...[const SizedBox(height: 8), SealBadge(email: e)],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final (kind, label, icon) in [
+                    (Reply.reply, l.reply, Icons.reply),
+                    (Reply.replyAll, l.replyAll, Icons.reply_all),
+                    (Reply.forward, l.forward, Icons.forward),
+                  ])
+                    OutlinedButton.icon(
+                      key: ValueKey(kind.name),
+                      onPressed: () async {
+                        if (await writeMessage(context, widget.account, replyTo: e.id, kind: kind)) {
+                          widget.onSent?.call();
+                        }
+                      },
+                      icon: Icon(icon, size: 18),
+                      label: Text(label),
+                    ),
+                ],
+              ),
               const Divider(height: 32),
               Text(e.text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
               if (e.attachments.isNotEmpty) ...[

@@ -67,7 +67,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContactDraft dco_decode_box_autoadd_contact_draft(dynamic raw);
 
   @protected
+  EmailDraft dco_decode_box_autoadd_email_draft(dynamic raw);
+
+  @protected
   EventDraft dco_decode_box_autoadd_event_draft(dynamic raw);
+
+  @protected
+  ReplyPhrases dco_decode_box_autoadd_reply_phrases(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
@@ -82,10 +88,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContactDraft dco_decode_contact_draft(dynamic raw);
 
   @protected
+  DraftAttachment dco_decode_draft_attachment(dynamic raw);
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw);
 
   @protected
   Email dco_decode_email(dynamic raw);
+
+  @protected
+  EmailDraft dco_decode_email_draft(dynamic raw);
 
   @protected
   EmailPage dco_decode_email_page(dynamic raw);
@@ -127,6 +139,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Contact> dco_decode_list_contact(dynamic raw);
 
   @protected
+  List<DraftAttachment> dco_decode_list_draft_attachment(dynamic raw);
+
+  @protected
   List<EmailSummary> dco_decode_list_email_summary(dynamic raw);
 
   @protected
@@ -158,6 +173,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Participant dco_decode_participant(dynamic raw);
+
+  @protected
+  ReplyPhrases dco_decode_reply_phrases(dynamic raw);
 
   @protected
   SendPlan dco_decode_send_plan(dynamic raw);
@@ -226,7 +244,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContactDraft sse_decode_box_autoadd_contact_draft(SseDeserializer deserializer);
 
   @protected
+  EmailDraft sse_decode_box_autoadd_email_draft(SseDeserializer deserializer);
+
+  @protected
   EventDraft sse_decode_box_autoadd_event_draft(SseDeserializer deserializer);
+
+  @protected
+  ReplyPhrases sse_decode_box_autoadd_reply_phrases(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
@@ -241,10 +265,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ContactDraft sse_decode_contact_draft(SseDeserializer deserializer);
 
   @protected
+  DraftAttachment sse_decode_draft_attachment(SseDeserializer deserializer);
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer);
 
   @protected
   Email sse_decode_email(SseDeserializer deserializer);
+
+  @protected
+  EmailDraft sse_decode_email_draft(SseDeserializer deserializer);
 
   @protected
   EmailPage sse_decode_email_page(SseDeserializer deserializer);
@@ -286,6 +316,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Contact> sse_decode_list_contact(SseDeserializer deserializer);
 
   @protected
+  List<DraftAttachment> sse_decode_list_draft_attachment(SseDeserializer deserializer);
+
+  @protected
   List<EmailSummary> sse_decode_list_email_summary(SseDeserializer deserializer);
 
   @protected
@@ -317,6 +350,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Participant sse_decode_participant(SseDeserializer deserializer);
+
+  @protected
+  ReplyPhrases sse_decode_reply_phrases(SseDeserializer deserializer);
 
   @protected
   SendPlan sse_decode_send_plan(SseDeserializer deserializer);
@@ -394,7 +430,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_contact_draft(ContactDraft self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_email_draft(EmailDraft self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_event_draft(EventDraft self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_reply_phrases(ReplyPhrases self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
@@ -409,10 +451,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_contact_draft(ContactDraft self, SseSerializer serializer);
 
   @protected
+  void sse_encode_draft_attachment(DraftAttachment self, SseSerializer serializer);
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer);
 
   @protected
   void sse_encode_email(Email self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_email_draft(EmailDraft self, SseSerializer serializer);
 
   @protected
   void sse_encode_email_page(EmailPage self, SseSerializer serializer);
@@ -454,6 +502,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_contact(List<Contact> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_draft_attachment(List<DraftAttachment> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_email_summary(List<EmailSummary> self, SseSerializer serializer);
 
   @protected
@@ -485,6 +536,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_participant(Participant self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_reply_phrases(ReplyPhrases self, SseSerializer serializer);
 
   @protected
   void sse_encode_send_plan(SendPlan self, SseSerializer serializer);

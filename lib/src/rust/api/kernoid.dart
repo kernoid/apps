@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -90,6 +90,10 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey();
 
+  /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
+  /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
+  Future<EmailDraft> replyDraft({required String emailId, required String kind, required ReplyPhrases phrases});
+
   /// Signs in again with what [`Kernoid::kept_login`] gave – after a restart. The refresh token is used up by it:
   /// keep the new one ([`Kernoid::kept_login`]). A login that ended is `unauthorized`: forget what was kept.
   static Future<Kernoid> resume({required String kept}) =>
@@ -111,12 +115,13 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String directory,
   });
 
-  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
-  /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
-  Future<bool> send({required List<String> to, required String subject, required String text, required String date});
+  /// Sends a message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3): then the files go inside
+  /// the encrypted message and nothing of them reaches the server as it is; else they are uploaded and attached.
+  /// Returns whether it went encrypted.
+  Future<bool> sendDraft({required EmailDraft draft});
 
-  /// How a message to `to` would go out: end-to-end encrypted when the key is unlocked and every recipient has a
-  /// key, else as before – with the reason.
+  /// How a message to `to` (every recipient, Cc and Bcc as well) would go out: end-to-end encrypted when the key is
+  /// unlocked and every recipient has a key, else as before – with the reason.
   Future<SendPlan> sendPlan({required List<String> to});
 
   String get server;
@@ -295,6 +300,28 @@ class ContactDraft {
           note == other.note;
 }
 
+class DraftAttachment {
+  final String blobId;
+  final String name;
+  final String mediaType;
+  final PlatformInt64 size;
+
+  const DraftAttachment({required this.blobId, required this.name, required this.mediaType, required this.size});
+
+  @override
+  int get hashCode => blobId.hashCode ^ name.hashCode ^ mediaType.hashCode ^ size.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DraftAttachment &&
+          runtimeType == other.runtimeType &&
+          blobId == other.blobId &&
+          name == other.name &&
+          mediaType == other.mediaType &&
+          size == other.size;
+}
+
 /// Where end-to-end encryption stands for this account (RFC 0006).
 class E2eStatus {
   /// The server has kernoid's end-to-end extension.
@@ -409,6 +436,64 @@ class Email {
           locked == other.locked &&
           signed == other.signed &&
           verified == other.verified;
+}
+
+/// A message being written: to whom, about what, the text, the thread it answers, and what is attached – files of
+/// another message (forwarding) and files of the device.
+class EmailDraft {
+  /// Addresses as people type them: `Name <a@b>, c@d`.
+  final String to;
+  final String cc;
+  final String bcc;
+  final String subject;
+  final String text;
+  final List<String> inReplyTo;
+  final List<String> references;
+
+  /// On the server already: the attachments of a message forwarded.
+  final List<DraftAttachment> attachments;
+
+  /// Paths of files on the device.
+  final List<String> files;
+
+  const EmailDraft({
+    required this.to,
+    required this.cc,
+    required this.bcc,
+    required this.subject,
+    required this.text,
+    required this.inReplyTo,
+    required this.references,
+    required this.attachments,
+    required this.files,
+  });
+
+  @override
+  int get hashCode =>
+      to.hashCode ^
+      cc.hashCode ^
+      bcc.hashCode ^
+      subject.hashCode ^
+      text.hashCode ^
+      inReplyTo.hashCode ^
+      references.hashCode ^
+      attachments.hashCode ^
+      files.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EmailDraft &&
+          runtimeType == other.runtimeType &&
+          to == other.to &&
+          cc == other.cc &&
+          bcc == other.bcc &&
+          subject == other.subject &&
+          text == other.text &&
+          inReplyTo == other.inReplyTo &&
+          references == other.references &&
+          attachments == other.attachments &&
+          files == other.files;
 }
 
 class EmailPage {
@@ -782,6 +867,52 @@ class Participant {
           name == other.name &&
           email == other.email &&
           status == other.status;
+}
+
+/// The words around a quote, in the user's language: `{date}` and `{who}` are filled in.
+class ReplyPhrases {
+  final String wrote;
+  final String forwarded;
+  final String from;
+  final String date;
+  final String subject;
+  final String to;
+
+  /// chrono's format of a date, e.g. `%d.%m.%Y %H:%M`.
+  final String dateFormat;
+
+  const ReplyPhrases({
+    required this.wrote,
+    required this.forwarded,
+    required this.from,
+    required this.date,
+    required this.subject,
+    required this.to,
+    required this.dateFormat,
+  });
+
+  @override
+  int get hashCode =>
+      wrote.hashCode ^
+      forwarded.hashCode ^
+      from.hashCode ^
+      date.hashCode ^
+      subject.hashCode ^
+      to.hashCode ^
+      dateFormat.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReplyPhrases &&
+          runtimeType == other.runtimeType &&
+          wrote == other.wrote &&
+          forwarded == other.forwarded &&
+          from == other.from &&
+          date == other.date &&
+          subject == other.subject &&
+          to == other.to &&
+          dateFormat == other.dateFormat;
 }
 
 /// How a message to these recipients would go out.

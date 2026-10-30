@@ -913,6 +913,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in cancelled'**
   String get signInCancelled;
+
+  /// No description provided for @bcc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bcc'**
+  String get bcc;
+
+  /// No description provided for @reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get reply;
+
+  /// No description provided for @replyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply all'**
+  String get replyAll;
+
+  /// No description provided for @forward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get forward;
+
+  /// No description provided for @attachFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach a file'**
+  String get attachFile;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// Above a quoted reply; {date} and {who} are filled in by the app, not by Flutter.
+  ///
+  /// In en, this message translates to:
+  /// **'On {date}, {who} wrote:'**
+  String quoteWrote(String date, String who);
+
+  /// No description provided for @quoteForwarded.
+  ///
+  /// In en, this message translates to:
+  /// **'---------- Forwarded message ----------'**
+  String get quoteForwarded;
+
+  /// How the date above a quote is written: a format of Rust's chrono (strftime).
+  ///
+  /// In en, this message translates to:
+  /// **'%a, %d %b %Y %H:%M'**
+  String get quoteDateFormat;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

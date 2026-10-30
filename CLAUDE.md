@@ -57,6 +57,9 @@ layout and the checks.
   login keychain, as the data protection keychain needs a signing team's entitlement –, Android Keystore, Windows
   Credential Manager, Secret Service on Linux (`libsecret-1-dev` to build). Every renewal rotates the refresh token
   and is kept again; one used before ends the login at the server.
+- Files are attached through file_selector: the macOS sandbox lets the app read what the user picked
+  (`com.apple.security.files.user-selected.read-only`); a widget test cannot drive the system's dialog, so
+  `rust/tests/server.rs` sends files through the bridge instead.
 - An iOS build needs a `libc` new enough for `backtrace` on iOS – do not set it back below the version in
   `rust/Cargo.lock`.
 - Android in CI builds for arm64 only and without debug info; the runner needs disk space freed first.

@@ -65,7 +65,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 838011895;
+  int get rustContentHash => 1353603886;
 
   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
     stem: 'kernoid_bridge',
@@ -158,6 +158,13 @@ abstract class RustLibApi extends BaseApi {
 
   Future<String> crateApiKernoidKernoidMakeKey({required Kernoid that});
 
+  Future<EmailDraft> crateApiKernoidKernoidReplyDraft({
+    required Kernoid that,
+    required String emailId,
+    required String kind,
+    required ReplyPhrases phrases,
+  });
+
   Future<Kernoid> crateApiKernoidKernoidResume({required String kept});
 
   Future<void> crateApiKernoidKernoidSaveContact({
@@ -177,13 +184,7 @@ abstract class RustLibApi extends BaseApi {
     required String directory,
   });
 
-  Future<bool> crateApiKernoidKernoidSend({
-    required Kernoid that,
-    required List<String> to,
-    required String subject,
-    required String text,
-    required String date,
-  });
+  Future<bool> crateApiKernoidKernoidSendDraft({required Kernoid that, required EmailDraft draft});
 
   Future<SendPlan> crateApiKernoidKernoidSendPlan({required Kernoid that, required List<String> to});
 
@@ -713,13 +714,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "Kernoid_make_key", argNames: ["that"]);
 
   @override
+  Future<EmailDraft> crateApiKernoidKernoidReplyDraft({
+    required Kernoid that,
+    required String emailId,
+    required String kind,
+    required ReplyPhrases phrases,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
+          sse_encode_String(emailId, serializer);
+          sse_encode_String(kind, serializer);
+          sse_encode_box_autoadd_reply_phrases(phrases, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_email_draft, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiKernoidKernoidReplyDraftConstMeta,
+        argValues: [that, emailId, kind, phrases],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKernoidKernoidReplyDraftConstMeta =>
+      const TaskConstMeta(debugName: "Kernoid_reply_draft", argNames: ["that", "emailId", "kind", "phrases"]);
+
+  @override
   Future<Kernoid> crateApiKernoidKernoidResume({required String kept}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(kept, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22, port: port_);
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -751,7 +780,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_opt_String(accountId, serializer);
           sse_encode_opt_String(contactId, serializer);
           sse_encode_box_autoadd_contact_draft(draft, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSaveContactConstMeta,
@@ -773,7 +802,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_opt_String(eventId, serializer);
           sse_encode_box_autoadd_event_draft(draft, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSaveEventConstMeta,
@@ -803,7 +832,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_u_32(partIndex, serializer);
           sse_encode_String(name, serializer);
           sse_encode_String(directory, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSavePartConstMeta,
@@ -819,34 +848,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<bool> crateApiKernoidKernoidSend({
-    required Kernoid that,
-    required List<String> to,
-    required String subject,
-    required String text,
-    required String date,
-  }) {
+  Future<bool> crateApiKernoidKernoidSendDraft({required Kernoid that, required EmailDraft draft}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          sse_encode_list_String(to, serializer);
-          sse_encode_String(subject, serializer);
-          sse_encode_String(text, serializer);
-          sse_encode_String(date, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25, port: port_);
+          sse_encode_box_autoadd_email_draft(draft, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_bool, decodeErrorData: sse_decode_kernoid_error),
-        constMeta: kCrateApiKernoidKernoidSendConstMeta,
-        argValues: [that, to, subject, text, date],
+        constMeta: kCrateApiKernoidKernoidSendDraftConstMeta,
+        argValues: [that, draft],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiKernoidKernoidSendConstMeta =>
-      const TaskConstMeta(debugName: "Kernoid_send", argNames: ["that", "to", "subject", "text", "date"]);
+  TaskConstMeta get kCrateApiKernoidKernoidSendDraftConstMeta =>
+      const TaskConstMeta(debugName: "Kernoid_send_draft", argNames: ["that", "draft"]);
 
   @override
   Future<SendPlan> crateApiKernoidKernoidSendPlan({required Kernoid that, required List<String> to}) {
@@ -856,7 +876,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_list_String(to, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_send_plan, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSendPlanConstMeta,
@@ -876,7 +896,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidServerConstMeta,
@@ -896,7 +916,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSignOutConstMeta,
@@ -917,7 +937,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_String(code, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_e_2_e_status, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidUnlockKeyConstMeta,
@@ -937,7 +957,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidUsernameConstMeta,
@@ -960,7 +980,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             final serializer = SseSerializer(generalizedFrbRustBinding);
             sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
             sse_encode_StreamSink_String_Sse(sink, serializer);
-            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31, port: port_);
+            pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32, port: port_);
           },
           codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: null),
           constMeta: kCrateApiKernoidKernoidWatchLoginConstMeta,
@@ -982,7 +1002,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerOidcLogin(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: null),
         constMeta: kCrateApiKernoidOidcLoginUrlConstMeta,
@@ -1001,7 +1021,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: null),
         constMeta: kCrateApiKernoidInitAppConstMeta,
@@ -1114,9 +1134,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EmailDraft dco_decode_box_autoadd_email_draft(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_email_draft(raw);
+  }
+
+  @protected
   EventDraft dco_decode_box_autoadd_event_draft(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_event_draft(raw);
+  }
+
+  @protected
+  ReplyPhrases dco_decode_box_autoadd_reply_phrases(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_reply_phrases(raw);
   }
 
   @protected
@@ -1171,6 +1203,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftAttachment dco_decode_draft_attachment(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return DraftAttachment(
+      blobId: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      mediaType: dco_decode_String(arr[2]),
+      size: dco_decode_i_64(arr[3]),
+    );
+  }
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1204,6 +1249,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       locked: dco_decode_bool(arr[9]),
       signed: dco_decode_bool(arr[10]),
       verified: dco_decode_bool(arr[11]),
+    );
+  }
+
+  @protected
+  EmailDraft dco_decode_email_draft(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    return EmailDraft(
+      to: dco_decode_String(arr[0]),
+      cc: dco_decode_String(arr[1]),
+      bcc: dco_decode_String(arr[2]),
+      subject: dco_decode_String(arr[3]),
+      text: dco_decode_String(arr[4]),
+      inReplyTo: dco_decode_list_String(arr[5]),
+      references: dco_decode_list_String(arr[6]),
+      attachments: dco_decode_list_draft_attachment(arr[7]),
+      files: dco_decode_list_String(arr[8]),
     );
   }
 
@@ -1352,6 +1415,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<DraftAttachment> dco_decode_list_draft_attachment(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_draft_attachment).toList();
+  }
+
+  @protected
   List<EmailSummary> dco_decode_list_email_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_email_summary).toList();
@@ -1429,6 +1498,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       name: dco_decode_opt_String(arr[0]),
       email: dco_decode_opt_String(arr[1]),
       status: dco_decode_opt_String(arr[2]),
+    );
+  }
+
+  @protected
+  ReplyPhrases dco_decode_reply_phrases(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return ReplyPhrases(
+      wrote: dco_decode_String(arr[0]),
+      forwarded: dco_decode_String(arr[1]),
+      from: dco_decode_String(arr[2]),
+      date: dco_decode_String(arr[3]),
+      subject: dco_decode_String(arr[4]),
+      to: dco_decode_String(arr[5]),
+      dateFormat: dco_decode_String(arr[6]),
     );
   }
 
@@ -1570,9 +1655,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EmailDraft sse_decode_box_autoadd_email_draft(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_email_draft(deserializer));
+  }
+
+  @protected
   EventDraft sse_decode_box_autoadd_event_draft(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_event_draft(deserializer));
+  }
+
+  @protected
+  ReplyPhrases sse_decode_box_autoadd_reply_phrases(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_reply_phrases(deserializer));
   }
 
   @protected
@@ -1639,6 +1736,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftAttachment sse_decode_draft_attachment(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_blobId = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_mediaType = sse_decode_String(deserializer);
+    var var_size = sse_decode_i_64(deserializer);
+    return DraftAttachment(blobId: var_blobId, name: var_name, mediaType: var_mediaType, size: var_size);
+  }
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_available = sse_decode_bool(deserializer);
@@ -1687,6 +1794,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       locked: var_locked,
       signed: var_signed,
       verified: var_verified,
+    );
+  }
+
+  @protected
+  EmailDraft sse_decode_email_draft(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_to = sse_decode_String(deserializer);
+    var var_cc = sse_decode_String(deserializer);
+    var var_bcc = sse_decode_String(deserializer);
+    var var_subject = sse_decode_String(deserializer);
+    var var_text = sse_decode_String(deserializer);
+    var var_inReplyTo = sse_decode_list_String(deserializer);
+    var var_references = sse_decode_list_String(deserializer);
+    var var_attachments = sse_decode_list_draft_attachment(deserializer);
+    var var_files = sse_decode_list_String(deserializer);
+    return EmailDraft(
+      to: var_to,
+      cc: var_cc,
+      bcc: var_bcc,
+      subject: var_subject,
+      text: var_text,
+      inReplyTo: var_inReplyTo,
+      references: var_references,
+      attachments: var_attachments,
+      files: var_files,
     );
   }
 
@@ -1898,6 +2030,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<DraftAttachment> sse_decode_list_draft_attachment(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DraftAttachment>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_draft_attachment(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<EmailSummary> sse_decode_list_email_summary(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -2024,6 +2168,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_email = sse_decode_opt_String(deserializer);
     var var_status = sse_decode_opt_String(deserializer);
     return Participant(name: var_name, email: var_email, status: var_status);
+  }
+
+  @protected
+  ReplyPhrases sse_decode_reply_phrases(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_wrote = sse_decode_String(deserializer);
+    var var_forwarded = sse_decode_String(deserializer);
+    var var_from = sse_decode_String(deserializer);
+    var var_date = sse_decode_String(deserializer);
+    var var_subject = sse_decode_String(deserializer);
+    var var_to = sse_decode_String(deserializer);
+    var var_dateFormat = sse_decode_String(deserializer);
+    return ReplyPhrases(
+      wrote: var_wrote,
+      forwarded: var_forwarded,
+      from: var_from,
+      date: var_date,
+      subject: var_subject,
+      to: var_to,
+      dateFormat: var_dateFormat,
+    );
   }
 
   @protected
@@ -2170,9 +2335,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_email_draft(EmailDraft self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_email_draft(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_event_draft(EventDraft self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_event_draft(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_reply_phrases(ReplyPhrases self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_reply_phrases(self, serializer);
   }
 
   @protected
@@ -2215,6 +2392,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_draft_attachment(DraftAttachment self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.blobId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.mediaType, serializer);
+    sse_encode_i_64(self.size, serializer);
+  }
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.available, serializer);
@@ -2241,6 +2427,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.locked, serializer);
     sse_encode_bool(self.signed, serializer);
     sse_encode_bool(self.verified, serializer);
+  }
+
+  @protected
+  void sse_encode_email_draft(EmailDraft self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.to, serializer);
+    sse_encode_String(self.cc, serializer);
+    sse_encode_String(self.bcc, serializer);
+    sse_encode_String(self.subject, serializer);
+    sse_encode_String(self.text, serializer);
+    sse_encode_list_String(self.inReplyTo, serializer);
+    sse_encode_list_String(self.references, serializer);
+    sse_encode_list_draft_attachment(self.attachments, serializer);
+    sse_encode_list_String(self.files, serializer);
   }
 
   @protected
@@ -2381,6 +2581,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_draft_attachment(List<DraftAttachment> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_draft_attachment(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_email_summary(List<EmailSummary> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -2478,6 +2687,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.name, serializer);
     sse_encode_opt_String(self.email, serializer);
     sse_encode_opt_String(self.status, serializer);
+  }
+
+  @protected
+  void sse_encode_reply_phrases(ReplyPhrases self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.wrote, serializer);
+    sse_encode_String(self.forwarded, serializer);
+    sse_encode_String(self.from, serializer);
+    sse_encode_String(self.date, serializer);
+    sse_encode_String(self.subject, serializer);
+    sse_encode_String(self.to, serializer);
+    sse_encode_String(self.dateFormat, serializer);
   }
 
   @protected
@@ -2614,6 +2835,11 @@ class KernoidImpl extends RustOpaque implements Kernoid {
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey() => RustLib.instance.api.crateApiKernoidKernoidMakeKey(that: this);
 
+  /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
+  /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
+  Future<EmailDraft> replyDraft({required String emailId, required String kind, required ReplyPhrases phrases}) =>
+      RustLib.instance.api.crateApiKernoidKernoidReplyDraft(that: this, emailId: emailId, kind: kind, phrases: phrases);
+
   /// Makes a contact in the account's default address book, or – with `account_id` and `contact_id` – changes one.
   /// Addresses and numbers that stay keep their labels (work, home, mobile …).
   Future<void> saveContact({String? accountId, String? contactId, required ContactDraft draft}) => RustLib.instance.api
@@ -2638,13 +2864,14 @@ class KernoidImpl extends RustOpaque implements Kernoid {
     directory: directory,
   );
 
-  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
-  /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
-  Future<bool> send({required List<String> to, required String subject, required String text, required String date}) =>
-      RustLib.instance.api.crateApiKernoidKernoidSend(that: this, to: to, subject: subject, text: text, date: date);
+  /// Sends a message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3): then the files go inside
+  /// the encrypted message and nothing of them reaches the server as it is; else they are uploaded and attached.
+  /// Returns whether it went encrypted.
+  Future<bool> sendDraft({required EmailDraft draft}) =>
+      RustLib.instance.api.crateApiKernoidKernoidSendDraft(that: this, draft: draft);
 
-  /// How a message to `to` would go out: end-to-end encrypted when the key is unlocked and every recipient has a
-  /// key, else as before – with the reason.
+  /// How a message to `to` (every recipient, Cc and Bcc as well) would go out: end-to-end encrypted when the key is
+  /// unlocked and every recipient has a key, else as before – with the reason.
   Future<SendPlan> sendPlan({required List<String> to}) =>
       RustLib.instance.api.crateApiKernoidKernoidSendPlan(that: this, to: to);
 

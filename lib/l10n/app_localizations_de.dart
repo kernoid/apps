@@ -435,4 +435,36 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get signInCancelled => 'Anmeldung abgebrochen';
+
+  @override
+  String get bcc => 'Bcc';
+
+  @override
+  String get reply => 'Antworten';
+
+  @override
+  String get replyAll => 'Allen antworten';
+
+  @override
+  String get forward => 'Weiterleiten';
+
+  @override
+  String get attachFile => 'Datei anhängen';
+
+  @override
+  String get remove => 'Entfernen';
+
+  @override
+  String quoteWrote(String date, String who) {
+    return 'Am $date schrieb $who:';
+  }
+
+  @override
+  String get quoteForwarded => '---------- Weitergeleitete Nachricht ----------';
+
+  @override
+  String get quoteDateFormat => '%d.%m.%Y %H:%M';
+
+  @override
+  String get date => 'Datum';
 }

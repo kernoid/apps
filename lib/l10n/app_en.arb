@@ -164,5 +164,29 @@
   "signInBrowserHint": "In your browser – with a passkey, a password or a second factor, as your organisation has it.",
   "orAppPassword": "or with an app password",
   "signInAppPassword": "Sign in with the app password",
-  "signInCancelled": "Sign-in cancelled"
+  "signInCancelled": "Sign-in cancelled",
+  "bcc": "Bcc",
+  "reply": "Reply",
+  "replyAll": "Reply all",
+  "forward": "Forward",
+  "attachFile": "Attach a file",
+  "remove": "Remove",
+  "quoteWrote": "On {date}, {who} wrote:",
+  "quoteForwarded": "---------- Forwarded message ----------",
+  "quoteDateFormat": "%a, %d %b %Y %H:%M",
+  "date": "Date",
+  "@quoteWrote": {
+    "description": "Above a quoted reply; {date} and {who} are filled in by the app, not by Flutter.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "@quoteDateFormat": {
+    "description": "How the date above a quote is written: a format of Rust's chrono (strftime)."
+  }
 }

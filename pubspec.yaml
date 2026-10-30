@@ -10,6 +10,7 @@ environment:
   sdk: ^3.13.7
 
 dependencies:
+  file_selector: 1.1.0
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -28,6 +29,11 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+
+# Platform parts of file_selector set back to their newest versions at least two weeks old (CLAUDE.md, Rules).
+dependency_overrides:
+  file_selector_ios: 0.5.3+6
+  file_selector_macos: 0.9.5+1
 
 flutter:
   uses-material-design: true

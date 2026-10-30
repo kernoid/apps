@@ -136,5 +136,15 @@
   "signInBrowserHint": "Im Browser – mit Passkey, Passwort oder zweitem Faktor, wie es deine Organisation vorsieht.",
   "orAppPassword": "oder mit einem App-Passwort",
   "signInAppPassword": "Mit App-Passwort anmelden",
-  "signInCancelled": "Anmeldung abgebrochen"
+  "signInCancelled": "Anmeldung abgebrochen",
+  "bcc": "Bcc",
+  "reply": "Antworten",
+  "replyAll": "Allen antworten",
+  "forward": "Weiterleiten",
+  "attachFile": "Datei anhängen",
+  "remove": "Entfernen",
+  "quoteWrote": "Am {date} schrieb {who}:",
+  "quoteForwarded": "---------- Weitergeleitete Nachricht ----------",
+  "quoteDateFormat": "%d.%m.%Y %H:%M",
+  "date": "Datum"
 }
