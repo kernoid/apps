@@ -65,7 +65,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -973232463;
+  int get rustContentHash => -71866148;
 
   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
     stem: 'kernoid_bridge',
@@ -76,6 +76,18 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<void> crateApiKernoidKernoidAnswerEvent({
+    required Kernoid that,
+    required String accountId,
+    required String eventId,
+    required String invitationKey,
+    required String status,
+  });
+
+  Future<List<Calendar>> crateApiKernoidKernoidCalendars({required Kernoid that});
+
+  Future<List<Contact>> crateApiKernoidKernoidContacts({required Kernoid that, required String search});
+
   Future<String> crateApiKernoidKernoidDownload({
     required Kernoid that,
     String? accountId,
@@ -93,6 +105,8 @@ abstract class RustLibApi extends BaseApi {
     required int position,
     required int limit,
   });
+
+  Future<List<Event>> crateApiKernoidKernoidEvents({required Kernoid that, required String from, required String to});
 
   List<FileStore> crateApiKernoidKernoidFileStores({required Kernoid that});
 
@@ -158,6 +172,79 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<void> crateApiKernoidKernoidAnswerEvent({
+    required Kernoid that,
+    required String accountId,
+    required String eventId,
+    required String invitationKey,
+    required String status,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
+          sse_encode_String(accountId, serializer);
+          sse_encode_String(eventId, serializer);
+          sse_encode_String(invitationKey, serializer);
+          sse_encode_String(status, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiKernoidKernoidAnswerEventConstMeta,
+        argValues: [that, accountId, eventId, invitationKey, status],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKernoidKernoidAnswerEventConstMeta => const TaskConstMeta(
+    debugName: "Kernoid_answer_event",
+    argNames: ["that", "accountId", "eventId", "invitationKey", "status"],
+  );
+
+  @override
+  Future<List<Calendar>> crateApiKernoidKernoidCalendars({required Kernoid that}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_list_calendar, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiKernoidKernoidCalendarsConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKernoidKernoidCalendarsConstMeta =>
+      const TaskConstMeta(debugName: "Kernoid_calendars", argNames: ["that"]);
+
+  @override
+  Future<List<Contact>> crateApiKernoidKernoidContacts({required Kernoid that, required String search}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
+          sse_encode_String(search, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_list_contact, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiKernoidKernoidContactsConstMeta,
+        argValues: [that, search],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKernoidKernoidContactsConstMeta =>
+      const TaskConstMeta(debugName: "Kernoid_contacts", argNames: ["that", "search"]);
+
+  @override
   Future<String> crateApiKernoidKernoidDownload({
     required Kernoid that,
     String? accountId,
@@ -176,7 +263,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(name, serializer);
           sse_encode_String(mediaType, serializer);
           sse_encode_String(directory, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidDownloadConstMeta,
@@ -199,7 +286,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_String(id, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_email, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidEmailConstMeta,
@@ -227,7 +314,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(mailboxId, serializer);
           sse_encode_u_32(position, serializer);
           sse_encode_u_32(limit, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_email_page, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidEmailsConstMeta,
@@ -241,13 +328,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "Kernoid_emails", argNames: ["that", "mailboxId", "position", "limit"]);
 
   @override
+  Future<List<Event>> crateApiKernoidKernoidEvents({required Kernoid that, required String from, required String to}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
+          sse_encode_String(from, serializer);
+          sse_encode_String(to, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_list_event, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiKernoidKernoidEventsConstMeta,
+        argValues: [that, from, to],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiKernoidKernoidEventsConstMeta =>
+      const TaskConstMeta(debugName: "Kernoid_events", argNames: ["that", "from", "to"]);
+
+  @override
   List<FileStore> crateApiKernoidKernoidFileStores({required Kernoid that}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_list_file_store, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidFileStoresConstMeta,
@@ -273,7 +382,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_String(accountId, serializer);
           sse_encode_opt_String(parentId, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_list_file_node, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidFilesConstMeta,
@@ -293,7 +402,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_e_2_e_status, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidKeyStatusConstMeta,
@@ -313,7 +422,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_e_2_e_status, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidLockKeyConstMeta,
@@ -339,7 +448,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(server, serializer);
           sse_encode_String(address, serializer);
           sse_encode_String(password, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12, port: port_);
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -363,7 +472,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_list_mailbox, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidMailboxesConstMeta,
@@ -383,7 +492,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidMakeKeyConstMeta,
@@ -413,7 +522,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_u_32(partIndex, serializer);
           sse_encode_String(name, serializer);
           sse_encode_String(directory, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSavePartConstMeta,
@@ -445,7 +554,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(subject, serializer);
           sse_encode_String(text, serializer);
           sse_encode_String(date, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_bool, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSendConstMeta,
@@ -466,7 +575,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_list_String(to, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_send_plan, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidSendPlanConstMeta,
@@ -486,7 +595,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidServerConstMeta,
@@ -507,7 +616,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
           sse_encode_String(code, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_e_2_e_status, decodeErrorData: sse_decode_kernoid_error),
         constMeta: kCrateApiKernoidKernoidUnlockKeyConstMeta,
@@ -527,7 +636,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid(that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
         },
         codec: SseCodec(decodeSuccessData: sse_decode_String, decodeErrorData: null),
         constMeta: kCrateApiKernoidKernoidUsernameConstMeta,
@@ -546,7 +655,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17, port: port_);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21, port: port_);
         },
         codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: null),
         constMeta: kCrateApiKernoidInitAppConstMeta,
@@ -623,6 +732,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Calendar dco_decode_calendar(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return Calendar(
+      id: dco_decode_String(arr[0]),
+      accountId: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      color: dco_decode_opt_String(arr[3]),
+      sharedBy: dco_decode_opt_String(arr[4]),
+    );
+  }
+
+  @protected
+  Contact dco_decode_contact(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return Contact(
+      id: dco_decode_String(arr[0]),
+      accountId: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      organization: dco_decode_opt_String(arr[3]),
+      emails: dco_decode_list_String(arr[4]),
+      phones: dco_decode_list_String(arr[5]),
+      notes: dco_decode_list_String(arr[6]),
+    );
+  }
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -683,6 +822,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       hasAttachment: dco_decode_bool(arr[7]),
       encrypted: dco_decode_bool(arr[8]),
       locked: dco_decode_bool(arr[9]),
+    );
+  }
+
+  @protected
+  Event dco_decode_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15) throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return Event(
+      id: dco_decode_String(arr[0]),
+      eventId: dco_decode_String(arr[1]),
+      accountId: dco_decode_String(arr[2]),
+      calendarIds: dco_decode_list_String(arr[3]),
+      title: dco_decode_String(arr[4]),
+      start: dco_decode_opt_String(arr[5]),
+      end: dco_decode_opt_String(arr[6]),
+      allDay: dco_decode_bool(arr[7]),
+      location: dco_decode_opt_String(arr[8]),
+      description: dco_decode_opt_String(arr[9]),
+      cancelled: dco_decode_bool(arr[10]),
+      recurring: dco_decode_bool(arr[11]),
+      participants: dco_decode_list_participant(arr[12]),
+      invitationKey: dco_decode_opt_String(arr[13]),
+      myStatus: dco_decode_opt_String(arr[14]),
     );
   }
 
@@ -748,9 +911,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Calendar> dco_decode_list_calendar(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_calendar).toList();
+  }
+
+  @protected
+  List<Contact> dco_decode_list_contact(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_contact).toList();
+  }
+
+  @protected
   List<EmailSummary> dco_decode_list_email_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_email_summary).toList();
+  }
+
+  @protected
+  List<Event> dco_decode_list_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_event).toList();
   }
 
   @protected
@@ -769,6 +950,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<Mailbox> dco_decode_list_mailbox(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_mailbox).toList();
+  }
+
+  @protected
+  List<Participant> dco_decode_list_participant(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_participant).toList();
   }
 
   @protected
@@ -802,6 +989,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
+  }
+
+  @protected
+  Participant dco_decode_participant(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Participant(
+      name: dco_decode_opt_String(arr[0]),
+      email: dco_decode_opt_String(arr[1]),
+      status: dco_decode_opt_String(arr[2]),
+    );
   }
 
   @protected
@@ -905,6 +1104,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Calendar sse_decode_calendar(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_accountId = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_color = sse_decode_opt_String(deserializer);
+    var var_sharedBy = sse_decode_opt_String(deserializer);
+    return Calendar(id: var_id, accountId: var_accountId, name: var_name, color: var_color, sharedBy: var_sharedBy);
+  }
+
+  @protected
+  Contact sse_decode_contact(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_accountId = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_organization = sse_decode_opt_String(deserializer);
+    var var_emails = sse_decode_list_String(deserializer);
+    var var_phones = sse_decode_list_String(deserializer);
+    var var_notes = sse_decode_list_String(deserializer);
+    return Contact(
+      id: var_id,
+      accountId: var_accountId,
+      name: var_name,
+      organization: var_organization,
+      emails: var_emails,
+      phones: var_phones,
+      notes: var_notes,
+    );
+  }
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_available = sse_decode_bool(deserializer);
@@ -992,6 +1223,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Event sse_decode_event(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_eventId = sse_decode_String(deserializer);
+    var var_accountId = sse_decode_String(deserializer);
+    var var_calendarIds = sse_decode_list_String(deserializer);
+    var var_title = sse_decode_String(deserializer);
+    var var_start = sse_decode_opt_String(deserializer);
+    var var_end = sse_decode_opt_String(deserializer);
+    var var_allDay = sse_decode_bool(deserializer);
+    var var_location = sse_decode_opt_String(deserializer);
+    var var_description = sse_decode_opt_String(deserializer);
+    var var_cancelled = sse_decode_bool(deserializer);
+    var var_recurring = sse_decode_bool(deserializer);
+    var var_participants = sse_decode_list_participant(deserializer);
+    var var_invitationKey = sse_decode_opt_String(deserializer);
+    var var_myStatus = sse_decode_opt_String(deserializer);
+    return Event(
+      id: var_id,
+      eventId: var_eventId,
+      accountId: var_accountId,
+      calendarIds: var_calendarIds,
+      title: var_title,
+      start: var_start,
+      end: var_end,
+      allDay: var_allDay,
+      location: var_location,
+      description: var_description,
+      cancelled: var_cancelled,
+      recurring: var_recurring,
+      participants: var_participants,
+      invitationKey: var_invitationKey,
+      myStatus: var_myStatus,
+    );
+  }
+
+  @protected
   FileNode sse_decode_file_node(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -1074,6 +1342,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<Calendar> sse_decode_list_calendar(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Calendar>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_calendar(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Contact> sse_decode_list_contact(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Contact>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_contact(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<EmailSummary> sse_decode_list_email_summary(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1081,6 +1373,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <EmailSummary>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_email_summary(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Event> sse_decode_list_event(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Event>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_event(deserializer));
     }
     return ans_;
   }
@@ -1117,6 +1421,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <Mailbox>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_mailbox(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<Participant> sse_decode_list_participant(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <Participant>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_participant(deserializer));
     }
     return ans_;
   }
@@ -1167,6 +1483,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     } else {
       return null;
     }
+  }
+
+  @protected
+  Participant sse_decode_participant(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_name = sse_decode_opt_String(deserializer);
+    var var_email = sse_decode_opt_String(deserializer);
+    var var_status = sse_decode_opt_String(deserializer);
+    return Participant(name: var_name, email: var_email, status: var_status);
   }
 
   @protected
@@ -1269,6 +1594,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_calendar(Calendar self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.color, serializer);
+    sse_encode_opt_String(self.sharedBy, serializer);
+  }
+
+  @protected
+  void sse_encode_contact(Contact self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_opt_String(self.organization, serializer);
+    sse_encode_list_String(self.emails, serializer);
+    sse_encode_list_String(self.phones, serializer);
+    sse_encode_list_String(self.notes, serializer);
+  }
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.available, serializer);
@@ -1317,6 +1664,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.hasAttachment, serializer);
     sse_encode_bool(self.encrypted, serializer);
     sse_encode_bool(self.locked, serializer);
+  }
+
+  @protected
+  void sse_encode_event(Event self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.eventId, serializer);
+    sse_encode_String(self.accountId, serializer);
+    sse_encode_list_String(self.calendarIds, serializer);
+    sse_encode_String(self.title, serializer);
+    sse_encode_opt_String(self.start, serializer);
+    sse_encode_opt_String(self.end, serializer);
+    sse_encode_bool(self.allDay, serializer);
+    sse_encode_opt_String(self.location, serializer);
+    sse_encode_opt_String(self.description, serializer);
+    sse_encode_bool(self.cancelled, serializer);
+    sse_encode_bool(self.recurring, serializer);
+    sse_encode_list_participant(self.participants, serializer);
+    sse_encode_opt_String(self.invitationKey, serializer);
+    sse_encode_opt_String(self.myStatus, serializer);
   }
 
   @protected
@@ -1381,11 +1748,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_calendar(List<Calendar> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_calendar(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_contact(List<Contact> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_contact(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_email_summary(List<EmailSummary> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_email_summary(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_event(List<Event> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_event(item, serializer);
     }
   }
 
@@ -1413,6 +1807,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_mailbox(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_participant(List<Participant> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_participant(item, serializer);
     }
   }
 
@@ -1452,6 +1855,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_box_autoadd_u_32(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_participant(Participant self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.name, serializer);
+    sse_encode_opt_String(self.email, serializer);
+    sse_encode_opt_String(self.status, serializer);
   }
 
   @protected
@@ -1506,6 +1917,27 @@ class KernoidImpl extends RustOpaque implements Kernoid {
     rustArcDecrementStrongCountPtr: RustLib.instance.api.rust_arc_decrement_strong_count_KernoidPtr,
   );
 
+  /// Answers an invitation: `accepted`, `tentative` or `declined`; the organizer hears of it by email.
+  Future<void> answerEvent({
+    required String accountId,
+    required String eventId,
+    required String invitationKey,
+    required String status,
+  }) => RustLib.instance.api.crateApiKernoidKernoidAnswerEvent(
+    that: this,
+    accountId: accountId,
+    eventId: eventId,
+    invitationKey: invitationKey,
+    status: status,
+  );
+
+  /// The calendars of every account with calendars – the own ones first.
+  Future<List<Calendar>> calendars() => RustLib.instance.api.crateApiKernoidKernoidCalendars(that: this);
+
+  /// The contacts of every address book, `search` searching them; by name.
+  Future<List<Contact>> contacts({required String search}) =>
+      RustLib.instance.api.crateApiKernoidKernoidContacts(that: this, search: search);
+
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
   Future<String> download({
@@ -1531,6 +1963,11 @@ class KernoidImpl extends RustOpaque implements Kernoid {
       .instance
       .api
       .crateApiKernoidKernoidEmails(that: this, mailboxId: mailboxId, position: position, limit: limit);
+
+  /// The events of the visible calendars between `from` and `to` (RFC 3339) – recurring ones as their instances,
+  /// by start.
+  Future<List<Event>> events({required String from, required String to}) =>
+      RustLib.instance.api.crateApiKernoidKernoidEvents(that: this, from: from, to: to);
 
   List<FileStore> fileStores() => RustLib.instance.api.crateApiKernoidKernoidFileStores(that: this);
 
@@ -1562,8 +1999,8 @@ class KernoidImpl extends RustOpaque implements Kernoid {
     directory: directory,
   );
 
-  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is the
-  /// app's time for the `Date` field (RFC 5322). Returns whether it went encrypted.
+  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
+  /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
   Future<bool> send({required List<String> to, required String subject, required String text, required String date}) =>
       RustLib.instance.api.crateApiKernoidKernoidSend(that: this, to: to, subject: subject, text: text, date: date);
 

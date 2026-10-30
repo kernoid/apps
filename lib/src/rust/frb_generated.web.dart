@@ -51,6 +51,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  Calendar dco_decode_calendar(dynamic raw);
+
+  @protected
+  Contact dco_decode_contact(dynamic raw);
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw);
 
   @protected
@@ -61,6 +67,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EmailSummary dco_decode_email_summary(dynamic raw);
+
+  @protected
+  Event dco_decode_event(dynamic raw);
 
   @protected
   FileNode dco_decode_file_node(dynamic raw);
@@ -84,7 +93,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Attachment> dco_decode_list_attachment(dynamic raw);
 
   @protected
+  List<Calendar> dco_decode_list_calendar(dynamic raw);
+
+  @protected
+  List<Contact> dco_decode_list_contact(dynamic raw);
+
+  @protected
   List<EmailSummary> dco_decode_list_email_summary(dynamic raw);
+
+  @protected
+  List<Event> dco_decode_list_event(dynamic raw);
 
   @protected
   List<FileNode> dco_decode_list_file_node(dynamic raw);
@@ -94,6 +112,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Mailbox> dco_decode_list_mailbox(dynamic raw);
+
+  @protected
+  List<Participant> dco_decode_list_participant(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -106,6 +127,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  Participant dco_decode_participant(dynamic raw);
 
   @protected
   SendPlan dco_decode_send_plan(dynamic raw);
@@ -153,6 +177,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  Calendar sse_decode_calendar(SseDeserializer deserializer);
+
+  @protected
+  Contact sse_decode_contact(SseDeserializer deserializer);
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer);
 
   @protected
@@ -163,6 +193,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EmailSummary sse_decode_email_summary(SseDeserializer deserializer);
+
+  @protected
+  Event sse_decode_event(SseDeserializer deserializer);
 
   @protected
   FileNode sse_decode_file_node(SseDeserializer deserializer);
@@ -186,7 +219,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Attachment> sse_decode_list_attachment(SseDeserializer deserializer);
 
   @protected
+  List<Calendar> sse_decode_list_calendar(SseDeserializer deserializer);
+
+  @protected
+  List<Contact> sse_decode_list_contact(SseDeserializer deserializer);
+
+  @protected
   List<EmailSummary> sse_decode_list_email_summary(SseDeserializer deserializer);
+
+  @protected
+  List<Event> sse_decode_list_event(SseDeserializer deserializer);
 
   @protected
   List<FileNode> sse_decode_list_file_node(SseDeserializer deserializer);
@@ -196,6 +238,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Mailbox> sse_decode_list_mailbox(SseDeserializer deserializer);
+
+  @protected
+  List<Participant> sse_decode_list_participant(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -208,6 +253,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  Participant sse_decode_participant(SseDeserializer deserializer);
 
   @protected
   SendPlan sse_decode_send_plan(SseDeserializer deserializer);
@@ -261,6 +309,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_calendar(Calendar self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_contact(Contact self, SseSerializer serializer);
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer);
 
   @protected
@@ -271,6 +325,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_email_summary(EmailSummary self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_event(Event self, SseSerializer serializer);
 
   @protected
   void sse_encode_file_node(FileNode self, SseSerializer serializer);
@@ -294,7 +351,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_attachment(List<Attachment> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_calendar(List<Calendar> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_contact(List<Contact> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_email_summary(List<EmailSummary> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_event(List<Event> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_file_node(List<FileNode> self, SseSerializer serializer);
@@ -304,6 +370,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_mailbox(List<Mailbox> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_participant(List<Participant> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
@@ -316,6 +385,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_participant(Participant self, SseSerializer serializer);
 
   @protected
   void sse_encode_send_plan(SendPlan self, SseSerializer serializer);

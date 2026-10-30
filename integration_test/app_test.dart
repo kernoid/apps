@@ -3,6 +3,7 @@
 // The app against a real kernoid, when one is named:
 //   flutter test integration_test -d macos --dart-define=KERNOID_TEST_SERVER=http://apps.localhost:18190 \
 //     --dart-define=KERNOID_TEST_ADDRESS=alice@demo.localhost --dart-define=KERNOID_TEST_PASSWORD=… \
+//     [--dart-define=KERNOID_TEST_INVITATION=<title> --dart-define=KERNOID_TEST_CONTACT=<name>] \
 //     [--dart-define=KERNOID_TEST_SCREENSHOTS=/a/directory]
 // The account needs mail in its inbox and files at the top of its store. Without a server the test does nothing.
 import 'dart:io';
@@ -22,6 +23,11 @@ const screenshots = String.fromEnvironment('KERNOID_TEST_SCREENSHOTS');
 
 /// The recovery code of the account's key, which then has sent itself an encrypted message (rust/tests/server.rs).
 const recoveryCode = String.fromEnvironment('KERNOID_TEST_RECOVERY_CODE');
+
+/// The title of an event in the next two weeks the account is invited to, and the name of one of its contacts
+/// (with an address): calendar and contacts are tried when both are given.
+const invitation = String.fromEnvironment('KERNOID_TEST_INVITATION');
+const contact = String.fromEnvironment('KERNOID_TEST_CONTACT');
 
 /// An account without a key yet, to make one in the app.
 const newAddress = String.fromEnvironment('KERNOID_TEST_NEW_ADDRESS');
@@ -111,6 +117,54 @@ void main() {
       await shoot(tester, '$name-account');
       await tester.tap(find.byKey(const ValueKey('sign-out')));
       await waitFor(tester, find.byKey(const ValueKey('sign-in')));
+    });
+  }
+
+  for (final (name, size) in [('wide', const Size(1280, 800)), ('phone', const Size(390, 844))]) {
+    testWidgets('calendar and contacts – $name', (tester) async {
+      if (server.isEmpty || invitation.isEmpty || contact.isEmpty) {
+        markTestSkipped('no KERNOID_TEST_INVITATION and KERNOID_TEST_CONTACT');
+        return;
+      }
+      tester.view.physicalSize = size * tester.view.devicePixelRatio;
+      addTearDown(tester.view.reset);
+      await signIn(tester, address, password);
+
+      // The invitation among the next two weeks, answered from the event.
+      await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+      await waitFor(tester, find.text(invitation));
+      await shoot(tester, '$name-calendar');
+      await tester.tap(find.text(invitation));
+      await waitFor(tester, find.byKey(const ValueKey('answer-accepted')));
+      await shoot(tester, '$name-event');
+      await tester.tap(find.byKey(const ValueKey('answer-accepted')));
+      await waitFor(
+        tester,
+        find.byWidgetPredicate((w) => w is ChoiceChip && w.key == const ValueKey('answer-accepted') && w.selected),
+      );
+      await shoot(tester, '$name-event-accepted');
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      // A contact found by search; its address starts an email to it.
+      await tester.tap(find.byIcon(Icons.contacts_outlined));
+      await waitFor(tester, find.text(contact));
+      await tester.enterText(find.byType(SearchBar), contact.split(' ').first);
+      await waitFor(tester, find.text(contact));
+      await shoot(tester, '$name-contacts');
+      await tester.tap(find.text(contact).last);
+      final write = find.byWidgetPredicate(
+        (w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('write-to-'),
+      );
+      await waitFor(tester, write);
+      await shoot(tester, '$name-contact');
+      await tester.tap(write.first);
+      await waitFor(tester, find.byKey(const ValueKey('to')));
+      final to = tester.widget<TextField>(
+        find.descendant(of: find.byKey(const ValueKey('to')), matching: find.byType(TextField)),
+      );
+      expect(to.controller!.text, contains('@'));
+      await shoot(tester, '$name-contact-compose');
     });
   }
 

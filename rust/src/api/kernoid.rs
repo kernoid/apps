@@ -10,7 +10,7 @@ use flutter_rust_bridge::frb;
 use tokio::sync::Mutex;
 
 use kernoid_client::e2e::{E2e, Outgoing, Plan};
-use kernoid_client::{self as client, Client, files, mail};
+use kernoid_client::{self as client, Client, calendars, contacts, files, mail};
 
 static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
     tokio::runtime::Builder::new_multi_thread()
@@ -143,6 +143,63 @@ pub struct FileNode {
     pub size: i64,
     pub media_type: Option<String>,
     pub modified: Option<String>,
+}
+
+/// A calendar the account reaches: its own or one shared with it.
+#[derive(Debug, Clone)]
+pub struct Calendar {
+    pub id: String,
+    pub account_id: String,
+    pub name: String,
+    /// CSS colour, if the calendar has one.
+    pub color: Option<String>,
+    /// The owner's name, for a calendar shared with the account.
+    pub shared_by: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Participant {
+    pub name: Option<String>,
+    pub email: Option<String>,
+    /// `needs-action`, `accepted`, `tentative` or `declined`.
+    pub status: Option<String>,
+}
+
+/// An event, or one instance of a recurring one.
+#[derive(Debug, Clone)]
+pub struct Event {
+    pub id: String,
+    /// The event changes go to: for an instance, the recurring event it is of.
+    pub event_id: String,
+    pub account_id: String,
+    pub calendar_ids: Vec<String>,
+    pub title: String,
+    /// RFC 3339, UTC; for an all-day event its first day, `YYYY-MM-DD`, in no time zone.
+    pub start: Option<String>,
+    /// RFC 3339, UTC; for an all-day event the day after its last, `YYYY-MM-DD`.
+    pub end: Option<String>,
+    pub all_day: bool,
+    pub location: Option<String>,
+    pub description: Option<String>,
+    /// The organizer called it off.
+    pub cancelled: bool,
+    pub recurring: bool,
+    pub participants: Vec<Participant>,
+    /// The account is invited (not the organizer): its key among the participants and its answer so far.
+    pub invitation_key: Option<String>,
+    pub my_status: Option<String>,
+}
+
+/// A contact card of one of the account's address books.
+#[derive(Debug, Clone)]
+pub struct Contact {
+    pub id: String,
+    pub account_id: String,
+    pub name: String,
+    pub organization: Option<String>,
+    pub emails: Vec<String>,
+    pub phones: Vec<String>,
+    pub notes: Vec<String>,
 }
 
 /// Where end-to-end encryption stands for this account (RFC 0006).
@@ -507,6 +564,121 @@ impl Kernoid {
             write(&directory, &name, bytes).await
         })
         .await
+    }
+}
+
+/// The addresses that are the user: the login and the addresses the account sends from.
+async fn own_addresses(client: &Client) -> Vec<String> {
+    let mut own = vec![client.session.username.clone()];
+    if let Some(account) = client.session.primary(client::MAIL)
+        && let Ok(identities) = mail::identities(client, account).await
+    {
+        own.extend(identities.into_iter().map(|identity| identity.email));
+    }
+    own
+}
+
+fn event(e: calendars::Event, own: &[String]) -> Event {
+    let invitation = if e.organized_by(own) { None } else { e.me(own).map(|(key, p)| (key.to_owned(), p.clone())) };
+    let rfc3339 = |time: chrono::DateTime<chrono::Utc>| time.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    // An all-day event is days, not times: its local start date and as many days as its duration says.
+    let (start, end) = if e.show_without_time {
+        let first = e.start.as_deref().and_then(|s| chrono::NaiveDate::parse_from_str(s.get(..10)?, "%Y-%m-%d").ok());
+        let days = e.duration.as_deref().and_then(calendars::parse_duration).map_or(1, |s| (s / 86_400).max(1));
+        (
+            first.map(|d| d.to_string()),
+            first.and_then(|d| d.checked_add_days(chrono::Days::new(days as u64))).map(|d| d.to_string()),
+        )
+    } else {
+        (e.starts().map(rfc3339), e.ends().map(rfc3339))
+    };
+    Event {
+        event_id: e.event_id().to_owned(),
+        start,
+        end,
+        cancelled: e.is_cancelled(),
+        location: e.location(),
+        recurring: e.base_event_id.is_some() || e.recurrence_rule.is_some(),
+        invitation_key: invitation.as_ref().map(|(key, _)| key.clone()),
+        my_status: invitation.and_then(|(_, p)| p.participation_status),
+        participants: e
+            .participants
+            .iter()
+            .flat_map(|map| map.values())
+            .map(|p| Participant {
+                name: p.name.clone(),
+                email: p.calendar_address.as_deref().map(|a| a.strip_prefix("mailto:").unwrap_or(a).to_owned()),
+                status: p.participation_status.clone(),
+            })
+            .collect(),
+        calendar_ids: e.calendar_ids.keys().cloned().collect(),
+        title: e.title.unwrap_or_default(),
+        all_day: e.show_without_time,
+        description: e.description.filter(|d| !d.trim().is_empty()),
+        account_id: e.account,
+        id: e.id,
+    }
+}
+
+impl Kernoid {
+    /// The calendars of every account with calendars – the own ones first.
+    pub async fn calendars(&self) -> Result<Vec<Calendar>, KernoidError> {
+        let client = self.client.clone();
+        let list = run(async move { calendars::calendars(&client).await }).await?;
+        Ok(list
+            .into_iter()
+            .map(|c| Calendar { id: c.id, account_id: c.account, name: c.name, color: c.color, shared_by: c.shared })
+            .collect())
+    }
+
+    /// The events of the visible calendars between `from` and `to` (RFC 3339) – recurring ones as their instances,
+    /// by start.
+    pub async fn events(&self, from: String, to: String) -> Result<Vec<Event>, KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let parse = |text: &str| {
+                chrono::DateTime::parse_from_rfc3339(text)
+                    .map(|time| time.with_timezone(&chrono::Utc))
+                    .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
+            };
+            let (after, before) = (parse(&from)?, parse(&to)?);
+            let list = calendars::calendars(&client).await?;
+            let mut found = calendars::instances(&client, &list, after, before).await?;
+            found.sort_by_key(|e| e.starts());
+            let own = own_addresses(&client).await;
+            Ok(found.into_iter().map(|e| event(e, &own)).collect())
+        })
+        .await
+    }
+
+    /// Answers an invitation: `accepted`, `tentative` or `declined`; the organizer hears of it by email.
+    pub async fn answer_event(
+        &self,
+        account_id: String,
+        event_id: String,
+        invitation_key: String,
+        status: String,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { calendars::answer(&client, &account_id, &event_id, &invitation_key, &status).await }).await
+    }
+
+    /// The contacts of every address book, `search` searching them; by name.
+    pub async fn contacts(&self, search: String) -> Result<Vec<Contact>, KernoidError> {
+        let client = self.client.clone();
+        let cards = run(async move { contacts::cards(&client, search.trim()).await }).await?;
+        Ok(cards
+            .into_iter()
+            .map(|c| Contact {
+                name: c.full_name(),
+                organization: c.organization(),
+                emails: c.emails(),
+                phones: c.phones(),
+                notes: c.notes().into_iter().filter(|n| !n.trim().is_empty()).collect(),
+                account_id: c.account,
+                id: c.id,
+            })
+            .collect())
     }
 }
 

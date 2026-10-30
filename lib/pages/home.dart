@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import 'account.dart';
+import 'calendar.dart';
+import 'contacts.dart';
 import 'files.dart';
 import 'mail.dart';
 
 /// Where the wide layout begins: a rail and panes side by side instead of a bar and pages on top of each other.
 const wideLayout = 840.0;
 
-/// The signed-in app: mail, files and the account – the same functions on every screen size, laid out for it.
+/// The signed-in app: mail, calendar, contacts, files and the account – the same functions on every screen size, laid out for it.
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.account, required this.onSignOut});
 
@@ -29,12 +31,16 @@ class _HomePageState extends State<HomePage> {
     final l = AppLocalizations.of(context);
     final destinations = [
       (Icons.mail_outline, Icons.mail, l.mail),
+      (Icons.calendar_month_outlined, Icons.calendar_month, l.calendar),
+      (Icons.contacts_outlined, Icons.contacts, l.contacts),
       (Icons.folder_outlined, Icons.folder, l.files),
       (Icons.person_outline, Icons.person, l.account),
     ];
     final page = switch (_section) {
       0 => MailPage(key: const ValueKey('mail'), account: widget.account),
-      1 => FilesPage(key: const ValueKey('files'), account: widget.account),
+      1 => CalendarPage(key: const ValueKey('calendar'), account: widget.account),
+      2 => ContactsPage(key: const ValueKey('contacts'), account: widget.account),
+      3 => FilesPage(key: const ValueKey('files'), account: widget.account),
       _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut),
     };
     final wide = MediaQuery.sizeOf(context).width >= wideLayout;

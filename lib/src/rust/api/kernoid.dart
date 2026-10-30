@@ -7,11 +7,25 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `recipients`, `run`, `status`, `unique_path`, `write`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `own_addresses`, `recipients`, `run`, `status`, `unique_path`, `write`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
+  /// Answers an invitation: `accepted`, `tentative` or `declined`; the organizer hears of it by email.
+  Future<void> answerEvent({
+    required String accountId,
+    required String eventId,
+    required String invitationKey,
+    required String status,
+  });
+
+  /// The calendars of every account with calendars – the own ones first.
+  Future<List<Calendar>> calendars();
+
+  /// The contacts of every address book, `search` searching them; by name.
+  Future<List<Contact>> contacts({required String search});
+
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
   Future<String> download({
@@ -27,6 +41,10 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// A page of a mailbox; encrypted emails with their summary decrypted, when the key is unlocked.
   Future<EmailPage> emails({required String mailboxId, required int position, required int limit});
+
+  /// The events of the visible calendars between `from` and `to` (RFC 3339) – recurring ones as their instances,
+  /// by start.
+  Future<List<Event>> events({required String from, required String to});
 
   List<FileStore> fileStores();
 
@@ -56,8 +74,8 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String directory,
   });
 
-  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is the
-  /// app's time for the `Date` field (RFC 5322). Returns whether it went encrypted.
+  /// Sends a plain-text message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3). `date` is
+  /// not used any more: the SDK dates the message itself. Returns whether it went encrypted.
   Future<bool> send({required List<String> to, required String subject, required String text, required String date});
 
   /// How a message to `to` would go out: end-to-end encrypted when the key is unlocked and every recipient has a
@@ -110,6 +128,79 @@ class Attachment {
           name == other.name &&
           mediaType == other.mediaType &&
           size == other.size;
+}
+
+/// A calendar the account reaches: its own or one shared with it.
+class Calendar {
+  final String id;
+  final String accountId;
+  final String name;
+
+  /// CSS colour, if the calendar has one.
+  final String? color;
+
+  /// The owner's name, for a calendar shared with the account.
+  final String? sharedBy;
+
+  const Calendar({required this.id, required this.accountId, required this.name, this.color, this.sharedBy});
+
+  @override
+  int get hashCode => id.hashCode ^ accountId.hashCode ^ name.hashCode ^ color.hashCode ^ sharedBy.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Calendar &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          accountId == other.accountId &&
+          name == other.name &&
+          color == other.color &&
+          sharedBy == other.sharedBy;
+}
+
+/// A contact card of one of the account's address books.
+class Contact {
+  final String id;
+  final String accountId;
+  final String name;
+  final String? organization;
+  final List<String> emails;
+  final List<String> phones;
+  final List<String> notes;
+
+  const Contact({
+    required this.id,
+    required this.accountId,
+    required this.name,
+    this.organization,
+    required this.emails,
+    required this.phones,
+    required this.notes,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      accountId.hashCode ^
+      name.hashCode ^
+      organization.hashCode ^
+      emails.hashCode ^
+      phones.hashCode ^
+      notes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Contact &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          accountId == other.accountId &&
+          name == other.name &&
+          organization == other.organization &&
+          emails == other.emails &&
+          phones == other.phones &&
+          notes == other.notes;
 }
 
 /// Where end-to-end encryption stands for this account (RFC 0006).
@@ -304,6 +395,92 @@ class EmailSummary {
           locked == other.locked;
 }
 
+/// An event, or one instance of a recurring one.
+class Event {
+  final String id;
+
+  /// The event changes go to: for an instance, the recurring event it is of.
+  final String eventId;
+  final String accountId;
+  final List<String> calendarIds;
+  final String title;
+
+  /// RFC 3339, UTC; for an all-day event its first day, `YYYY-MM-DD`, in no time zone.
+  final String? start;
+
+  /// RFC 3339, UTC; for an all-day event the day after its last, `YYYY-MM-DD`.
+  final String? end;
+  final bool allDay;
+  final String? location;
+  final String? description;
+
+  /// The organizer called it off.
+  final bool cancelled;
+  final bool recurring;
+  final List<Participant> participants;
+
+  /// The account is invited (not the organizer): its key among the participants and its answer so far.
+  final String? invitationKey;
+  final String? myStatus;
+
+  const Event({
+    required this.id,
+    required this.eventId,
+    required this.accountId,
+    required this.calendarIds,
+    required this.title,
+    this.start,
+    this.end,
+    required this.allDay,
+    this.location,
+    this.description,
+    required this.cancelled,
+    required this.recurring,
+    required this.participants,
+    this.invitationKey,
+    this.myStatus,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      eventId.hashCode ^
+      accountId.hashCode ^
+      calendarIds.hashCode ^
+      title.hashCode ^
+      start.hashCode ^
+      end.hashCode ^
+      allDay.hashCode ^
+      location.hashCode ^
+      description.hashCode ^
+      cancelled.hashCode ^
+      recurring.hashCode ^
+      participants.hashCode ^
+      invitationKey.hashCode ^
+      myStatus.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Event &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          eventId == other.eventId &&
+          accountId == other.accountId &&
+          calendarIds == other.calendarIds &&
+          title == other.title &&
+          start == other.start &&
+          end == other.end &&
+          allDay == other.allDay &&
+          location == other.location &&
+          description == other.description &&
+          cancelled == other.cancelled &&
+          recurring == other.recurring &&
+          participants == other.participants &&
+          invitationKey == other.invitationKey &&
+          myStatus == other.myStatus;
+}
+
 class FileNode {
   final String id;
   final String name;
@@ -423,6 +600,28 @@ class Mailbox {
           role == other.role &&
           total == other.total &&
           unread == other.unread;
+}
+
+class Participant {
+  final String? name;
+  final String? email;
+
+  /// `needs-action`, `accepted`, `tentative` or `declined`.
+  final String? status;
+
+  const Participant({this.name, this.email, this.status});
+
+  @override
+  int get hashCode => name.hashCode ^ email.hashCode ^ status.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Participant &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          email == other.email &&
+          status == other.status;
 }
 
 /// How a message to these recipients would go out.

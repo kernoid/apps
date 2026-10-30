@@ -234,4 +234,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancel => 'Cancel';
+
+  @override
+  String get calendar => 'Calendar';
+
+  @override
+  String get contacts => 'Contacts';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get earlier => 'Earlier';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get allDay => 'All day';
+
+  @override
+  String get noEvents => 'No events in these two weeks';
+
+  @override
+  String get location => 'Place';
+
+  @override
+  String get participants => 'Participants';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get maybe => 'Maybe';
+
+  @override
+  String get decline => 'Decline';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get recurring => 'Repeats';
+
+  @override
+  String get yourAnswer => 'Your answer';
+
+  @override
+  String get statusAccepted => 'accepted';
+
+  @override
+  String get statusTentative => 'maybe';
+
+  @override
+  String get statusDeclined => 'declined';
+
+  @override
+  String get statusNeedsAction => 'no answer yet';
+
+  @override
+  String get answerSent => 'Answer sent to the organizer';
+
+  @override
+  String get searchContacts => 'Search contacts';
+
+  @override
+  String get noContacts => 'No contacts';
+
+  @override
+  String get emails => 'Email';
+
+  @override
+  String get phones => 'Phone';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get writeEmail => 'Write email';
+
+  @override
+  String get organization => 'Organisation';
+
+  @override
+  String sharedBy(String name) {
+    return 'shared by $name';
+  }
 }

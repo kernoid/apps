@@ -236,4 +236,90 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cancel => 'Abbrechen';
+
+  @override
+  String get calendar => 'Kalender';
+
+  @override
+  String get contacts => 'Kontakte';
+
+  @override
+  String get today => 'Heute';
+
+  @override
+  String get earlier => 'Früher';
+
+  @override
+  String get later => 'Später';
+
+  @override
+  String get allDay => 'Ganztägig';
+
+  @override
+  String get noEvents => 'Keine Termine in diesen zwei Wochen';
+
+  @override
+  String get location => 'Ort';
+
+  @override
+  String get participants => 'Teilnehmende';
+
+  @override
+  String get accept => 'Zusagen';
+
+  @override
+  String get maybe => 'Vielleicht';
+
+  @override
+  String get decline => 'Absagen';
+
+  @override
+  String get cancelled => 'Abgesagt';
+
+  @override
+  String get recurring => 'Wiederholt sich';
+
+  @override
+  String get yourAnswer => 'Deine Antwort';
+
+  @override
+  String get statusAccepted => 'zugesagt';
+
+  @override
+  String get statusTentative => 'vielleicht';
+
+  @override
+  String get statusDeclined => 'abgesagt';
+
+  @override
+  String get statusNeedsAction => 'noch keine Antwort';
+
+  @override
+  String get answerSent => 'Antwort an die Person gesendet, die eingeladen hat';
+
+  @override
+  String get searchContacts => 'Kontakte durchsuchen';
+
+  @override
+  String get noContacts => 'Keine Kontakte';
+
+  @override
+  String get emails => 'E-Mail';
+
+  @override
+  String get phones => 'Telefon';
+
+  @override
+  String get notes => 'Notizen';
+
+  @override
+  String get writeEmail => 'E-Mail schreiben';
+
+  @override
+  String get organization => 'Organisation';
+
+  @override
+  String sharedBy(String name) {
+    return 'geteilt von $name';
+  }
 }

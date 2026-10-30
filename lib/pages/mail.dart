@@ -41,6 +41,7 @@ class _MailPageState extends State<MailPage> {
     setState(() => _error = null);
     try {
       final boxes = await widget.account.mailboxes();
+      if (!mounted) return;
       final keep = boxes.where((b) => b.id == _mailbox?.id).firstOrNull;
       setState(() {
         _mailboxes = boxes;
@@ -48,7 +49,7 @@ class _MailPageState extends State<MailPage> {
       });
       await _loadEmails(reset: true);
     } catch (error) {
-      setState(() => _error = error);
+      if (mounted) setState(() => _error = error);
     }
   }
 
@@ -62,7 +63,7 @@ class _MailPageState extends State<MailPage> {
         position: reset ? 0 : _emails.length,
         limit: _pageSize,
       );
-      if (_mailbox?.id != mailbox.id) return;
+      if (!mounted || _mailbox?.id != mailbox.id) return;
       setState(() {
         if (reset) _emails.clear();
         _emails.addAll(page.emails);
@@ -70,7 +71,7 @@ class _MailPageState extends State<MailPage> {
         _error = null;
       });
     } catch (error) {
-      setState(() => _error = error);
+      if (mounted) setState(() => _error = error);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -367,7 +368,7 @@ class _EmailViewState extends State<EmailView> {
                   FilledButton.icon(
                     key: const ValueKey('unlock-to-read'),
                     onPressed: () async {
-                      if (await unlockKey(context, widget.account)) {
+                      if (await unlockKey(context, widget.account) && mounted) {
                         setState(() {
                           _email = widget.account.email(id: widget.id);
                         });

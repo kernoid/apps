@@ -15,9 +15,12 @@ enum Sent { encrypted, plain }
 /// is unlocked – without a setting; the view says beforehand which it will be (RFC 0006, 5.3). Pops how it was sent.
 /// **OPEN**: replies, attachments.
 class ComposePage extends StatefulWidget {
-  const ComposePage({super.key, required this.account});
+  const ComposePage({super.key, required this.account, this.to = ''});
 
   final Kernoid account;
+
+  /// Recipients to begin with, e.g. a contact's address.
+  final String to;
 
   @override
   State<ComposePage> createState() => _ComposePageState();
@@ -25,7 +28,7 @@ class ComposePage extends StatefulWidget {
 
 class _ComposePageState extends State<ComposePage> {
   final _form = GlobalKey<FormState>();
-  final _to = TextEditingController();
+  late final _to = TextEditingController(text: widget.to);
   final _subject = TextEditingController();
   final _text = TextEditingController();
   bool _busy = false;
@@ -38,6 +41,7 @@ class _ComposePageState extends State<ComposePage> {
   void initState() {
     super.initState();
     _to.addListener(_toChanged);
+    if (widget.to.isNotEmpty) _toChanged();
   }
 
   @override

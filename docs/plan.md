@@ -95,8 +95,11 @@ End-to-end encrypted mail came the same day, on `kernoid-e2e` (from `kernoid/ker
 crates.io): the key made in the app with a recovery code shown once (and the tenant's copy when its policy asks),
 unlocked with that code and kept in memory only, encrypted mail shown as locked until then, read and its signature
 checked on the device, and sent encrypted and signed whenever every recipient has a key – the compose view says so
-beforehand. Unlocking with a passkey (PRF) and a copy in the system's key store, vaults and encrypted calendars,
-calendars and contacts at all, and the native shells follow.
+beforehand. Unlocking with a passkey (PRF) and a copy in the system's key store, vaults, encrypted calendars and the native
+shells follow. Calendars and contacts came on the SDK (2026-10-30): the
+calendars as two weeks of days with recurring events as their instances and all-day events as dates, invitations
+answered from the event; contacts with search and an email started from an address (OPEN: making and changing
+events and contacts, a month view).
 
 ## 5. Files in the operating system
 

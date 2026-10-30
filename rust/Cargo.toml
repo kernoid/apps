@@ -18,6 +18,7 @@ publish = false
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
+chrono = { version = "=0.4.45", default-features = false, features = ["clock", "std"] }
 flutter_rust_bridge = "=2.13.0"
 # kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – from kernoid/kernoid until it is on
 # crates.io (docs/plan.md, 1).

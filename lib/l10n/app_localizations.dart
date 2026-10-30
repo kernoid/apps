@@ -523,6 +523,174 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
+
+  /// No description provided for @calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendar;
+
+  /// No description provided for @contacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get contacts;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @earlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get earlier;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @allDay.
+  ///
+  /// In en, this message translates to:
+  /// **'All day'**
+  String get allDay;
+
+  /// No description provided for @noEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No events in these two weeks'**
+  String get noEvents;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get location;
+
+  /// No description provided for @participants.
+  ///
+  /// In en, this message translates to:
+  /// **'Participants'**
+  String get participants;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @maybe.
+  ///
+  /// In en, this message translates to:
+  /// **'Maybe'**
+  String get maybe;
+
+  /// No description provided for @decline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
+  /// No description provided for @cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cancelled;
+
+  /// No description provided for @recurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats'**
+  String get recurring;
+
+  /// No description provided for @yourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer'**
+  String get yourAnswer;
+
+  /// No description provided for @statusAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'accepted'**
+  String get statusAccepted;
+
+  /// No description provided for @statusTentative.
+  ///
+  /// In en, this message translates to:
+  /// **'maybe'**
+  String get statusTentative;
+
+  /// No description provided for @statusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'declined'**
+  String get statusDeclined;
+
+  /// No description provided for @statusNeedsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'no answer yet'**
+  String get statusNeedsAction;
+
+  /// No description provided for @answerSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer sent to the organizer'**
+  String get answerSent;
+
+  /// No description provided for @searchContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Search contacts'**
+  String get searchContacts;
+
+  /// No description provided for @noContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts'**
+  String get noContacts;
+
+  /// No description provided for @emails.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emails;
+
+  /// No description provided for @phones.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phones;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @writeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Write email'**
+  String get writeEmail;
+
+  /// No description provided for @organization.
+  ///
+  /// In en, this message translates to:
+  /// **'Organisation'**
+  String get organization;
+
+  /// No description provided for @sharedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'shared by {name}'**
+  String sharedBy(String name);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

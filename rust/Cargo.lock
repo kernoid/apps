@@ -1761,6 +1761,7 @@ dependencies = [
 name = "kernoid_bridge"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "flutter_rust_bridge",
  "kernoid-client",
  "kernoid-e2e",

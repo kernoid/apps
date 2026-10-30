@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -973232463;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -71866148;
 
 // Section: executor
 
@@ -48,6 +48,153 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__kernoid__Kernoid_answer_event_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_answer_event",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <String>::sse_decode(&mut deserializer);
+            let api_event_id = <String>::sse_decode(&mut deserializer);
+            let api_invitation_key = <String>::sse_decode(&mut deserializer);
+            let api_status = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::answer_event(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_event_id,
+                            api_invitation_key,
+                            api_status,
+                        )
+                        .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_calendars_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_calendars",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::calendars(&*api_that_guard).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_contacts_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_contacts",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_search = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::contacts(&*api_that_guard, api_search).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__kernoid__Kernoid_download_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -198,6 +345,54 @@ fn wire__crate__api__kernoid__Kernoid_emails_impl(
                             api_limit,
                         )
                         .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_events_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_events",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_from = <String>::sse_decode(&mut deserializer);
+            let api_to = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::api::kernoid::Kernoid::events(&*api_that_guard, api_from, api_to).await?;
                         std::result::Result::Ok(output_ok)
                     })()
                     .await,
@@ -887,6 +1082,46 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for crate::api::kernoid::Calendar {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_accountId = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_color = <Option<String>>::sse_decode(deserializer);
+        let mut var_sharedBy = <Option<String>>::sse_decode(deserializer);
+        return crate::api::kernoid::Calendar {
+            id: var_id,
+            account_id: var_accountId,
+            name: var_name,
+            color: var_color,
+            shared_by: var_sharedBy,
+        };
+    }
+}
+
+impl SseDecode for crate::api::kernoid::Contact {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_accountId = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_organization = <Option<String>>::sse_decode(deserializer);
+        let mut var_emails = <Vec<String>>::sse_decode(deserializer);
+        let mut var_phones = <Vec<String>>::sse_decode(deserializer);
+        let mut var_notes = <Vec<String>>::sse_decode(deserializer);
+        return crate::api::kernoid::Contact {
+            id: var_id,
+            account_id: var_accountId,
+            name: var_name,
+            organization: var_organization,
+            emails: var_emails,
+            phones: var_phones,
+            notes: var_notes,
+        };
+    }
+}
+
 impl SseDecode for crate::api::kernoid::E2eStatus {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -974,6 +1209,44 @@ impl SseDecode for crate::api::kernoid::EmailSummary {
             has_attachment: var_hasAttachment,
             encrypted: var_encrypted,
             locked: var_locked,
+        };
+    }
+}
+
+impl SseDecode for crate::api::kernoid::Event {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_eventId = <String>::sse_decode(deserializer);
+        let mut var_accountId = <String>::sse_decode(deserializer);
+        let mut var_calendarIds = <Vec<String>>::sse_decode(deserializer);
+        let mut var_title = <String>::sse_decode(deserializer);
+        let mut var_start = <Option<String>>::sse_decode(deserializer);
+        let mut var_end = <Option<String>>::sse_decode(deserializer);
+        let mut var_allDay = <bool>::sse_decode(deserializer);
+        let mut var_location = <Option<String>>::sse_decode(deserializer);
+        let mut var_description = <Option<String>>::sse_decode(deserializer);
+        let mut var_cancelled = <bool>::sse_decode(deserializer);
+        let mut var_recurring = <bool>::sse_decode(deserializer);
+        let mut var_participants = <Vec<crate::api::kernoid::Participant>>::sse_decode(deserializer);
+        let mut var_invitationKey = <Option<String>>::sse_decode(deserializer);
+        let mut var_myStatus = <Option<String>>::sse_decode(deserializer);
+        return crate::api::kernoid::Event {
+            id: var_id,
+            event_id: var_eventId,
+            account_id: var_accountId,
+            calendar_ids: var_calendarIds,
+            title: var_title,
+            start: var_start,
+            end: var_end,
+            all_day: var_allDay,
+            location: var_location,
+            description: var_description,
+            cancelled: var_cancelled,
+            recurring: var_recurring,
+            participants: var_participants,
+            invitation_key: var_invitationKey,
+            my_status: var_myStatus,
         };
     }
 }
@@ -1068,6 +1341,30 @@ impl SseDecode for Vec<crate::api::kernoid::Attachment> {
     }
 }
 
+impl SseDecode for Vec<crate::api::kernoid::Calendar> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::kernoid::Calendar>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::kernoid::Contact> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::kernoid::Contact>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::kernoid::EmailSummary> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1075,6 +1372,18 @@ impl SseDecode for Vec<crate::api::kernoid::EmailSummary> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::kernoid::EmailSummary>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::kernoid::Event> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::kernoid::Event>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1111,6 +1420,18 @@ impl SseDecode for Vec<crate::api::kernoid::Mailbox> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::kernoid::Mailbox>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::kernoid::Participant> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::kernoid::Participant>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1170,6 +1491,16 @@ impl SseDecode for Option<u32> {
     }
 }
 
+impl SseDecode for crate::api::kernoid::Participant {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_name = <Option<String>>::sse_decode(deserializer);
+        let mut var_email = <Option<String>>::sse_decode(deserializer);
+        let mut var_status = <Option<String>>::sse_decode(deserializer);
+        return crate::api::kernoid::Participant { name: var_name, email: var_email, status: var_status };
+    }
+}
+
 impl SseDecode for crate::api::kernoid::SendPlan {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1221,20 +1552,24 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__kernoid__Kernoid_download_impl(port, ptr, rust_vec_len, data_len),
-        2 => wire__crate__api__kernoid__Kernoid_email_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__kernoid__Kernoid_emails_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__kernoid__Kernoid_files_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__kernoid__Kernoid_key_status_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__kernoid__Kernoid_lock_key_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__kernoid__Kernoid_login_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__kernoid__Kernoid_mailboxes_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__kernoid__Kernoid_make_key_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__kernoid__Kernoid_save_part_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__kernoid__Kernoid_send_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__kernoid__Kernoid_send_plan_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__crate__api__kernoid__Kernoid_answer_event_impl(port, ptr, rust_vec_len, data_len),
+        2 => wire__crate__api__kernoid__Kernoid_calendars_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__kernoid__Kernoid_contacts_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__kernoid__Kernoid_download_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__kernoid__Kernoid_email_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__kernoid__Kernoid_emails_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__kernoid__Kernoid_events_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__kernoid__Kernoid_files_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__kernoid__Kernoid_key_status_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__kernoid__Kernoid_lock_key_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__kernoid__Kernoid_login_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__kernoid__Kernoid_mailboxes_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__kernoid__Kernoid_make_key_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__kernoid__Kernoid_save_part_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__kernoid__Kernoid_send_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__kernoid__Kernoid_send_plan_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1247,9 +1582,9 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        4 => wire__crate__api__kernoid__Kernoid_file_stores_impl(ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__kernoid__Kernoid_server_impl(ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__kernoid__Kernoid_file_stores_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__kernoid__Kernoid_server_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1298,6 +1633,46 @@ impl flutter_rust_bridge::IntoDart for crate::api::kernoid::Attachment {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::Attachment {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Attachment> for crate::api::kernoid::Attachment {
     fn into_into_dart(self) -> crate::api::kernoid::Attachment {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::Calendar {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.account_id.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.color.into_into_dart().into_dart(),
+            self.shared_by.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::Calendar {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Calendar> for crate::api::kernoid::Calendar {
+    fn into_into_dart(self) -> crate::api::kernoid::Calendar {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::Contact {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.account_id.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.organization.into_into_dart().into_dart(),
+            self.emails.into_into_dart().into_dart(),
+            self.phones.into_into_dart().into_dart(),
+            self.notes.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::Contact {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Contact> for crate::api::kernoid::Contact {
+    fn into_into_dart(self) -> crate::api::kernoid::Contact {
         self
     }
 }
@@ -1385,6 +1760,35 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::EmailSummary> for cr
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::Event {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.id.into_into_dart().into_dart(),
+            self.event_id.into_into_dart().into_dart(),
+            self.account_id.into_into_dart().into_dart(),
+            self.calendar_ids.into_into_dart().into_dart(),
+            self.title.into_into_dart().into_dart(),
+            self.start.into_into_dart().into_dart(),
+            self.end.into_into_dart().into_dart(),
+            self.all_day.into_into_dart().into_dart(),
+            self.location.into_into_dart().into_dart(),
+            self.description.into_into_dart().into_dart(),
+            self.cancelled.into_into_dart().into_dart(),
+            self.recurring.into_into_dart().into_dart(),
+            self.participants.into_into_dart().into_dart(),
+            self.invitation_key.into_into_dart().into_dart(),
+            self.my_status.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::Event {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Event> for crate::api::kernoid::Event {
+    fn into_into_dart(self) -> crate::api::kernoid::Event {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::kernoid::FileNode {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1456,6 +1860,23 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Mailbox> for crate::
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::Participant {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.name.into_into_dart().into_dart(),
+            self.email.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::Participant {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::Participant> for crate::api::kernoid::Participant {
+    fn into_into_dart(self) -> crate::api::kernoid::Participant {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::kernoid::SendPlan {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [self.encrypted.into_into_dart().into_dart(), self.reason.into_into_dart().into_dart()].into_dart()
@@ -1520,6 +1941,30 @@ impl SseEncode for bool {
     }
 }
 
+impl SseEncode for crate::api::kernoid::Calendar {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.account_id, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.color, serializer);
+        <Option<String>>::sse_encode(self.shared_by, serializer);
+    }
+}
+
+impl SseEncode for crate::api::kernoid::Contact {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.account_id, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.organization, serializer);
+        <Vec<String>>::sse_encode(self.emails, serializer);
+        <Vec<String>>::sse_encode(self.phones, serializer);
+        <Vec<String>>::sse_encode(self.notes, serializer);
+    }
+}
+
 impl SseEncode for crate::api::kernoid::E2eStatus {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1572,6 +2017,27 @@ impl SseEncode for crate::api::kernoid::EmailSummary {
         <bool>::sse_encode(self.has_attachment, serializer);
         <bool>::sse_encode(self.encrypted, serializer);
         <bool>::sse_encode(self.locked, serializer);
+    }
+}
+
+impl SseEncode for crate::api::kernoid::Event {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.event_id, serializer);
+        <String>::sse_encode(self.account_id, serializer);
+        <Vec<String>>::sse_encode(self.calendar_ids, serializer);
+        <String>::sse_encode(self.title, serializer);
+        <Option<String>>::sse_encode(self.start, serializer);
+        <Option<String>>::sse_encode(self.end, serializer);
+        <bool>::sse_encode(self.all_day, serializer);
+        <Option<String>>::sse_encode(self.location, serializer);
+        <Option<String>>::sse_encode(self.description, serializer);
+        <bool>::sse_encode(self.cancelled, serializer);
+        <bool>::sse_encode(self.recurring, serializer);
+        <Vec<crate::api::kernoid::Participant>>::sse_encode(self.participants, serializer);
+        <Option<String>>::sse_encode(self.invitation_key, serializer);
+        <Option<String>>::sse_encode(self.my_status, serializer);
     }
 }
 
@@ -1643,12 +2109,42 @@ impl SseEncode for Vec<crate::api::kernoid::Attachment> {
     }
 }
 
+impl SseEncode for Vec<crate::api::kernoid::Calendar> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::kernoid::Calendar>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::kernoid::Contact> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::kernoid::Contact>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::kernoid::EmailSummary> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::kernoid::EmailSummary>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::kernoid::Event> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::kernoid::Event>::sse_encode(item, serializer);
         }
     }
 }
@@ -1679,6 +2175,16 @@ impl SseEncode for Vec<crate::api::kernoid::Mailbox> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::kernoid::Mailbox>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::kernoid::Participant> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::kernoid::Participant>::sse_encode(item, serializer);
         }
     }
 }
@@ -1722,6 +2228,15 @@ impl SseEncode for Option<u32> {
         if let Some(value) = self {
             <u32>::sse_encode(value, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::kernoid::Participant {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<String>>::sse_encode(self.name, serializer);
+        <Option<String>>::sse_encode(self.email, serializer);
+        <Option<String>>::sse_encode(self.status, serializer);
     }
 }
 
