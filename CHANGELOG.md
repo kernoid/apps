@@ -7,7 +7,7 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
-## [0.2.0] – DATE
+## [0.2.0] – 2026-10-30
 
 The first release, a preview: one Flutter app for macOS, Linux, Windows and Android (iOS builds, but installs only
 signed), on kernoid's Rust SDK from crates.io (`kernoid-client`, `kernoid-e2e` 0.2.0). The builds are **not signed** –
