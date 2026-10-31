@@ -13,6 +13,14 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   Lucide icons, a side bar with the word mark on wide screens and a bar of the sections on narrow ones, and widgets of
   its own (`lib/ui`). Mail shows its folders as a tree, its messages with avatars and an unread mark.
 
+### Added
+
+- Shared mailboxes: each one the user may read appears under its name with its folders; its messages are read,
+  answered and forwarded from the user's own account (a forward fetches their attachments from the shared mailbox).
+- Searching mail, over the whole mailbox.
+- Several messages at once – Ctrl or ⌘ and Shift on desktops, a long press on phones –: marked read or unread,
+  flagged, moved to a folder, deleted (into the Trash; out of the Trash or Junk for good, once confirmed).
+
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on
   x64, Linux on x64 and arm64.

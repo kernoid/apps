@@ -545,4 +545,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mailboxes => 'Folders';
+
+  @override
+  String get searchMail => 'Search mail';
+
+  @override
+  String get searchResults => 'Search results';
+
+  @override
+  String get myMailbox => 'My mailbox';
+
+  @override
+  String get nothingFound => 'Nothing found';
+
+  @override
+  String get chooseAll => 'Choose all';
+
+  @override
+  String get markRead => 'Read or unread';
+
+  @override
+  String get flag => 'Flag';
+
+  @override
+  String get moveTo => 'Move to';
+
+  @override
+  String chosen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count chosen', one: '1 chosen');
+    return '$_temp0';
+  }
+
+  @override
+  String deleteForGood(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete these $count emails for good?',
+      one: 'Delete this email for good?',
+    );
+    return '$_temp0';
+  }
 }

@@ -18,6 +18,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kernoid/app/kept_login.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
+import 'package:kernoid/pages/mail.dart';
 import 'package:kernoid/src/rust/api/kernoid.dart';
 import 'package:kernoid/src/rust/frb_generated.dart';
 import 'package:kernoid/ui/widgets.dart';
@@ -373,6 +374,69 @@ void main() {
       }
     });
   }
+
+  testWidgets('mail: a shared mailbox, search, several emails at once', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await waitFor(tester, listRows);
+    final l = AppLocalizations.of(tester.element(listRows.first));
+    Finder side(String label) => find.widgetWithText(KSideItem, label);
+
+    // Searching the whole mailbox; emptying the field shows the folder again.
+    await tester.enterText(find.byKey(const ValueKey('mail-search')), 'Montag');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await waitFor(tester, inList('Treffen am Montag'));
+    expect(inList('Entwürfe für die Website'), findsNothing);
+    await shoot(tester, 'mail-search');
+    await settledTap(
+      tester,
+      find.descendant(of: find.byKey(const ValueKey('mail-search')), matching: find.byType(KIconButton)),
+    );
+    await waitFor(tester, inList('Entwürfe für die Website'));
+
+    // Choosing one by a long press: flagged, then moved into a folder of the tree.
+    final row = find.ancestor(of: find.text('Treffen am Montag'), matching: find.byType(KListRow));
+    await tester.longPress(row);
+    await waitFor(tester, find.byKey(const ValueKey('chosen-bar')));
+    await settledTap(tester, find.byKey(const ValueKey('mark-flag')));
+    await waitFor(tester, find.descendant(of: row, matching: find.byIcon(LucideIcons.flag)));
+    await shoot(tester, 'mail-chosen');
+    await settledTap(tester, find.byKey(const ValueKey('move-to')));
+    await settledTap(tester, find.widgetWithText(PopupMenuItem<Mailbox>, 'Website'));
+    await waitGone(tester, inList('Treffen am Montag'));
+    await settledTap(tester, side('Website'));
+    await waitFor(tester, inList('Treffen am Montag'));
+
+    // Deleted: into the Trash.
+    await tester.longPress(find.ancestor(of: find.text('Treffen am Montag'), matching: find.byType(KListRow)));
+    await settledTap(tester, find.byKey(const ValueKey('delete-emails')));
+    await waitGone(tester, inList('Treffen am Montag'));
+    await settledTap(tester, side(l.trash));
+    await waitFor(tester, inList('Treffen am Montag'));
+    // Back where it was, so that the test can run again.
+    await tester.longPress(find.ancestor(of: find.text('Treffen am Montag'), matching: find.byType(KListRow)));
+    await settledTap(tester, find.byKey(const ValueKey('mark-flag')));
+    await settledTap(tester, find.byKey(const ValueKey('move-to')));
+    await settledTap(tester, find.widgetWithText(PopupMenuItem<Mailbox>, l.inbox).first);
+    await waitGone(tester, inList('Treffen am Montag'));
+
+    // The shared mailbox, under its name, with its own inbox.
+    expect(find.textContaining('INFO'), findsOneWidget);
+    await settledTap(tester, side(l.inbox).last);
+    await waitFor(tester, inList('Anfrage zum Angebot'));
+    await settledTap(tester, inList('Anfrage zum Angebot'));
+    await waitFor(
+      tester,
+      find.descendant(of: find.byType(EmailView), matching: find.textContaining('Frage zum Angebot')),
+    );
+    expect(find.byKey(const ValueKey('reply')), findsOneWidget);
+    await shoot(tester, 'mail-shared');
+  });
 
   testWidgets('a message is written, answered and forwarded', (tester) async {
     if (server.isEmpty) {

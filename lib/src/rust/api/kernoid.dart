@@ -7,9 +7,9 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `html_of`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `html_of`, `identity`, `kept`, `mail_account`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -42,6 +42,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Leaves one instance of a recurring event out; the people invited hear of it by email.
   Future<void> deleteInstance({required String accountId, required String eventId, required String recurrenceId});
 
+  /// Removes several emails for good – the app moves them to the Trash first, and removes them only from there.
+  Future<void> destroyEmails({String? accountId, required List<String> ids});
+
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
   Future<String> download({
@@ -53,13 +56,20 @@ abstract class Kernoid implements RustOpaqueInterface {
   });
 
   /// One message to read – an encrypted one decrypted here, with its signature checked.
-  Future<Email> email({required String id});
+  Future<Email> email({String? accountId, required String id});
 
   /// The labels an email address may have.
   static List<String> emailLabels() => RustLib.instance.api.crateApiKernoidKernoidEmailLabels();
 
-  /// A page of a mailbox; encrypted emails with their summary decrypted, when the key is unlocked.
-  Future<EmailPage> emails({required String mailboxId, required int position, required int limit});
+  /// A page of a mailbox – or, without one, of all the account's –, `search` searching it (full text); encrypted
+  /// emails with their summary decrypted, when the key is unlocked.
+  Future<EmailPage> emails({
+    String? accountId,
+    String? mailboxId,
+    required String search,
+    required int position,
+    required int limit,
+  });
 
   /// An event as a draft, to change it: for an instance of a recurring event, the event as a whole.
   Future<EventDraft> eventDraft({required String accountId, required String eventId});
@@ -91,17 +101,32 @@ abstract class Kernoid implements RustOpaqueInterface {
   static Future<Kernoid> login({required String server, required String address, required String password}) =>
       RustLib.instance.api.crateApiKernoidKernoidLogin(server: server, address: address, password: password);
 
-  Future<List<Mailbox>> mailboxes();
+  /// The mail accounts the user reaches – their own first, then the shared mailboxes by name.
+  List<MailAccount> mailAccounts();
+
+  Future<List<Mailbox>> mailboxes({String? accountId});
 
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey();
+
+  /// Marks several emails: `$seen` (read) or `$flagged`, on or off.
+  Future<void> markEmails({String? accountId, required List<String> ids, required String keyword, required bool on_});
+
+  /// Moves several emails into one mailbox of their account.
+  Future<void> moveEmails({String? accountId, required List<String> ids, required String mailboxId});
 
   /// The labels a phone number may have: where it is, then what it is.
   static List<String> phoneLabels() => RustLib.instance.api.crateApiKernoidKernoidPhoneLabels();
 
   /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
   /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
-  Future<EmailDraft> replyDraft({required String emailId, required String kind, required ReplyPhrases phrases});
+  /// The email is read from `account_id` (a shared mailbox) or the user's own; the draft is the user's own.
+  Future<EmailDraft> replyDraft({
+    String? accountId,
+    required String emailId,
+    required String kind,
+    required ReplyPhrases phrases,
+  });
 
   /// Signs in again with what [`Kernoid::kept_login`] gave – after a restart. The refresh token is used up by it:
   /// keep the new one ([`Kernoid::kept_login`]). A login that ended is `unauthorized`: forget what was kept.
@@ -343,21 +368,36 @@ class DraftAttachment {
 /// An attachment of a message decrypted here, forwarded: read again from that message when the draft is sent.
 class DraftPart {
   final String emailId;
-  final int partIndex;
+
+  /// An attachment inside a message decrypted here …
+  final int? partIndex;
+
+  /// … or one on the server in another account – a shared mailbox's –, fetched again when the draft is sent.
+  final String? accountId;
+  final String? blobId;
   final String name;
   final String mediaType;
   final PlatformInt64 size;
 
   const DraftPart({
     required this.emailId,
-    required this.partIndex,
+    this.partIndex,
+    this.accountId,
+    this.blobId,
     required this.name,
     required this.mediaType,
     required this.size,
   });
 
   @override
-  int get hashCode => emailId.hashCode ^ partIndex.hashCode ^ name.hashCode ^ mediaType.hashCode ^ size.hashCode;
+  int get hashCode =>
+      emailId.hashCode ^
+      partIndex.hashCode ^
+      accountId.hashCode ^
+      blobId.hashCode ^
+      name.hashCode ^
+      mediaType.hashCode ^
+      size.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -366,6 +406,8 @@ class DraftPart {
           runtimeType == other.runtimeType &&
           emailId == other.emailId &&
           partIndex == other.partIndex &&
+          accountId == other.accountId &&
+          blobId == other.blobId &&
           name == other.name &&
           mediaType == other.mediaType &&
           size == other.size;
@@ -894,6 +936,31 @@ class LabelledValue {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is LabelledValue && runtimeType == other.runtimeType && value == other.value && labels == other.labels;
+}
+
+/// A mail account the user reaches: their own, or a shared mailbox granted to them.
+class MailAccount {
+  final String id;
+  final String name;
+
+  /// The user's own.
+  final bool isPersonal;
+  final bool readOnly;
+
+  const MailAccount({required this.id, required this.name, required this.isPersonal, required this.readOnly});
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode ^ isPersonal.hashCode ^ readOnly.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MailAccount &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          isPersonal == other.isPersonal &&
+          readOnly == other.readOnly;
 }
 
 class Mailbox {

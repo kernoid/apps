@@ -172,7 +172,7 @@ async fn messages_are_written_replied_to_and_forwarded() {
     };
     let app = Kernoid::login(server, address.clone(), password).await.expect("login");
     let sent_box = app
-        .mailboxes()
+        .mailboxes(None)
         .await
         .expect("mailboxes")
         .into_iter()
@@ -180,9 +180,9 @@ async fn messages_are_written_replied_to_and_forwarded() {
         .expect("sent")
         .id;
     let in_sent = async |subject: &str| {
-        let page = app.emails(sent_box.clone(), 0, 50).await.expect("sent");
+        let page = app.emails(None, Some(sent_box.clone()), String::new(), 0, 50).await.expect("sent");
         let found = page.emails.into_iter().find(|e| e.subject == subject).expect(subject);
-        app.email(found.id).await.expect("email")
+        app.email(None, found.id).await.expect("email")
     };
 
     let file = std::env::temp_dir().join(format!("kernoid-plan-{}.txt", std::process::id()));
@@ -215,7 +215,7 @@ async fn messages_are_written_replied_to_and_forwarded() {
         to: "An".into(),
         date_format: "%d.%m.%Y %H:%M".into(),
     };
-    let reply = app.reply_draft(written.id.clone(), "replyAll".into(), phrases.clone()).await.expect("reply");
+    let reply = app.reply_draft(None, written.id.clone(), "replyAll".into(), phrases.clone()).await.expect("reply");
     assert_eq!(reply.subject, format!("Re: {subject}"));
     assert!(reply.to.contains(&address), "{}", reply.to);
     assert_eq!(reply.cc, "carol@example.org", "the user is not asked twice");
@@ -224,7 +224,7 @@ async fn messages_are_written_replied_to_and_forwarded() {
     assert_eq!(reply.in_reply_to.len(), 1);
     assert!(reply.attachments.is_empty());
 
-    let forward = app.reply_draft(written.id.clone(), "forward".into(), phrases).await.expect("forward");
+    let forward = app.reply_draft(None, written.id.clone(), "forward".into(), phrases).await.expect("forward");
     assert_eq!(forward.subject, format!("Fwd: {subject}"));
     assert!(forward.text.contains("Weitergeleitete Nachricht ----------\nVon: "), "{}", forward.text);
     assert_eq!(forward.attachments.len(), 1);
@@ -232,7 +232,7 @@ async fn messages_are_written_replied_to_and_forwarded() {
     app.send_draft(forward).await.expect("forward");
     let forwarded = in_sent(&format!("Fwd: {subject}")).await;
     assert_eq!(forwarded.attachments.first().map(|a| a.name.as_str()), Some(attached.name.as_str()));
-    assert!(app.reply_draft(written.id, "sideways".into(), reply_phrases()).await.is_err());
+    assert!(app.reply_draft(None, written.id, "sideways".into(), reply_phrases()).await.is_err());
     let _ = std::fs::remove_file(file);
 }
 
@@ -262,7 +262,7 @@ async fn an_encrypted_message_is_forwarded_with_its_attachment() {
         app.unlock_key(code).await.expect("unlock");
     }
     let sent_box = app
-        .mailboxes()
+        .mailboxes(None)
         .await
         .expect("mailboxes")
         .into_iter()
@@ -270,9 +270,9 @@ async fn an_encrypted_message_is_forwarded_with_its_attachment() {
         .expect("sent")
         .id;
     let in_sent = async |subject: &str| {
-        let page = app.emails(sent_box.clone(), 0, 50).await.expect("sent");
+        let page = app.emails(None, Some(sent_box.clone()), String::new(), 0, 50).await.expect("sent");
         let found = page.emails.into_iter().find(|e| e.subject == subject).expect(subject);
-        app.email(found.id).await.expect("email")
+        app.email(None, found.id).await.expect("email")
     };
 
     let file = std::env::temp_dir().join(format!("kernoid-sealed-{}.txt", std::process::id()));
@@ -297,7 +297,7 @@ async fn an_encrypted_message_is_forwarded_with_its_attachment() {
     assert_eq!(written.attachments.len(), 1);
     assert!(written.attachments[0].blob_id.is_none(), "inside the encrypted message only");
 
-    let forward = app.reply_draft(written.id.clone(), "forward".into(), reply_phrases()).await.expect("forward");
+    let forward = app.reply_draft(None, written.id.clone(), "forward".into(), reply_phrases()).await.expect("forward");
     assert!(forward.attachments.is_empty(), "nothing to name by blob");
     assert_eq!(forward.parts.len(), 1);
     assert_eq!(forward.parts[0].name, written.attachments[0].name);

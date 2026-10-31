@@ -548,4 +548,45 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mailboxes => 'Ordner';
+
+  @override
+  String get searchMail => 'Mail durchsuchen';
+
+  @override
+  String get searchResults => 'Suchergebnisse';
+
+  @override
+  String get myMailbox => 'Mein Postfach';
+
+  @override
+  String get nothingFound => 'Nichts gefunden';
+
+  @override
+  String get chooseAll => 'Alle auswählen';
+
+  @override
+  String get markRead => 'Gelesen oder ungelesen';
+
+  @override
+  String get flag => 'Markieren';
+
+  @override
+  String get moveTo => 'Verschieben nach';
+
+  @override
+  String chosen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count ausgewählt', one: '1 ausgewählt');
+    return '$_temp0';
+  }
+
+  @override
+  String deleteForGood(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Diese $count Mails endgültig löschen?',
+      one: 'Diese Mail endgültig löschen?',
+    );
+    return '$_temp0';
+  }
 }

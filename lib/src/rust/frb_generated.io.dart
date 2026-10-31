@@ -166,6 +166,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LabelledValue> dco_decode_list_labelled_value(dynamic raw);
 
   @protected
+  List<MailAccount> dco_decode_list_mail_account(dynamic raw);
+
+  @protected
   List<Mailbox> dco_decode_list_mailbox(dynamic raw);
 
   @protected
@@ -173,6 +176,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  MailAccount dco_decode_mail_account(dynamic raw);
 
   @protected
   Mailbox dco_decode_mailbox(dynamic raw);
@@ -355,6 +361,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LabelledValue> sse_decode_list_labelled_value(SseDeserializer deserializer);
 
   @protected
+  List<MailAccount> sse_decode_list_mail_account(SseDeserializer deserializer);
+
+  @protected
   List<Mailbox> sse_decode_list_mailbox(SseDeserializer deserializer);
 
   @protected
@@ -362,6 +371,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  MailAccount sse_decode_mail_account(SseDeserializer deserializer);
 
   @protected
   Mailbox sse_decode_mailbox(SseDeserializer deserializer);
@@ -553,6 +565,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_labelled_value(List<LabelledValue> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_mail_account(List<MailAccount> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_mailbox(List<Mailbox> self, SseSerializer serializer);
 
   @protected
@@ -560,6 +575,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_mail_account(MailAccount self, SseSerializer serializer);
 
   @protected
   void sse_encode_mailbox(Mailbox self, SseSerializer serializer);

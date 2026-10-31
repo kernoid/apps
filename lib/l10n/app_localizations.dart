@@ -1135,6 +1135,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Folders'**
   String get mailboxes;
+
+  /// No description provided for @searchMail.
+  ///
+  /// In en, this message translates to:
+  /// **'Search mail'**
+  String get searchMail;
+
+  /// No description provided for @searchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get searchResults;
+
+  /// No description provided for @myMailbox.
+  ///
+  /// In en, this message translates to:
+  /// **'My mailbox'**
+  String get myMailbox;
+
+  /// No description provided for @nothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found'**
+  String get nothingFound;
+
+  /// No description provided for @chooseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose all'**
+  String get chooseAll;
+
+  /// No description provided for @markRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read or unread'**
+  String get markRead;
+
+  /// No description provided for @flag.
+  ///
+  /// In en, this message translates to:
+  /// **'Flag'**
+  String get flag;
+
+  /// No description provided for @moveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to'**
+  String get moveTo;
+
+  /// No description provided for @chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 chosen} other{{count} chosen}}'**
+  String chosen(int count);
+
+  /// No description provided for @deleteForGood.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete this email for good?} other{Delete these {count} emails for good?}}'**
+  String deleteForGood(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

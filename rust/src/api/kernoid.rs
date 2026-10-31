@@ -124,6 +124,16 @@ fn options() -> client::Options {
     client::Options { allow_http: false, user_agent: concat!("kernoid-app/", env!("CARGO_PKG_VERSION")).into() }
 }
 
+/// A mail account the user reaches: their own, or a shared mailbox granted to them.
+#[derive(Debug, Clone)]
+pub struct MailAccount {
+    pub id: String,
+    pub name: String,
+    /// The user's own.
+    pub is_personal: bool,
+    pub read_only: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct Mailbox {
     pub id: String,
@@ -235,7 +245,11 @@ pub struct EmailDraft {
 #[derive(Debug, Clone)]
 pub struct DraftPart {
     pub email_id: String,
-    pub part_index: u32,
+    /// An attachment inside a message decrypted here …
+    pub part_index: Option<u32>,
+    /// … or one on the server in another account – a shared mailbox's –, fetched again when the draft is sent.
+    pub account_id: Option<String>,
+    pub blob_id: Option<String>,
     pub name: String,
     pub media_type: String,
     pub size: i64,
@@ -560,8 +574,32 @@ impl Kernoid {
             .ok_or_else(|| KernoidError { unauthorized: false, message: format!("the account has no {capability}") })
     }
 
-    pub async fn mailboxes(&self) -> Result<Vec<Mailbox>, KernoidError> {
-        let (client, account) = (self.client.clone(), self.account(client::MAIL)?);
+    /// A mail account: the one named, or the user's own.
+    fn mail_account(&self, account_id: Option<String>) -> Result<String, KernoidError> {
+        match account_id {
+            Some(id) => Ok(id),
+            None => self.account(client::MAIL),
+        }
+    }
+
+    /// The mail accounts the user reaches – their own first, then the shared mailboxes by name.
+    #[frb(sync)]
+    pub fn mail_accounts(&self) -> Vec<MailAccount> {
+        self.client
+            .session
+            .accounts_with(client::MAIL)
+            .into_iter()
+            .map(|(id, a)| MailAccount {
+                is_personal: Some(id) == self.client.session.primary(client::MAIL),
+                id: id.to_owned(),
+                name: a.name.clone(),
+                read_only: a.is_read_only,
+            })
+            .collect()
+    }
+
+    pub async fn mailboxes(&self, account_id: Option<String>) -> Result<Vec<Mailbox>, KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
         let boxes = run(async move { mail::mailboxes(&client, &account).await }).await?;
         Ok(boxes
             .into_iter()
@@ -576,12 +614,21 @@ impl Kernoid {
             .collect())
     }
 
-    /// A page of a mailbox; encrypted emails with their summary decrypted, when the key is unlocked.
-    pub async fn emails(&self, mailbox_id: String, position: u32, limit: u32) -> Result<EmailPage, KernoidError> {
-        let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+    /// A page of a mailbox – or, without one, of all the account's –, `search` searching it (full text); encrypted
+    /// emails with their summary decrypted, when the key is unlocked.
+    pub async fn emails(
+        &self,
+        account_id: Option<String>,
+        mailbox_id: Option<String>,
+        search: String,
+        position: u32,
+        limit: u32,
+    ) -> Result<EmailPage, KernoidError> {
+        let (client, account, e2e) = (self.client.clone(), self.mail_account(account_id)?, self.e2e.clone());
         run(async move {
             let (emails, total) =
-                mail::emails(&client, &account, Some(&mailbox_id), "", u64::from(position), u64::from(limit)).await?;
+                mail::emails(&client, &account, mailbox_id.as_deref(), &search, u64::from(position), u64::from(limit))
+                    .await?;
             let e2e = e2e.lock().await;
             let emails = emails
                 .into_iter()
@@ -607,9 +654,38 @@ impl Kernoid {
         .await
     }
 
+    /// Marks several emails: `$seen` (read) or `$flagged`, on or off.
+    pub async fn mark_emails(
+        &self,
+        account_id: Option<String>,
+        ids: Vec<String>,
+        keyword: String,
+        on: bool,
+    ) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::set_keywords(&client, &account, &ids, &keyword, on).await }).await
+    }
+
+    /// Moves several emails into one mailbox of their account.
+    pub async fn move_emails(
+        &self,
+        account_id: Option<String>,
+        ids: Vec<String>,
+        mailbox_id: String,
+    ) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::move_all(&client, &account, &ids, &mailbox_id).await }).await
+    }
+
+    /// Removes several emails for good – the app moves them to the Trash first, and removes them only from there.
+    pub async fn destroy_emails(&self, account_id: Option<String>, ids: Vec<String>) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::destroy_all(&client, &account, &ids).await }).await
+    }
+
     /// One message to read – an encrypted one decrypted here, with its signature checked.
-    pub async fn email(&self, id: String) -> Result<Email, KernoidError> {
-        let (client, account) = (self.client.clone(), self.account(client::MAIL)?);
+    pub async fn email(&self, account_id: Option<String>, id: String) -> Result<Email, KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
         let (e2e, opened) = (self.e2e.clone(), self.opened.clone());
         run(async move {
             let email = mail::full(&client, &account, &[id.as_str()])
@@ -671,13 +747,16 @@ impl Kernoid {
 
     /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
     /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
+    /// The email is read from `account_id` (a shared mailbox) or the user's own; the draft is the user's own.
     pub async fn reply_draft(
         &self,
+        account_id: Option<String>,
         email_id: String,
         kind: String,
         phrases: ReplyPhrases,
     ) -> Result<EmailDraft, KernoidError> {
-        let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+        let own = self.account(client::MAIL)?;
+        let (client, account, e2e) = (self.client.clone(), self.mail_account(account_id)?, self.e2e.clone());
         let opened = self.opened.clone();
         run(async move {
             let kind = match kind.as_str() {
@@ -694,7 +773,7 @@ impl Kernoid {
             let email = e2e.lock().await.open(&client, &account, email).await?;
             let text = email.text(TEXT_WIDTH);
             // A forward carries the attachments of an encrypted message too: they are read from it again on sending.
-            let parts: Vec<DraftPart> = match (&kind, &email.inner) {
+            let mut parts: Vec<DraftPart> = match (&kind, &email.inner) {
                 (reply::Kind::Forward, Some(inner)) => {
                     opened.lock().await.insert(email.summary.id.clone(), inner.0.clone());
                     email
@@ -703,7 +782,9 @@ impl Kernoid {
                         .filter_map(|part| {
                             Some(DraftPart {
                                 email_id: email.summary.id.clone(),
-                                part_index: u32::try_from(part.inner?).ok()?,
+                                part_index: Some(u32::try_from(part.inner?).ok()?),
+                                account_id: None,
+                                blob_id: None,
                                 name: part.name.clone().unwrap_or_else(|| "attachment".into()),
                                 media_type: part.kind.clone(),
                                 size: count(part.size),
@@ -713,7 +794,7 @@ impl Kernoid {
                 }
                 _ => Vec::new(),
             };
-            let identities = mail::identities(&client, &account).await?;
+            let identities = mail::identities(&client, &own).await?;
             let phrases = reply::Phrases {
                 wrote: phrases.wrote,
                 forwarded: phrases.forwarded,
@@ -723,7 +804,21 @@ impl Kernoid {
                 to: phrases.to,
                 date_format: phrases.date_format,
             };
-            let draft = reply::start(kind, Some((&email, &text)), &identities, &phrases);
+            let mut draft = reply::start(kind, Some((&email, &text)), &identities, &phrases);
+            // The attachments of a shared mailbox's message lie in that account: the draft fetches them when it is sent.
+            if account != own {
+                for a in std::mem::take(&mut draft.attachments) {
+                    parts.push(DraftPart {
+                        email_id: email.summary.id.clone(),
+                        part_index: None,
+                        account_id: Some(account.clone()),
+                        blob_id: Some(a.blob_id),
+                        name: a.name,
+                        media_type: a.kind,
+                        size: count(a.size),
+                    });
+                }
+            }
             Ok(EmailDraft {
                 to: mail::format_addresses(&draft.to),
                 cc: mail::format_addresses(&draft.cc),
@@ -758,18 +853,22 @@ impl Kernoid {
         run(async move {
             let mut inline = Vec::new();
             for part in &draft.parts {
-                let message = opened
-                    .lock()
-                    .await
-                    .get(&part.email_id)
-                    .cloned()
-                    .ok_or_else(|| client::Error::E2e("open the message again: the key was locked".into()))?;
-                inline.push(mail::InlineFile {
-                    name: part.name.clone(),
-                    media_type: part.media_type.clone(),
-                    data: kernoid_e2e::compose::part(&message, part.part_index as usize)
-                        .map_err(client::Error::from)?,
-                });
+                let data = match (part.part_index, &part.account_id, &part.blob_id) {
+                    (Some(index), _, _) => {
+                        let message =
+                            opened.lock().await.get(&part.email_id).cloned().ok_or_else(|| {
+                                client::Error::E2e("open the message again: the key was locked".into())
+                            })?;
+                        kernoid_e2e::compose::part(&message, index as usize).map_err(client::Error::from)?
+                    }
+                    (None, Some(from), Some(blob)) => {
+                        let mut data = Vec::new();
+                        client.download(from, blob, &part.name, &part.media_type, &mut data, &mut |_, _| {}).await?;
+                        data
+                    }
+                    _ => return Err(client::Error::Protocol("an attachment without its source".into())),
+                };
+                inline.push(mail::InlineFile { name: part.name.clone(), media_type: part.media_type.clone(), data });
             }
             let mut message = mail::Draft {
                 from: None,

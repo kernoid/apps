@@ -22,12 +22,13 @@ Future<bool> writeMessage(
   Kernoid account, {
   String to = '',
   String? replyTo,
+  String? replyAccount,
   Reply kind = Reply.reply,
 }) async {
   final sent = await Navigator.of(context).push<Sent>(
     MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => ComposePage(account: account, to: to, replyTo: replyTo, kind: kind),
+      builder: (_) => ComposePage(account: account, to: to, replyTo: replyTo, replyAccount: replyAccount, kind: kind),
     ),
   );
   if (sent == null || !context.mounted) return false;
@@ -41,7 +42,14 @@ Future<bool> writeMessage(
 /// every recipient has a key and the user's key is unlocked – without a setting; the view says beforehand which it
 /// will be (RFC 0006, 5.3). Pops how it was sent.
 class ComposePage extends StatefulWidget {
-  const ComposePage({super.key, required this.account, this.to = '', this.replyTo, this.kind = Reply.reply});
+  const ComposePage({
+    super.key,
+    required this.account,
+    this.to = '',
+    this.replyTo,
+    this.replyAccount,
+    this.kind = Reply.reply,
+  });
 
   final Kernoid account;
 
@@ -50,6 +58,9 @@ class ComposePage extends StatefulWidget {
 
   /// The email answered or forwarded, as [kind] says.
   final String? replyTo;
+
+  /// The account [replyTo] lies in – a shared mailbox –, or none for the user's own.
+  final String? replyAccount;
   final Reply kind;
 
   @override
@@ -99,6 +110,7 @@ class _ComposePageState extends State<ComposePage> {
     try {
       final l = AppLocalizations.of(context);
       final draft = await widget.account.replyDraft(
+        accountId: widget.replyAccount,
         emailId: id,
         kind: widget.kind.name,
         phrases: ReplyPhrases(

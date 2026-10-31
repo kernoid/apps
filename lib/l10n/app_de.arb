@@ -173,5 +173,15 @@
   "open": "Öffnen",
   "asText": "Als Text",
   "asHtml": "Formatiert",
-  "mailboxes": "Ordner"
+  "mailboxes": "Ordner",
+  "searchMail": "Mail durchsuchen",
+  "searchResults": "Suchergebnisse",
+  "myMailbox": "Mein Postfach",
+  "nothingFound": "Nichts gefunden",
+  "chooseAll": "Alle auswählen",
+  "markRead": "Gelesen oder ungelesen",
+  "flag": "Markieren",
+  "moveTo": "Verschieben nach",
+  "chosen": "{count, plural, =1{1 ausgewählt} other{{count} ausgewählt}}",
+  "deleteForGood": "{count, plural, =1{Diese Mail endgültig löschen?} other{Diese {count} Mails endgültig löschen?}}"
 }

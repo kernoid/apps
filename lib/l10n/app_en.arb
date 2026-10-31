@@ -215,5 +215,29 @@
   "open": "Open",
   "asText": "As text",
   "asHtml": "Formatted",
-  "mailboxes": "Folders"
+  "mailboxes": "Folders",
+  "searchMail": "Search mail",
+  "searchResults": "Search results",
+  "myMailbox": "My mailbox",
+  "nothingFound": "Nothing found",
+  "chooseAll": "Choose all",
+  "markRead": "Read or unread",
+  "flag": "Flag",
+  "moveTo": "Move to",
+  "chosen": "{count, plural, =1{1 chosen} other{{count} chosen}}",
+  "@chosen": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteForGood": "{count, plural, =1{Delete this email for good?} other{Delete these {count} emails for good?}}",
+  "@deleteForGood": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
