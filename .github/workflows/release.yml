@@ -3,7 +3,8 @@
 # Android, each with its SHA-256, and `apps.json` – the feed kernoid's website shows its downloads from. The builds are
 # not signed by a developer account: macOS ad hoc, Android with the runner's throwaway debug key (an update needs the
 # app removed first); iOS installs only signed and is left out. Check the files, then publish the draft. Flutter and
-# Rust as in CI.
+# Rust as in CI. Nothing is checked again: the tag must be on a commit of main whose CI run passed – the release waits
+# for that run when the commit and the tag were pushed together.
 name: Release
 
 on:
@@ -12,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   FLUTTER_VERSION: 3.47.8
@@ -22,6 +24,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: The tag is on main, and main's CI passed for it
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+            || { echo "::error::$GITHUB_REF_NAME is not on main: release a commit of main"; exit 1; }
+          for _ in $(seq 1 60); do
+            result=$(gh run list --workflow CI --branch main --commit "$GITHUB_SHA" --event push --limit 1 \
+              --json status,conclusion --jq '.[0] | .status + " " + .conclusion')
+            case "$result" in
+              "completed success") exit 0 ;;
+              completed*) echo "::error::main's CI run of $GITHUB_SHA: $result"; exit 1 ;;
+            esac
+            echo "waiting for main's CI run of $GITHUB_SHA (${result:-not started})"
+            sleep 60
+          done
+          echo "::error::main's CI run of $GITHUB_SHA did not finish in an hour"; exit 1
       - name: The tag names the version in pubspec.yaml
         run: |
           have=$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)
