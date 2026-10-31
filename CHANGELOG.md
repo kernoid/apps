@@ -7,6 +7,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.2.1] – 2026-10-31
+
+With kernoid 0.2.1 and its Rust SDK (`kernoid-client`, `kernoid-e2e` 0.2.1 from crates.io). The builds are still
+**not signed** – for testing, not for data that matters.
+
 ### Added
 
 - One event of a series is changed or deleted on its own, or the whole series – the app asks which.
@@ -45,5 +50,6 @@ Marked `OPEN` in [docs/plan.md](docs/plan.md), among them: files in the system's
 syncing a folder, unlocking with a passkey, one instance of a recurring event on its own, a month view, HTML mail,
 forwarding the attachments of an encrypted message, signed builds and the app stores.
 
-[Unreleased]: https://github.com/kernoid/apps/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kernoid/apps/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kernoid/apps/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kernoid/apps/releases/tag/v0.2.0
