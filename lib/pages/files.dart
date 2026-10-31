@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+import 'dart:async';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -6,10 +9,18 @@ import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/dialogs.dart';
+import '../ui/tokens.dart';
+import '../ui/widgets.dart';
 import '../widgets/states.dart';
+import 'file_dialogs.dart';
+import 'home.dart';
 
-/// Files inside the app: the stores the account reaches, their directories, saving a file. In the system's file
-/// manager they come through the native shells (docs/plan.md, 5).
+/// Files inside the app, as the web app has them: the stores the account reaches – its own, the tenant's drives,
+/// what others share –, their directories, searching names and contents, uploading, and for each node what the user
+/// may do with it: share, link, versions, copy or move, rename, delete into the trash. In the system's file manager
+/// they come through the native shells (docs/plan.md, 5). **OPEN**: vaults (end-to-end encrypted folders), a viewer,
+/// dropping files onto the window.
 class FilesPage extends StatefulWidget {
   const FilesPage({super.key, required this.account});
 
@@ -19,133 +30,625 @@ class FilesPage extends StatefulWidget {
   State<FilesPage> createState() => _FilesPageState();
 }
 
+/// What the user may do with a node.
+typedef _Rights = ({bool add, bool rename, bool delete, bool share, bool content});
+
+const _all = (add: true, rename: true, delete: true, share: true, content: true);
+const _edit = (add: true, rename: true, delete: true, share: false, content: true);
+const _none = (add: false, rename: false, delete: false, share: false, content: false);
+
 class _FilesPageState extends State<FilesPage> {
   late final List<FileStore> _stores = widget.account.fileStores();
   late FileStore? _store = _stores.firstOrNull;
+  late final bool _links = widget.account.linksAvailable();
 
   /// The directories from the top of the store down to the one shown.
   final List<FileNode> _path = [];
   List<FileNode>? _nodes;
+  FileNode? _trash;
+  final _search = TextEditingController();
+  String _query = '';
+  List<FoundFile>? _found;
   Object? _error;
+  bool _busy = false;
+
+  /// The files being uploaded: their names and how far each is.
+  List<({String name, int sent, int total})> _uploads = [];
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadTrash();
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
     final store = _store;
     if (store == null) return;
     setState(() {
-      _nodes = null;
       _error = null;
+      if (_query.isEmpty) _found = null;
     });
     try {
-      final nodes = await widget.account.files(accountId: store.accountId, parentId: _path.lastOrNull?.id);
-      if (mounted) setState(() => _nodes = nodes);
+      if (_query.isNotEmpty) {
+        final found = await widget.account.searchFiles(accountId: store.accountId, text: _query);
+        if (mounted && _store == store) setState(() => _found = found);
+      } else {
+        final nodes = await widget.account.files(accountId: store.accountId, parentId: _path.lastOrNull?.id);
+        // The trash at the end, after what the user made.
+        final ordered = [...nodes.where((n) => n.role != 'trash'), ...nodes.where((n) => n.role == 'trash')];
+        if (mounted && _store == store) setState(() => _nodes = ordered);
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error);
     }
   }
 
-  void _enter(FileNode directory) {
-    _path.add(directory);
+  Future<void> _loadTrash() async {
+    final store = _store;
+    if (store == null) return;
+    try {
+      final trash = await widget.account.fileTrash(accountId: store.accountId);
+      if (mounted && _store == store) setState(() => _trash = trash);
+    } catch (_) {
+      // Without a trash, deleting asks and removes for good.
+    }
+  }
+
+  void _open(FileStore store, List<FileNode> path) {
+    final other = store.accountId != _store?.accountId;
+    setState(() {
+      _store = store;
+      _path
+        ..clear()
+        ..addAll(path);
+      _nodes = null;
+      _query = '';
+      _found = null;
+      _search.clear();
+      if (other) _trash = null;
+    });
+    _load();
+    if (other) _loadTrash();
+  }
+
+  void _runSearch(String text) {
+    setState(() => _query = text.trim());
     _load();
   }
 
-  void _up(int depth) {
-    _path.removeRange(depth, _path.length);
-    _load();
+  bool get _inTrash => _trash != null && _path.any((d) => d.id == _trash!.id);
+
+  /// The rights here: the directory's, or at the top whether the user may add there.
+  _Rights get _here {
+    final store = _store!;
+    final current = _path.lastOrNull;
+    if (current != null && current.hasRights) return _of(current);
+    if (current != null) return _none;
+    if (store.isPersonal) return _all;
+    return store.mayCreateTopLevel ? _edit : _none;
   }
 
-  String _storeName(AppLocalizations l, FileStore s) => s.isPersonal ? l.myFiles : s.name;
+  /// The rights on a node: a directory's own, a file's those of where it lies.
+  _Rights _rightsOf(FileNode node, [List<FileNode>? path]) {
+    if (node.hasRights) return _of(node);
+    final above = (path ?? _path).lastOrNull;
+    if (above != null && above.hasRights) return _of(above);
+    final store = _store!;
+    if (store.isPersonal) return _all;
+    return store.mayCreateTopLevel ? _edit : _none;
+  }
+
+  static _Rights _of(FileNode n) =>
+      (add: n.mayAddChildren, rename: n.mayRename, delete: n.mayDelete, share: n.mayShare, content: n.mayModifyContent);
+
+  Future<void> _run(Future<void> Function() work) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
+    setState(() => _busy = true);
+    try {
+      await work();
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    await _load();
+  }
+
+  Future<void> _newFolder() async {
+    final l = AppLocalizations.of(context);
+    final name = await askText(context, title: l.newFolder, confirm: l.create, label: l.newFolderName);
+    if (name == null) return;
+    final store = _store!;
+    await _run(
+      () => widget.account.createDirectory(accountId: store.accountId, parentId: _path.lastOrNull?.id, name: name),
+    );
+  }
+
+  Future<void> _upload() async {
+    final picked = await openFiles();
+    if (picked.isEmpty || !mounted) return;
+    final store = _store!;
+    final parent = _path.lastOrNull?.id;
+    setState(() => _uploads = [for (final f in picked) (name: f.name, sent: 0, total: 0)]);
+    final done = Completer<void>();
+    widget.account
+        .uploadFiles(accountId: store.accountId, parentId: parent, paths: [for (final f in picked) f.path])
+        .listen(
+          (p) {
+            if (!mounted || p.index >= _uploads.length) return;
+            setState(() => _uploads[p.index] = (name: _uploads[p.index].name, sent: p.sent, total: p.total));
+          },
+          onError: (Object error) {
+            if (!done.isCompleted) done.completeError(error);
+          },
+          onDone: () {
+            if (!done.isCompleted) done.complete();
+          },
+        );
+    await _run(() => done.future);
+    if (mounted) setState(() => _uploads = []);
+  }
+
+  Future<void> _rename(FileNode node) async {
+    final l = AppLocalizations.of(context);
+    final name = await askText(context, title: l.rename, confirm: l.rename, initial: node.name, label: l.newName);
+    if (name == null || name == node.name) return;
+    final store = _store!;
+    await _run(() => widget.account.renameFile(accountId: store.accountId, id: node.id, name: name));
+  }
+
+  Future<void> _delete(FileNode node) async {
+    final l = AppLocalizations.of(context);
+    final store = _store!;
+    final trash = _trash;
+    if (trash == null || _inTrash || node.role != null) {
+      final sure = await confirmAction(
+        context,
+        text: l.deleteFileConfirm(node.role == 'trash' ? l.trash : node.name),
+        confirm: l.deleteFileForGood,
+        danger: true,
+      );
+      if (!sure) return;
+      await _run(() => widget.account.destroyFile(accountId: store.accountId, id: node.id));
+    } else {
+      await _run(
+        () => widget.account.copyFile(
+          fromAccountId: store.accountId,
+          toAccountId: store.accountId,
+          id: node.id,
+          parentId: trash.id,
+          moveIt: true,
+        ),
+      );
+    }
+  }
+
+  Future<void> _copy(FileNode node) async {
+    final store = _store!;
+    final target = await chooseTarget(context, widget.account, _stores, store, node);
+    if (target == null) return;
+    await _run(
+      () => widget.account.copyFile(
+        fromAccountId: store.accountId,
+        toAccountId: target.store.accountId,
+        id: node.id,
+        parentId: target.directory,
+        moveIt: target.move,
+      ),
+    );
+  }
+
+  void _save(FileNode node) => saveBlob(
+    context,
+    widget.account,
+    accountId: _store!.accountId,
+    blobId: node.blobId!,
+    name: node.name,
+    mediaType: node.mediaType ?? 'application/octet-stream',
+  );
+
+  /// What can be done with a node, at the point of a right click, a long press or its button.
+  Future<void> _menu(FileNode node, Offset position, [List<FileNode>? path]) async {
+    final l = AppLocalizations.of(context);
+    final rights = _rightsOf(node, path);
+    final store = _store!;
+    final deleteForGood = _trash == null || _inTrash || node.role != null;
+    final choice = await showPointMenu<String>(
+      context,
+      position: position,
+      items: [
+        if (!node.isDirectory) ('save', LucideIcons.download, l.save, false),
+        if (node.isDirectory && rights.share && node.role == null) ('share', LucideIcons.share2, l.share, false),
+        if (_links && rights.share && node.role == null) ('link', LucideIcons.link, l.link, false),
+        if (!node.isDirectory) ('versions', LucideIcons.history, l.versions, false),
+        if (node.role == null) ('copy', LucideIcons.copy, l.copyOrMove, false),
+        if (rights.rename && node.role == null) ('rename', LucideIcons.pencil, l.rename, false),
+        if (rights.delete && node.role == null)
+          ('delete', LucideIcons.trash2, deleteForGood ? l.deleteFileForGood : l.delete, true),
+      ],
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case 'save':
+        _save(node);
+      case 'share':
+        if (await shareDialog(context, widget.account, store.accountId, node)) await _load();
+      case 'link':
+        await linkDialog(context, widget.account, store.accountId, node);
+      case 'versions':
+        if (await versionsDialog(context, widget.account, store.accountId, node)) await _load();
+      case 'copy':
+        await _copy(node);
+      case 'rename':
+        await _rename(node);
+      case 'delete':
+        await _delete(node);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final k = context.k;
     final store = _store;
     if (store == null) return EmptyView(l.folderEmpty, icon: LucideIcons.folderX);
-    return Scaffold(
-      appBar: AppBar(
-        title: _stores.length > 1
-            ? DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: store.accountId,
-                  items: [for (final s in _stores) DropdownMenuItem(value: s.accountId, child: Text(_storeName(l, s)))],
-                  onChanged: (id) {
-                    setState(() => _store = _stores.firstWhere((s) => s.accountId == id));
-                    _up(0);
-                  },
-                ),
-              )
-            : Text(_storeName(l, store)),
-        actions: [IconButton(tooltip: l.refresh, onPressed: _load, icon: const Icon(LucideIcons.refreshCw))],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(36),
-          child: SizedBox(
-            height: 36,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              children: [
-                TextButton(onPressed: () => _up(0), child: Text(_storeName(l, store))),
-                for (final (i, d) in _path.indexed) ...[
-                  const Icon(LucideIcons.chevronRight, size: 18),
-                  TextButton(onPressed: () => _up(i + 1), child: Text(d.name)),
-                ],
+    final wide = MediaQuery.sizeOf(context).width >= wideLayout;
+    final here = _here;
+    final actions = [
+      if (here.add && !_inTrash) ...[
+        KIconButton(
+          key: const ValueKey('new-folder'),
+          icon: LucideIcons.folderPlus,
+          tooltip: l.newFolder,
+          onPressed: _busy ? null : _newFolder,
+        ),
+        KIconButton(
+          key: const ValueKey('upload'),
+          icon: LucideIcons.upload,
+          tooltip: l.upload,
+          onPressed: _busy ? null : _upload,
+        ),
+      ],
+      KIconButton(icon: LucideIcons.refreshCw, tooltip: l.refresh, onPressed: _load),
+    ];
+    final main = Column(
+      children: [
+        if (wide || _path.isNotEmpty)
+          _Trail(
+            store: store,
+            path: _path,
+            trash: _trash,
+            onOpen: (path) => _open(store, path),
+            actions: wide ? actions : const [],
+          ),
+        KSearchField(
+          fieldKey: const ValueKey('files-search'),
+          controller: _search,
+          onSubmitted: _runSearch,
+          hint: l.searchFiles,
+        ),
+        if (_uploads.isNotEmpty) _Uploads(uploads: _uploads),
+        Expanded(child: _list(l, k)),
+      ],
+    );
+    if (!wide) {
+      return Scaffold(
+        appBar: KTopBar(
+          leading: const SizedBox(width: 6),
+          actions: actions,
+          titleWidget: Align(
+            alignment: Alignment.centerLeft,
+            child: PopupMenuButton<FileStore>(
+              key: const ValueKey('store-menu'),
+              tooltip: l.files,
+              onSelected: (s) => _open(s, const []),
+              itemBuilder: (_) => [
+                for (final s in _stores)
+                  PopupMenuItem(
+                    value: s,
+                    child: Row(
+                      children: [
+                        Icon(_storeIcon(s), size: 17, color: k.muted),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(storeName(l, s))),
+                      ],
+                    ),
+                  ),
               ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      storeName(l, store),
+                      overflow: TextOverflow.ellipsis,
+                      style: KText.heading(k).copyWith(fontSize: 17),
+                    ),
+                  ),
+                  if (_stores.length > 1) ...[
+                    const SizedBox(width: 6),
+                    Icon(LucideIcons.chevronDown, size: 16, color: k.muted),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
+        body: main,
+      );
+    }
+    return Scaffold(
+      body: Row(
+        children: [
+          SizedBox(
+            width: KSize.sideWidth,
+            child: _Stores(stores: _stores, selected: store.accountId, onSelect: (s) => _open(s, const [])),
+          ),
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: k.surface,
+                border: Border(left: BorderSide(color: k.line)),
+              ),
+              child: main,
+            ),
+          ),
+        ],
       ),
-      body: _body(l),
     );
   }
 
-  Widget _body(AppLocalizations l) {
+  Widget _list(AppLocalizations l, KTokens k) {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
+    if (_query.isNotEmpty) {
+      final found = _found;
+      if (found == null) return const Center(child: CircularProgressIndicator());
+      if (found.isEmpty) return EmptyView(l.nothingFound, icon: LucideIcons.searchX);
+      return ListView(
+        children: [
+          for (final f in found)
+            _row(
+              l,
+              k,
+              f.node,
+              path: f.path,
+              subtitle: [storeName(l, _store!), ...f.path.map((d) => d.role == 'trash' ? l.trash : d.name)].join(' / '),
+              onOpen: () => f.node.isDirectory ? _open(_store!, [...f.path, f.node]) : _save(f.node),
+            ),
+        ],
+      );
+    }
     final nodes = _nodes;
     if (nodes == null) return const Center(child: CircularProgressIndicator());
-    if (nodes.isEmpty) return EmptyView(l.folderEmpty, icon: LucideIcons.folderOpen);
+    if (nodes.isEmpty) {
+      return EmptyView(_inTrash ? l.trashEmptyNote : l.folderEmpty, icon: LucideIcons.folderOpen);
+    }
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView.separated(
-        itemCount: nodes.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final n = nodes[i];
-          final details = [
-            if (!n.isDirectory) bytes(n.size),
-            if (n.modified != null) shortDate(context, n.modified!),
-          ].join(' · ');
-          return ListTile(
-            leading: Icon(n.isDirectory ? LucideIcons.folder : _fileIcon(n.mediaType)),
-            title: Text(n.name),
-            subtitle: details.isEmpty ? null : Text(details),
-            onTap: n.isDirectory ? () => _enter(n) : null,
-            trailing: n.isDirectory
-                ? const Icon(LucideIcons.chevronRight)
-                : IconButton(
-                    tooltip: l.save,
-                    icon: const Icon(LucideIcons.download),
-                    onPressed: () => saveBlob(
-                      context,
-                      widget.account,
-                      accountId: _store!.accountId,
-                      blobId: n.blobId!,
-                      name: n.name,
-                      mediaType: n.mediaType ?? 'application/octet-stream',
-                    ),
-                  ),
-          );
-        },
+      child: ListView(
+        children: [
+          for (final n in nodes) _row(l, k, n, onOpen: () => n.isDirectory ? _open(_store!, [..._path, n]) : _save(n)),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(
+    AppLocalizations l,
+    KTokens k,
+    FileNode n, {
+    List<FileNode>? path,
+    String? subtitle,
+    required VoidCallback onOpen,
+  }) {
+    final details =
+        subtitle ??
+        [if (!n.isDirectory) bytes(n.size), if (n.modified != null) shortDate(context, n.modified!)].join(' · ');
+    return GestureDetector(
+      onSecondaryTapUp: (d) => _menu(n, d.globalPosition, path),
+      onLongPressEnd: (d) => _menu(n, d.globalPosition, path),
+      child: KListRow(
+        key: ValueKey('file-${n.name}'),
+        divider: true,
+        leading: Icon(
+          n.role == 'trash'
+              ? LucideIcons.trash2
+              : n.isDirectory
+              ? LucideIcons.folder
+              : fileIcon(n.mediaType),
+          size: 19,
+          color: n.isDirectory ? k.accent : k.muted,
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                n.role == 'trash' ? l.trash : n.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: KText.label(k),
+              ),
+            ),
+            if (n.shares.isNotEmpty) ...[const SizedBox(width: 8), KBadge(l.shared, icon: LucideIcons.users)],
+          ],
+        ),
+        subtitle: details.isEmpty ? null : Text(details, style: KText.small(k)),
+        trailing: Builder(
+          builder: (button) => KIconButton(
+            key: ValueKey('more-${n.name}'),
+            icon: LucideIcons.ellipsis,
+            tooltip: l.more,
+            onPressed: _busy
+                ? null
+                : () {
+                    final box = button.findRenderObject()! as RenderBox;
+                    _menu(n, box.localToGlobal(box.size.bottomLeft(Offset.zero)), path);
+                  },
+          ),
+        ),
+        onTap: onOpen,
       ),
     );
   }
 }
 
-IconData _fileIcon(String? type) {
+IconData _storeIcon(FileStore s) => s.isPersonal
+    ? LucideIcons.folder
+    : s.isDrive
+    ? LucideIcons.hardDrive
+    : LucideIcons.folderOpen;
+
+/// The stores in the side bar: the user's own, then the drives, then what others share.
+class _Stores extends StatelessWidget {
+  const _Stores({required this.stores, required this.selected, required this.onSelect});
+
+  final List<FileStore> stores;
+  final String selected;
+  final ValueChanged<FileStore> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    final drives = stores.where((s) => s.isDrive).toList();
+    final shared = stores.where((s) => !s.isDrive && !s.isPersonal).toList();
+    Widget item(FileStore s) => KSideItem(
+      key: ValueKey('store-${s.isPersonal ? 'own' : s.name}'),
+      icon: _storeIcon(s),
+      label: storeName(l, s),
+      selected: s.accountId == selected,
+      onTap: () => onSelect(s),
+    );
+    return Container(
+      color: k.panel,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
+        children: [
+          ...stores.where((s) => s.isPersonal).map(item),
+          if (drives.isNotEmpty) ...[KOverline(l.drives), ...drives.map(item)],
+          if (shared.isNotEmpty) ...[KOverline(l.sharedWithMe), ...shared.map(item)],
+        ],
+      ),
+    );
+  }
+}
+
+/// Where the list is: the store and the directories down to the one shown, each a way back up; the page's actions at
+/// its end.
+class _Trail extends StatelessWidget {
+  const _Trail({
+    required this.store,
+    required this.path,
+    required this.trash,
+    required this.onOpen,
+    required this.actions,
+  });
+
+  final FileStore store;
+  final List<FileNode> path;
+  final FileNode? trash;
+  final ValueChanged<List<FileNode>> onOpen;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    Widget crumb(String label, List<FileNode> to, bool last) => TextButton(
+      onPressed: last ? null : () => onOpen(to),
+      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6), minimumSize: const Size(0, 32)),
+      child: Text(
+        label,
+        style: last ? KText.heading(k).copyWith(fontSize: 15) : KText.label(k).copyWith(color: k.muted),
+      ),
+    );
+    return Container(
+      height: KSize.bar,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: k.panel,
+        border: Border(bottom: BorderSide(color: k.line)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: ListView(
+              key: const ValueKey('trail'),
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              children: [
+                // Reversed, so that the end – the directory shown – stays in sight.
+                for (final (i, d) in path.indexed.toList().reversed) ...[
+                  crumb(d.id == trash?.id ? l.trash : d.name, path.sublist(0, i + 1), i == path.length - 1),
+                  Center(child: Icon(LucideIcons.chevronRight, size: 14, color: k.faint)),
+                ],
+                crumb(storeName(l, store), const [], path.isEmpty),
+              ],
+            ),
+          ),
+          ...actions.expand((a) => [const SizedBox(width: 4), a]),
+        ],
+      ),
+    );
+  }
+}
+
+/// The files being uploaded, each with how far it is.
+class _Uploads extends StatelessWidget {
+  const _Uploads({required this.uploads});
+
+  final List<({String name, int sent, int total})> uploads;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    return Container(
+      key: const ValueKey('uploads'),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      decoration: BoxDecoration(
+        color: k.raised,
+        border: Border(bottom: BorderSide(color: k.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.uploading, style: KText.small(k)),
+          for (final u in uploads)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 160,
+                    child: Text(u.name, overflow: TextOverflow.ellipsis, style: KText.label(k)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: LinearProgressIndicator(
+                      value: u.total == 0 ? null : u.sent / u.total,
+                      color: k.accent,
+                      backgroundColor: k.line,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData fileIcon(String? type) {
   final t = type ?? '';
   if (t.startsWith('image/')) return LucideIcons.image;
   if (t.startsWith('audio/')) return LucideIcons.fileAudio;

@@ -207,11 +207,16 @@ pub struct FileStore {
     pub account_id: String,
     pub name: String,
     pub is_personal: bool,
+    /// A drive: folders the tenant owns, which the user has rights in.
+    pub is_drive: bool,
+    /// Whether the user may add at the top of the store.
+    pub may_create_top_level: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct FileNode {
     pub id: String,
+    pub parent_id: Option<String>,
     pub name: String,
     pub is_directory: bool,
     pub role: Option<String>,
@@ -219,6 +224,70 @@ pub struct FileNode {
     pub size: i64,
     pub media_type: Option<String>,
     pub modified: Option<String>,
+    /// The user's rights on it, as the server says them – `false` when it says none (a file takes those of where it
+    /// lies).
+    pub has_rights: bool,
+    pub may_read: bool,
+    pub may_add_children: bool,
+    pub may_rename: bool,
+    pub may_delete: bool,
+    pub may_modify_content: bool,
+    pub may_share: bool,
+    /// With whom a directory is shared.
+    pub shares: Vec<FileShare>,
+}
+
+/// A person or group a directory is shared with, and how far: `read`, `edit` or `full` (edit and share).
+#[derive(Debug, Clone)]
+pub struct FileShare {
+    pub principal_id: String,
+    pub level: String,
+}
+
+/// A person or group of the tenant (RFC 9670): `individual` or `group`.
+#[derive(Debug, Clone)]
+pub struct Principal {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+    pub email: Option<String>,
+}
+
+/// A node found by a search, with the names of the directories above it.
+#[derive(Debug, Clone)]
+pub struct FoundFile {
+    pub node: FileNode,
+    pub path: Vec<FileNode>,
+}
+
+/// The content of a file: the current one or an earlier version.
+#[derive(Debug, Clone)]
+pub struct FileVersion {
+    pub id: String,
+    pub blob_id: String,
+    pub size: i64,
+    pub media_type: Option<String>,
+    pub modified: Option<String>,
+    pub created: Option<String>,
+    pub is_current: bool,
+}
+
+/// A link for people without an account: `view`, `add` (view and add) or `drop` (only add).
+#[derive(Debug, Clone)]
+pub struct FileLink {
+    pub id: String,
+    pub mode: String,
+    pub expires: Option<String>,
+    pub has_password: bool,
+    pub created: Option<String>,
+}
+
+/// How far an upload is: the file (its index among those chosen) and its bytes.
+#[derive(Debug, Clone)]
+pub struct UploadProgress {
+    pub index: u32,
+    pub sent: i64,
+    pub total: i64,
 }
 
 /// A message being written: to whom, about what, the text, the thread it answers, and what is attached – files of
@@ -403,6 +472,59 @@ const TEXT_WIDTH: usize = 10_000;
 
 fn addresses(list: Option<Vec<mail::EmailAddress>>) -> Vec<Address> {
     list.unwrap_or_default().into_iter().map(|a| Address { name: a.name, email: a.email }).collect()
+}
+
+fn file_node(n: files::FileNode) -> FileNode {
+    let rights = n.my_rights;
+    let r = rights.unwrap_or_default();
+    let shares = n
+        .share_with
+        .as_ref()
+        .map(|with| {
+            with.iter()
+                .map(|(principal, rights)| FileShare {
+                    principal_id: principal.clone(),
+                    level: match files::Level::of(rights) {
+                        files::Level::Full => "full",
+                        files::Level::Edit => "edit",
+                        files::Level::Read => "read",
+                    }
+                    .into(),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    FileNode {
+        is_directory: n.is_directory(),
+        id: n.id,
+        parent_id: n.parent_id,
+        name: n.name,
+        role: n.role,
+        blob_id: n.blob_id,
+        size: count(n.size.unwrap_or_default()),
+        media_type: n.media_type,
+        modified: n.modified,
+        has_rights: rights.is_some(),
+        may_read: r.may_read,
+        may_add_children: r.may_add_children,
+        may_rename: r.may_rename,
+        may_delete: r.may_delete,
+        may_modify_content: r.may_modify_content,
+        may_share: r.may_share,
+        shares,
+    }
+}
+
+fn principal(p: files::Principal) -> Principal {
+    Principal { id: p.id, kind: p.kind, name: p.name, email: p.email }
+}
+
+fn link_mode_name(mode: files::LinkMode) -> &'static str {
+    match mode {
+        files::LinkMode::View => "view",
+        files::LinkMode::Add => "add",
+        files::LinkMode::Drop => "drop",
+    }
 }
 
 fn count(n: u64) -> i64 {
@@ -1006,9 +1128,26 @@ impl Kernoid {
 
     #[frb(sync)]
     pub fn file_stores(&self) -> Vec<FileStore> {
+        let session = &self.client.session;
         files::stores(&self.client)
             .into_iter()
-            .map(|s| FileStore { is_personal: s.kind == files::StoreKind::Own, account_id: s.id, name: s.name })
+            .map(|s| {
+                let may_create_top_level = s.kind == files::StoreKind::Own
+                    || session
+                        .accounts
+                        .get(&s.id)
+                        .and_then(|a| a.account_capabilities.get(client::FILENODE))
+                        .is_some_and(|c| {
+                            c.get("mayCreateTopLevelFileNode").and_then(serde_json::Value::as_bool).unwrap_or(false)
+                        });
+                FileStore {
+                    is_personal: s.kind == files::StoreKind::Own,
+                    is_drive: s.kind == files::StoreKind::Drive,
+                    may_create_top_level,
+                    account_id: s.id,
+                    name: s.name,
+                }
+            })
             .collect()
     }
 
@@ -1016,19 +1155,222 @@ impl Kernoid {
     pub async fn files(&self, account_id: String, parent_id: Option<String>) -> Result<Vec<FileNode>, KernoidError> {
         let client = self.client.clone();
         let nodes = run(async move { files::children(&client, &account_id, parent_id.as_deref()).await }).await?;
-        Ok(nodes
+        Ok(nodes.into_iter().map(file_node).collect())
+    }
+
+    /// The directory with the role `trash`, if the store has one.
+    pub async fn file_trash(&self, account_id: String) -> Result<Option<FileNode>, KernoidError> {
+        let client = self.client.clone();
+        Ok(run(async move { files::trash(&client, &account_id).await }).await?.map(file_node))
+    }
+
+    /// The nodes whose name or text holds `text`, anywhere in the store.
+    pub async fn search_files(&self, account_id: String, text: String) -> Result<Vec<FoundFile>, KernoidError> {
+        let client = self.client.clone();
+        let found = run(async move { files::search(&client, &account_id, text.trim()).await }).await?;
+        Ok(found
             .into_iter()
-            .map(|n| FileNode {
-                is_directory: n.is_directory(),
-                id: n.id,
-                name: n.name,
-                role: n.role,
-                blob_id: n.blob_id,
-                size: count(n.size.unwrap_or_default()),
-                media_type: n.media_type,
-                modified: n.modified,
+            .map(|f| FoundFile { node: file_node(f.node), path: f.path.into_iter().map(file_node).collect() })
+            .collect())
+    }
+
+    pub async fn create_directory(
+        &self,
+        account_id: String,
+        parent_id: Option<String>,
+        name: String,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { files::create_directory(&client, &account_id, parent_id.as_deref(), name.trim()).await }).await
+    }
+
+    pub async fn rename_file(&self, account_id: String, id: String, name: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { files::rename(&client, &account_id, &id, name.trim()).await }).await
+    }
+
+    /// Moves or copies a node into a directory (`None`: the top) – of the same store or another; a name taken there
+    /// gets a number.
+    pub async fn copy_file(
+        &self,
+        from_account_id: String,
+        to_account_id: String,
+        id: String,
+        parent_id: Option<String>,
+        move_it: bool,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            if move_it && from_account_id == to_account_id {
+                files::move_to(&client, &to_account_id, &id, parent_id.as_deref()).await
+            } else {
+                files::copy_to(&client, &from_account_id, &to_account_id, &id, parent_id.as_deref(), move_it).await
+            }
+        })
+        .await
+    }
+
+    /// Removes a node and all it holds, for good.
+    pub async fn destroy_file(&self, account_id: String, id: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { files::destroy(&client, &account_id, &id).await }).await
+    }
+
+    /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
+    /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
+    pub fn upload_files(
+        &self,
+        account_id: String,
+        parent_id: Option<String>,
+        paths: Vec<String>,
+        sink: StreamSink<UploadProgress>,
+    ) {
+        let client = self.client.clone();
+        RUNTIME.spawn(async move {
+            let result = async {
+                let existing = files::children(&client, &account_id, parent_id.as_deref()).await?;
+                for (index, path) in paths.iter().enumerate() {
+                    let path = std::path::Path::new(path);
+                    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
+                    let same = existing.iter().find(|node| node.name == name);
+                    let progress = sink.clone();
+                    let index = u32::try_from(index).unwrap_or(u32::MAX);
+                    files::upload_file(&client, &account_id, parent_id.as_deref(), path, same, move |sent, total| {
+                        let _ = progress.add(UploadProgress { index, sent: count(sent), total: count(total) });
+                    })
+                    .await?;
+                }
+                client::Result::Ok(())
+            }
+            .await;
+            if let Err(error) = result {
+                let _ = sink.add_error(KernoidError::from(error));
+            }
+        });
+    }
+
+    /// The current content and the earlier versions of a file, newest first.
+    pub async fn file_versions(&self, account_id: String, id: String) -> Result<Vec<FileVersion>, KernoidError> {
+        let client = self.client.clone();
+        let versions = run(async move { files::versions(&client, &account_id, &id).await }).await?;
+        Ok(versions
+            .into_iter()
+            .map(|v| FileVersion {
+                id: v.id,
+                blob_id: v.blob_id,
+                size: count(v.size),
+                media_type: v.media_type,
+                modified: v.modified,
+                created: v.created,
+                is_current: v.is_current,
             })
             .collect())
+    }
+
+    /// Makes an earlier version the file's content again.
+    pub async fn restore_version(
+        &self,
+        account_id: String,
+        id: String,
+        version_id: String,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let versions = files::versions(&client, &account_id, &id).await?;
+            let version = versions
+                .iter()
+                .find(|v| v.id == version_id)
+                .ok_or_else(|| client::Error::Protocol("the version is gone".into()))?;
+            files::restore(&client, &account_id, &id, version).await
+        })
+        .await
+    }
+
+    /// Sets with whom a directory is shared, replacing what was.
+    pub async fn share_directory(
+        &self,
+        account_id: String,
+        id: String,
+        shares: Vec<FileShare>,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        let with: Vec<(String, files::Level)> = shares
+            .into_iter()
+            .map(|s| {
+                let level = match s.level.as_str() {
+                    "full" => files::Level::Full,
+                    "edit" => files::Level::Edit,
+                    _ => files::Level::Read,
+                };
+                (s.principal_id, level)
+            })
+            .collect();
+        run(async move { files::share(&client, &account_id, &id, &with).await }).await
+    }
+
+    /// People and groups of the tenant whose name or address holds `text`.
+    pub async fn find_principals(&self, text: String) -> Result<Vec<Principal>, KernoidError> {
+        let client = self.client.clone();
+        Ok(run(async move { files::find_principals(&client, &text).await }).await?.into_iter().map(principal).collect())
+    }
+
+    /// The people and groups named.
+    pub async fn principals(&self, ids: Vec<String>) -> Result<Vec<Principal>, KernoidError> {
+        let client = self.client.clone();
+        let found = run(async move {
+            let ids: Vec<&str> = ids.iter().map(String::as_str).collect();
+            files::principals(&client, &ids).await
+        })
+        .await?;
+        Ok(found.into_iter().map(principal).collect())
+    }
+
+    /// Whether the server makes links for people without an account.
+    #[frb(sync)]
+    pub fn links_available(&self) -> bool {
+        files::links_available(&self.client)
+    }
+
+    pub async fn file_links(&self, account_id: String, id: String) -> Result<Vec<FileLink>, KernoidError> {
+        let client = self.client.clone();
+        let links = run(async move { files::links(&client, &account_id, &id).await }).await?;
+        Ok(links
+            .into_iter()
+            .map(|l| FileLink {
+                mode: link_mode_name(files::LinkMode::of(&l)).into(),
+                id: l.id,
+                expires: l.expires,
+                has_password: l.has_password,
+                created: l.created,
+            })
+            .collect())
+    }
+
+    /// Makes a link – `mode` is `view`, `add` or `drop` –, with an expiry (a UTCDate) and a password if given, and
+    /// answers its address: the only time it can be known.
+    pub async fn create_file_link(
+        &self,
+        account_id: String,
+        id: String,
+        mode: String,
+        expires: Option<String>,
+        password: Option<String>,
+    ) -> Result<String, KernoidError> {
+        let client = self.client.clone();
+        let mode = match mode.as_str() {
+            "add" => files::LinkMode::Add,
+            "drop" => files::LinkMode::Drop,
+            _ => files::LinkMode::View,
+        };
+        run(async move {
+            files::create_link(&client, &account_id, &id, mode, expires.as_deref(), password.as_deref()).await
+        })
+        .await
+    }
+
+    pub async fn remove_file_link(&self, account_id: String, id: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { files::remove_link(&client, &account_id, &id).await }).await
     }
 
     /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)

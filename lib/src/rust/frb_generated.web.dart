@@ -54,6 +54,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<String> dco_decode_StreamSink_String_Sse(dynamic raw);
 
   @protected
+  RustStreamSink<UploadProgress> dco_decode_StreamSink_upload_progress_Sse(dynamic raw);
+
+  @protected
   String dco_decode_String(dynamic raw);
 
   @protected
@@ -73,6 +76,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventDraft dco_decode_box_autoadd_event_draft(dynamic raw);
+
+  @protected
+  FileNode dco_decode_box_autoadd_file_node(dynamic raw);
 
   @protected
   ReplyPhrases dco_decode_box_autoadd_reply_phrases(dynamic raw);
@@ -117,10 +123,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EventDraft dco_decode_event_draft(dynamic raw);
 
   @protected
+  FileLink dco_decode_file_link(dynamic raw);
+
+  @protected
   FileNode dco_decode_file_node(dynamic raw);
 
   @protected
+  FileShare dco_decode_file_share(dynamic raw);
+
+  @protected
   FileStore dco_decode_file_store(dynamic raw);
+
+  @protected
+  FileVersion dco_decode_file_version(dynamic raw);
+
+  @protected
+  FoundFile dco_decode_found_file(dynamic raw);
 
   @protected
   PlatformInt64 dco_decode_i_64(dynamic raw);
@@ -159,10 +177,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Event> dco_decode_list_event(dynamic raw);
 
   @protected
+  List<FileLink> dco_decode_list_file_link(dynamic raw);
+
+  @protected
   List<FileNode> dco_decode_list_file_node(dynamic raw);
 
   @protected
+  List<FileShare> dco_decode_list_file_share(dynamic raw);
+
+  @protected
   List<FileStore> dco_decode_list_file_store(dynamic raw);
+
+  @protected
+  List<FileVersion> dco_decode_list_file_version(dynamic raw);
+
+  @protected
+  List<FoundFile> dco_decode_list_found_file(dynamic raw);
 
   @protected
   List<LabelledValue> dco_decode_list_labelled_value(dynamic raw);
@@ -180,6 +210,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<Principal> dco_decode_list_principal(dynamic raw);
+
+  @protected
   MailAccount dco_decode_mail_account(dynamic raw);
 
   @protected
@@ -189,10 +222,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  FileNode? dco_decode_opt_box_autoadd_file_node(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
   Participant dco_decode_participant(dynamic raw);
+
+  @protected
+  Principal dco_decode_principal(dynamic raw);
 
   @protected
   ReplyPhrases dco_decode_reply_phrases(dynamic raw);
@@ -208,6 +247,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void dco_decode_unit(dynamic raw);
+
+  @protected
+  UploadProgress dco_decode_upload_progress(dynamic raw);
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
@@ -249,6 +291,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustStreamSink<String> sse_decode_StreamSink_String_Sse(SseDeserializer deserializer);
 
   @protected
+  RustStreamSink<UploadProgress> sse_decode_StreamSink_upload_progress_Sse(SseDeserializer deserializer);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
@@ -268,6 +313,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventDraft sse_decode_box_autoadd_event_draft(SseDeserializer deserializer);
+
+  @protected
+  FileNode sse_decode_box_autoadd_file_node(SseDeserializer deserializer);
 
   @protected
   ReplyPhrases sse_decode_box_autoadd_reply_phrases(SseDeserializer deserializer);
@@ -312,10 +360,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EventDraft sse_decode_event_draft(SseDeserializer deserializer);
 
   @protected
+  FileLink sse_decode_file_link(SseDeserializer deserializer);
+
+  @protected
   FileNode sse_decode_file_node(SseDeserializer deserializer);
 
   @protected
+  FileShare sse_decode_file_share(SseDeserializer deserializer);
+
+  @protected
   FileStore sse_decode_file_store(SseDeserializer deserializer);
+
+  @protected
+  FileVersion sse_decode_file_version(SseDeserializer deserializer);
+
+  @protected
+  FoundFile sse_decode_found_file(SseDeserializer deserializer);
 
   @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
@@ -354,10 +414,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Event> sse_decode_list_event(SseDeserializer deserializer);
 
   @protected
+  List<FileLink> sse_decode_list_file_link(SseDeserializer deserializer);
+
+  @protected
   List<FileNode> sse_decode_list_file_node(SseDeserializer deserializer);
 
   @protected
+  List<FileShare> sse_decode_list_file_share(SseDeserializer deserializer);
+
+  @protected
   List<FileStore> sse_decode_list_file_store(SseDeserializer deserializer);
+
+  @protected
+  List<FileVersion> sse_decode_list_file_version(SseDeserializer deserializer);
+
+  @protected
+  List<FoundFile> sse_decode_list_found_file(SseDeserializer deserializer);
 
   @protected
   List<LabelledValue> sse_decode_list_labelled_value(SseDeserializer deserializer);
@@ -375,6 +447,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<Principal> sse_decode_list_principal(SseDeserializer deserializer);
+
+  @protected
   MailAccount sse_decode_mail_account(SseDeserializer deserializer);
 
   @protected
@@ -384,10 +459,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  FileNode? sse_decode_opt_box_autoadd_file_node(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   Participant sse_decode_participant(SseDeserializer deserializer);
+
+  @protected
+  Principal sse_decode_principal(SseDeserializer deserializer);
 
   @protected
   ReplyPhrases sse_decode_reply_phrases(SseDeserializer deserializer);
@@ -403,6 +484,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  UploadProgress sse_decode_upload_progress(SseDeserializer deserializer);
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
@@ -453,6 +537,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_StreamSink_String_Sse(RustStreamSink<String> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_StreamSink_upload_progress_Sse(RustStreamSink<UploadProgress> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
@@ -472,6 +559,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_event_draft(EventDraft self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_file_node(FileNode self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_reply_phrases(ReplyPhrases self, SseSerializer serializer);
@@ -516,10 +606,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_event_draft(EventDraft self, SseSerializer serializer);
 
   @protected
+  void sse_encode_file_link(FileLink self, SseSerializer serializer);
+
+  @protected
   void sse_encode_file_node(FileNode self, SseSerializer serializer);
 
   @protected
+  void sse_encode_file_share(FileShare self, SseSerializer serializer);
+
+  @protected
   void sse_encode_file_store(FileStore self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_file_version(FileVersion self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_found_file(FoundFile self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
@@ -558,10 +660,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_event(List<Event> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_file_link(List<FileLink> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_file_node(List<FileNode> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_file_share(List<FileShare> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_file_store(List<FileStore> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_file_version(List<FileVersion> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_found_file(List<FoundFile> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_labelled_value(List<LabelledValue> self, SseSerializer serializer);
@@ -579,6 +693,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_principal(List<Principal> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_mail_account(MailAccount self, SseSerializer serializer);
 
   @protected
@@ -588,10 +705,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_file_node(FileNode? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_participant(Participant self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_principal(Principal self, SseSerializer serializer);
 
   @protected
   void sse_encode_reply_phrases(ReplyPhrases self, SseSerializer serializer);
@@ -607,6 +730,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_upload_progress(UploadProgress self, SseSerializer serializer);
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);

@@ -7,9 +7,9 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `html_of`, `identity`, `kept`, `mail_account`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -34,6 +34,28 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// The contacts of every address book, `search` searching them; by name.
   Future<List<Contact>> contacts({required String search});
 
+  /// Moves or copies a node into a directory (`None`: the top) – of the same store or another; a name taken there
+  /// gets a number.
+  Future<void> copyFile({
+    required String fromAccountId,
+    required String toAccountId,
+    required String id,
+    String? parentId,
+    required bool moveIt,
+  });
+
+  Future<void> createDirectory({required String accountId, String? parentId, required String name});
+
+  /// Makes a link – `mode` is `view`, `add` or `drop` –, with an expiry (a UTCDate) and a password if given, and
+  /// answers its address: the only time it can be known.
+  Future<String> createFileLink({
+    required String accountId,
+    required String id,
+    required String mode,
+    String? expires,
+    String? password,
+  });
+
   /// Makes a folder – in `parent_id`, or at the top – and returns its id.
   Future<String> createMailbox({String? accountId, required String name, String? parentId});
 
@@ -47,6 +69,9 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Removes several emails for good – the app moves them to the Trash first, and removes them only from there.
   Future<void> destroyEmails({String? accountId, required List<String> ids});
+
+  /// Removes a node and all it holds, for good.
+  Future<void> destroyFile({required String accountId, required String id});
 
   /// Removes a folder, with the emails only in it when `with_emails`.
   Future<void> destroyMailbox({String? accountId, required String id, required bool withEmails});
@@ -87,10 +112,21 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// by start.
   Future<List<Event>> events({required String from, required String to});
 
+  Future<List<FileLink>> fileLinks({required String accountId, required String id});
+
   List<FileStore> fileStores();
+
+  /// The directory with the role `trash`, if the store has one.
+  Future<FileNode?> fileTrash({required String accountId});
+
+  /// The current content and the earlier versions of a file, newest first.
+  Future<List<FileVersion>> fileVersions({required String accountId, required String id});
 
   /// The nodes of a directory, or of the top of the store for `None`.
   Future<List<FileNode>> files({required String accountId, String? parentId});
+
+  /// People and groups of the tenant whose name or address holds `text`.
+  Future<List<Principal>> findPrincipals({required String text});
 
   /// Finishes a login with the URL the browser came back to. The access token is renewed in the background before
   /// it expires; [`Kernoid::kept_login`] and [`Kernoid::watch_login`] give what to keep to stay signed in.
@@ -101,6 +137,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   String? keptLogin();
 
   Future<E2eStatus> keyStatus();
+
+  /// Whether the server makes links for people without an account.
+  bool linksAvailable();
 
   /// Forgets the unlocked key and every message decrypted with it.
   Future<E2eStatus> lockKey();
@@ -130,6 +169,13 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// The labels a phone number may have: where it is, then what it is.
   static List<String> phoneLabels() => RustLib.instance.api.crateApiKernoidKernoidPhoneLabels();
 
+  /// The people and groups named.
+  Future<List<Principal>> principals({required List<String> ids});
+
+  Future<void> removeFileLink({required String accountId, required String id});
+
+  Future<void> renameFile({required String accountId, required String id, required String name});
+
   Future<void> renameMailbox({String? accountId, required String id, required String name});
 
   /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
@@ -141,6 +187,9 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String kind,
     required ReplyPhrases phrases,
   });
+
+  /// Makes an earlier version the file's content again.
+  Future<void> restoreVersion({required String accountId, required String id, required String versionId});
 
   /// Signs in again with what [`Kernoid::kept_login`] gave – after a restart. The refresh token is used up by it:
   /// keep the new one ([`Kernoid::kept_login`]). A login that ended is `unauthorized`: forget what was kept.
@@ -172,6 +221,9 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String directory,
   });
 
+  /// The nodes whose name or text holds `text`, anywhere in the store.
+  Future<List<FoundFile>> searchFiles({required String accountId, required String text});
+
   /// Sends a message – end-to-end encrypted and signed whenever it can be (RFC 0006, 5.3): then the files go inside
   /// the encrypted message and nothing of them reaches the server as it is; else they are uploaded and attached.
   /// Returns whether it went encrypted.
@@ -183,11 +235,18 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   String get server;
 
+  /// Sets with whom a directory is shared, replacing what was.
+  Future<void> shareDirectory({required String accountId, required String id, required List<FileShare> shares});
+
   /// Signs out: a login with OpenID Connect is revoked at the server – the browser's session there stays.
   Future<void> signOut();
 
   /// Unlocks the key with the recovery code; it stays in this process's memory only.
   Future<E2eStatus> unlockKey({required String code});
+
+  /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
+  /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
+  Stream<UploadProgress> uploadFiles({required String accountId, String? parentId, required List<String> paths});
 
   String get username;
 
@@ -849,8 +908,34 @@ class EventDraft {
           repeat == other.repeat;
 }
 
+/// A link for people without an account: `view`, `add` (view and add) or `drop` (only add).
+class FileLink {
+  final String id;
+  final String mode;
+  final String? expires;
+  final bool hasPassword;
+  final String? created;
+
+  const FileLink({required this.id, required this.mode, this.expires, required this.hasPassword, this.created});
+
+  @override
+  int get hashCode => id.hashCode ^ mode.hashCode ^ expires.hashCode ^ hasPassword.hashCode ^ created.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FileLink &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          mode == other.mode &&
+          expires == other.expires &&
+          hasPassword == other.hasPassword &&
+          created == other.created;
+}
+
 class FileNode {
   final String id;
+  final String? parentId;
   final String name;
   final bool isDirectory;
   final String? role;
@@ -859,8 +944,22 @@ class FileNode {
   final String? mediaType;
   final String? modified;
 
+  /// The user's rights on it, as the server says them – `false` when it says none (a file takes those of where it
+  /// lies).
+  final bool hasRights;
+  final bool mayRead;
+  final bool mayAddChildren;
+  final bool mayRename;
+  final bool mayDelete;
+  final bool mayModifyContent;
+  final bool mayShare;
+
+  /// With whom a directory is shared.
+  final List<FileShare> shares;
+
   const FileNode({
     required this.id,
+    this.parentId,
     required this.name,
     required this.isDirectory,
     this.role,
@@ -868,18 +967,35 @@ class FileNode {
     required this.size,
     this.mediaType,
     this.modified,
+    required this.hasRights,
+    required this.mayRead,
+    required this.mayAddChildren,
+    required this.mayRename,
+    required this.mayDelete,
+    required this.mayModifyContent,
+    required this.mayShare,
+    required this.shares,
   });
 
   @override
   int get hashCode =>
       id.hashCode ^
+      parentId.hashCode ^
       name.hashCode ^
       isDirectory.hashCode ^
       role.hashCode ^
       blobId.hashCode ^
       size.hashCode ^
       mediaType.hashCode ^
-      modified.hashCode;
+      modified.hashCode ^
+      hasRights.hashCode ^
+      mayRead.hashCode ^
+      mayAddChildren.hashCode ^
+      mayRename.hashCode ^
+      mayDelete.hashCode ^
+      mayModifyContent.hashCode ^
+      mayShare.hashCode ^
+      shares.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -887,13 +1003,41 @@ class FileNode {
       other is FileNode &&
           runtimeType == other.runtimeType &&
           id == other.id &&
+          parentId == other.parentId &&
           name == other.name &&
           isDirectory == other.isDirectory &&
           role == other.role &&
           blobId == other.blobId &&
           size == other.size &&
           mediaType == other.mediaType &&
-          modified == other.modified;
+          modified == other.modified &&
+          hasRights == other.hasRights &&
+          mayRead == other.mayRead &&
+          mayAddChildren == other.mayAddChildren &&
+          mayRename == other.mayRename &&
+          mayDelete == other.mayDelete &&
+          mayModifyContent == other.mayModifyContent &&
+          mayShare == other.mayShare &&
+          shares == other.shares;
+}
+
+/// A person or group a directory is shared with, and how far: `read`, `edit` or `full` (edit and share).
+class FileShare {
+  final String principalId;
+  final String level;
+
+  const FileShare({required this.principalId, required this.level});
+
+  @override
+  int get hashCode => principalId.hashCode ^ level.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FileShare &&
+          runtimeType == other.runtimeType &&
+          principalId == other.principalId &&
+          level == other.level;
 }
 
 class FileStore {
@@ -901,10 +1045,23 @@ class FileStore {
   final String name;
   final bool isPersonal;
 
-  const FileStore({required this.accountId, required this.name, required this.isPersonal});
+  /// A drive: folders the tenant owns, which the user has rights in.
+  final bool isDrive;
+
+  /// Whether the user may add at the top of the store.
+  final bool mayCreateTopLevel;
+
+  const FileStore({
+    required this.accountId,
+    required this.name,
+    required this.isPersonal,
+    required this.isDrive,
+    required this.mayCreateTopLevel,
+  });
 
   @override
-  int get hashCode => accountId.hashCode ^ name.hashCode ^ isPersonal.hashCode;
+  int get hashCode =>
+      accountId.hashCode ^ name.hashCode ^ isPersonal.hashCode ^ isDrive.hashCode ^ mayCreateTopLevel.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -913,7 +1070,69 @@ class FileStore {
           runtimeType == other.runtimeType &&
           accountId == other.accountId &&
           name == other.name &&
-          isPersonal == other.isPersonal;
+          isPersonal == other.isPersonal &&
+          isDrive == other.isDrive &&
+          mayCreateTopLevel == other.mayCreateTopLevel;
+}
+
+/// The content of a file: the current one or an earlier version.
+class FileVersion {
+  final String id;
+  final String blobId;
+  final PlatformInt64 size;
+  final String? mediaType;
+  final String? modified;
+  final String? created;
+  final bool isCurrent;
+
+  const FileVersion({
+    required this.id,
+    required this.blobId,
+    required this.size,
+    this.mediaType,
+    this.modified,
+    this.created,
+    required this.isCurrent,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      blobId.hashCode ^
+      size.hashCode ^
+      mediaType.hashCode ^
+      modified.hashCode ^
+      created.hashCode ^
+      isCurrent.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FileVersion &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          blobId == other.blobId &&
+          size == other.size &&
+          mediaType == other.mediaType &&
+          modified == other.modified &&
+          created == other.created &&
+          isCurrent == other.isCurrent;
+}
+
+/// A node found by a search, with the names of the directories above it.
+class FoundFile {
+  final FileNode node;
+  final List<FileNode> path;
+
+  const FoundFile({required this.node, required this.path});
+
+  @override
+  int get hashCode => node.hashCode ^ path.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FoundFile && runtimeType == other.runtimeType && node == other.node && path == other.path;
 }
 
 /// An error for people: the message is shown as it is.
@@ -1033,6 +1252,29 @@ class Participant {
           status == other.status;
 }
 
+/// A person or group of the tenant (RFC 9670): `individual` or `group`.
+class Principal {
+  final String id;
+  final String kind;
+  final String name;
+  final String? email;
+
+  const Principal({required this.id, required this.kind, required this.name, this.email});
+
+  @override
+  int get hashCode => id.hashCode ^ kind.hashCode ^ name.hashCode ^ email.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Principal &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          kind == other.kind &&
+          name == other.name &&
+          email == other.email;
+}
+
 /// The words around a quote, in the user's language: `{date}` and `{who}` are filled in.
 class ReplyPhrases {
   final String wrote;
@@ -1095,4 +1337,25 @@ class SendPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SendPlan && runtimeType == other.runtimeType && encrypted == other.encrypted && reason == other.reason;
+}
+
+/// How far an upload is: the file (its index among those chosen) and its bytes.
+class UploadProgress {
+  final int index;
+  final PlatformInt64 sent;
+  final PlatformInt64 total;
+
+  const UploadProgress({required this.index, required this.sent, required this.total});
+
+  @override
+  int get hashCode => index.hashCode ^ sent.hashCode ^ total.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UploadProgress &&
+          runtimeType == other.runtimeType &&
+          index == other.index &&
+          sent == other.sent &&
+          total == other.total;
 }

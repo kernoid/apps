@@ -460,7 +460,12 @@ class _MailPageState extends State<MailPage> {
     final list = Column(
       children: [
         _chosen.isEmpty
-            ? _SearchField(controller: _search, onSubmitted: _runSearch, hint: l.searchMail)
+            ? KSearchField(
+                fieldKey: const ValueKey('mail-search'),
+                controller: _search,
+                onSubmitted: _runSearch,
+                hint: l.searchMail,
+              )
             : _ChosenBar(
                 count: _chosen.length,
                 boxes: _boxes[_accountId] ?? const [],
@@ -736,69 +741,6 @@ class _Mailboxes extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// The search over the list: Enter searches the whole mailbox, emptying it shows the folder again.
-class _SearchField extends StatefulWidget {
-  const _SearchField({required this.controller, required this.onSubmitted, required this.hint});
-
-  final TextEditingController controller;
-  final ValueChanged<String> onSubmitted;
-  final String hint;
-
-  @override
-  State<_SearchField> createState() => _SearchFieldState();
-}
-
-class _SearchFieldState extends State<_SearchField> {
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Container(
-      height: KSize.bar,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: k.surface,
-        border: Border(bottom: BorderSide(color: k.line)),
-      ),
-      child: TextField(
-        key: const ValueKey('mail-search'),
-        controller: widget.controller,
-        textInputAction: TextInputAction.search,
-        onSubmitted: widget.onSubmitted,
-        onChanged: (text) {
-          setState(() {});
-          if (text.isEmpty) widget.onSubmitted('');
-        },
-        style: KText.body(k).copyWith(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          filled: true,
-          fillColor: k.raised,
-          prefixIcon: Icon(LucideIcons.search, size: 16, color: k.faint),
-          prefixIconConstraints: const BoxConstraints(minWidth: 36),
-          suffixIcon: widget.controller.text.isEmpty
-              ? null
-              : KIconButton(
-                  icon: LucideIcons.x,
-                  tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
-                  size: 30,
-                  onPressed: () {
-                    widget.controller.clear();
-                    widget.onSubmitted('');
-                    setState(() {});
-                  },
-                ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(KSize.radiusSmall),
-            borderSide: BorderSide.none,
-          ),
-        ),
       ),
     );
   }

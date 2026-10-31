@@ -637,4 +637,137 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appPasswordWrong => 'The address or the app password is wrong.';
+
+  @override
+  String get drives => 'Drives';
+
+  @override
+  String get sharedWithMe => 'Shared with me';
+
+  @override
+  String get upload => 'Upload';
+
+  @override
+  String get uploading => 'Uploading …';
+
+  @override
+  String get searchFiles => 'Search names and contents';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String shareTitle(String name) {
+    return 'Share “$name”';
+  }
+
+  @override
+  String get findPeople => 'Find people and groups';
+
+  @override
+  String get levelRead => 'Can view';
+
+  @override
+  String get levelEdit => 'Can edit';
+
+  @override
+  String get levelFull => 'Can edit and share';
+
+  @override
+  String get notShared => 'Shared with nobody yet.';
+
+  @override
+  String get shared => 'Shared';
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String linksTitle(String name) {
+    return 'Links to “$name”';
+  }
+
+  @override
+  String get linkView => 'View';
+
+  @override
+  String get linkAdd => 'View and add';
+
+  @override
+  String get linkDrop => 'Only add';
+
+  @override
+  String get expires => 'Expires';
+
+  @override
+  String get never => 'Never';
+
+  @override
+  String inDays(int days) {
+    return 'In $days days';
+  }
+
+  @override
+  String expiresOn(String date) {
+    return 'Expires $date';
+  }
+
+  @override
+  String get withPassword => 'With password';
+
+  @override
+  String get passwordOptional => 'Password (optional)';
+
+  @override
+  String get createLink => 'Make a link';
+
+  @override
+  String get linkMade => 'The link – it is shown only now:';
+
+  @override
+  String get noLinks => 'No links yet.';
+
+  @override
+  String get versions => 'Versions';
+
+  @override
+  String get currentVersion => 'Current';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get restoreConfirm => 'Make this version the file\'s content again? The current one stays as a version.';
+
+  @override
+  String get copyOrMove => 'Copy or move';
+
+  @override
+  String get copyHere => 'Copy here';
+
+  @override
+  String get moveHere => 'Move here';
+
+  @override
+  String deleteFileConfirm(String name) {
+    return 'Delete “$name” for good?';
+  }
+
+  @override
+  String get trashEmptyNote => 'The trash is empty';
+
+  @override
+  String get more => 'More';
+
+  @override
+  String get newFolderName => 'Name of the new folder';
+
+  @override
+  String get newName => 'New name';
+
+  @override
+  String get drive => 'Drive';
+
+  @override
+  String get deleteFileForGood => 'Delete for good';
 }

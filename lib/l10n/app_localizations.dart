@@ -1279,6 +1279,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The address or the app password is wrong.'**
   String get appPasswordWrong;
+
+  /// No description provided for @drives.
+  ///
+  /// In en, this message translates to:
+  /// **'Drives'**
+  String get drives;
+
+  /// No description provided for @sharedWithMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with me'**
+  String get sharedWithMe;
+
+  /// No description provided for @upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get upload;
+
+  /// No description provided for @uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading …'**
+  String get uploading;
+
+  /// No description provided for @searchFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search names and contents'**
+  String get searchFiles;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share “{name}”'**
+  String shareTitle(String name);
+
+  /// No description provided for @findPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Find people and groups'**
+  String get findPeople;
+
+  /// No description provided for @levelRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Can view'**
+  String get levelRead;
+
+  /// No description provided for @levelEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Can edit'**
+  String get levelEdit;
+
+  /// No description provided for @levelFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Can edit and share'**
+  String get levelFull;
+
+  /// No description provided for @notShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with nobody yet.'**
+  String get notShared;
+
+  /// No description provided for @shared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get shared;
+
+  /// No description provided for @link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get link;
+
+  /// No description provided for @linksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Links to “{name}”'**
+  String linksTitle(String name);
+
+  /// No description provided for @linkView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get linkView;
+
+  /// No description provided for @linkAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'View and add'**
+  String get linkAdd;
+
+  /// No description provided for @linkDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Only add'**
+  String get linkDrop;
+
+  /// No description provided for @expires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get expires;
+
+  /// No description provided for @never.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get never;
+
+  /// No description provided for @inDays.
+  ///
+  /// In en, this message translates to:
+  /// **'In {days} days'**
+  String inDays(int days);
+
+  /// No description provided for @expiresOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {date}'**
+  String expiresOn(String date);
+
+  /// No description provided for @withPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'With password'**
+  String get withPassword;
+
+  /// No description provided for @passwordOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Password (optional)'**
+  String get passwordOptional;
+
+  /// No description provided for @createLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a link'**
+  String get createLink;
+
+  /// No description provided for @linkMade.
+  ///
+  /// In en, this message translates to:
+  /// **'The link – it is shown only now:'**
+  String get linkMade;
+
+  /// No description provided for @noLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'No links yet.'**
+  String get noLinks;
+
+  /// No description provided for @versions.
+  ///
+  /// In en, this message translates to:
+  /// **'Versions'**
+  String get versions;
+
+  /// No description provided for @currentVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get currentVersion;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @restoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Make this version the file\'s content again? The current one stays as a version.'**
+  String get restoreConfirm;
+
+  /// No description provided for @copyOrMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy or move'**
+  String get copyOrMove;
+
+  /// No description provided for @copyHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy here'**
+  String get copyHere;
+
+  /// No description provided for @moveHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move here'**
+  String get moveHere;
+
+  /// No description provided for @deleteFileConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}” for good?'**
+  String deleteFileConfirm(String name);
+
+  /// No description provided for @trashEmptyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The trash is empty'**
+  String get trashEmptyNote;
+
+  /// No description provided for @more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get more;
+
+  /// No description provided for @newFolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name of the new folder'**
+  String get newFolderName;
+
+  /// No description provided for @newName.
+  ///
+  /// In en, this message translates to:
+  /// **'New name'**
+  String get newName;
+
+  /// No description provided for @drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive'**
+  String get drive;
+
+  /// No description provided for @deleteFileForGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for good'**
+  String get deleteFileForGood;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -6,7 +6,8 @@
 //     [--dart-define=KERNOID_TEST_INVITATION=<title> --dart-define=KERNOID_TEST_CONTACT=<name>] \
 //     [--dart-define=KERNOID_TEST_SCREENSHOTS=/a/directory]
 // The account needs mail in its inbox, and files at the top of its store: Notizen.txt, and Roadmap.md in a folder
-// Projekte. Without a server the test does nothing.
+// Projekte. The files test also tries a drive "Team" it may change, when there is one, and needs a folder "Von Bob" with
+// Plan.txt that bob@demo.localhost shares for reading. Without a server the test does nothing.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -528,6 +529,155 @@ void main() {
     // A tap chooses a folder and goes back to its messages.
     await settledTap(tester, side('Projekte'));
     await waitFor(tester, find.byKey(const ValueKey('manage-folders')));
+  });
+
+  testWidgets('files: folders, copies, the trash, sharing, links, versions, search, drives', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-files')));
+    await waitFor(tester, find.byKey(const ValueKey('file-Notizen.txt')));
+    final folder = 'Mappe ${DateTime.now().millisecondsSinceEpoch % 100000}';
+    Finder row(String name) => find.byKey(ValueKey('file-$name'));
+    Future<void> settle() async {
+      // After a dialog or a menu: give it the time to fade out.
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+      await tester.pump();
+    }
+
+    Future<void> menu(String name, String action) async {
+      await settle();
+      await settledTap(tester, find.byKey(ValueKey('more-$name')));
+      await waitFor(tester, find.byKey(ValueKey('menu-$action')));
+      await settledTap(tester, find.byKey(ValueKey('menu-$action')));
+    }
+
+    Future<void> ask(String text) async {
+      await waitFor(tester, find.byKey(const ValueKey('ask-text')));
+      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
+    }
+
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('files-search'))));
+
+    // A folder, and a copy in it of a file someone shares.
+    await settledTap(tester, find.byKey(const ValueKey('new-folder')));
+    await ask(folder);
+    await waitFor(tester, row(folder));
+    await settledTap(tester, find.byKey(const ValueKey('store-bob@demo.localhost')));
+    await waitFor(tester, row('Von Bob'));
+    expect(find.byKey(const ValueKey('new-folder')), findsNothing);
+    await settledTap(tester, row('Von Bob'));
+    await waitFor(tester, row('Plan.txt'));
+    await menu('Plan.txt', 'copy');
+    await waitFor(tester, find.byKey(const ValueKey('target-store')));
+    await settledTap(tester, find.byKey(const ValueKey('target-store')));
+    await settledTap(tester, find.text(l.myFiles).last);
+    await waitFor(tester, find.byKey(ValueKey('target-$folder')));
+    await settledTap(tester, find.byKey(ValueKey('target-$folder')));
+    await waitFor(tester, find.byKey(const ValueKey('copy-here')));
+    await settle();
+    await settledTap(tester, find.byKey(const ValueKey('copy-here')));
+    await settle();
+    await settledTap(tester, find.byKey(const ValueKey('store-own')));
+    await waitFor(tester, row(folder));
+    await settledTap(tester, row(folder));
+    await waitFor(tester, row('Plan.txt'));
+    await shoot(tester, 'files-copied');
+
+    // Renamed, then into the trash, and out of it for good.
+    await menu('Plan.txt', 'rename');
+    await ask('Kopie.txt');
+    await waitFor(tester, row('Kopie.txt'));
+    await menu('Kopie.txt', 'delete');
+    await waitGone(tester, row('Kopie.txt'));
+    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await waitFor(tester, row('Trash'));
+    await settledTap(tester, row('Trash'));
+    await waitFor(tester, row('Kopie.txt'));
+    await menu('Kopie.txt', 'delete');
+    await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+    await waitGone(tester, row('Kopie.txt'));
+    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await waitFor(tester, row(folder));
+
+    // Shared with bob, and a link to it.
+    await menu(folder, 'share');
+    await waitFor(tester, find.byKey(const ValueKey('share-find')));
+    await tester.enterText(find.byKey(const ValueKey('share-find')), 'bob');
+    await waitFor(tester, find.byKey(const ValueKey('principal-bob@demo.localhost')));
+    await settledTap(tester, find.byKey(const ValueKey('principal-bob@demo.localhost')));
+    await waitFor(tester, find.byKey(const ValueKey('level-0')));
+    await settledTap(tester, find.byKey(const ValueKey('share-save')));
+    await waitFor(tester, find.descendant(of: row(folder), matching: find.text(l.shared)));
+    await menu(folder, 'link');
+    await waitFor(tester, find.byKey(const ValueKey('link-create')));
+    await settledTap(tester, find.byKey(const ValueKey('link-create')));
+    await waitFor(tester, find.byKey(const ValueKey('link-made')));
+    expect(tester.widget<SelectableText>(find.byKey(const ValueKey('link-made'))).data, startsWith('http'));
+    await shoot(tester, 'files-link');
+    await settledTap(tester, find.text(l.done));
+
+    // The versions of a file.
+    await settle();
+    await settledTap(tester, row('Projekte'));
+    await waitFor(tester, row('Roadmap.md'));
+    await menu('Roadmap.md', 'versions');
+    await waitFor(tester, find.byKey(const ValueKey('version-0')));
+    await settledTap(tester, find.text(l.done));
+
+    // A search over names and contents.
+    await settle();
+    await tester.enterText(find.byKey(const ValueKey('files-search')), 'Roadmap');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await waitFor(tester, find.textContaining('${l.myFiles} / Projekte'));
+    await shoot(tester, 'files-search');
+    await tester.enterText(find.byKey(const ValueKey('files-search')), '');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+
+    // The folder goes, for good.
+    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await waitFor(tester, row(folder));
+    await menu(folder, 'delete');
+    await waitGone(tester, row(folder));
+    await settledTap(tester, row('Trash'));
+    await waitFor(tester, row(folder));
+    await menu(folder, 'delete');
+    await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+    await waitGone(tester, row(folder));
+
+    // A drive of the tenant.
+    if (find.byKey(const ValueKey('store-Team')).evaluate().isNotEmpty) {
+      await settledTap(tester, find.byKey(const ValueKey('store-Team')));
+      await waitFor(tester, find.byKey(const ValueKey('new-folder')));
+      await shoot(tester, 'files-drive');
+    }
+  });
+
+  testWidgets('files on a phone: the stores in a menu, a long press', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(390, 844) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-files')));
+    await waitFor(tester, find.byKey(const ValueKey('file-Notizen.txt')));
+    await shoot(tester, 'files-phone');
+    await tester.longPress(find.byKey(const ValueKey('file-Notizen.txt')));
+    await waitFor(tester, find.byKey(const ValueKey('menu-versions')));
+    await tester.tapAt(const Offset(10, 400));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+    await tester.pump();
+    await settledTap(tester, find.byKey(const ValueKey('store-menu')));
+    await waitFor(tester, find.text('Team'));
+    await settledTap(tester, find.text('Team').last);
+    await waitFor(tester, find.byKey(const ValueKey('new-folder')));
   });
 
   testWidgets('a message is written, answered and forwarded', (tester) async {

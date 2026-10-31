@@ -640,4 +640,138 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get appPasswordWrong => 'Die Adresse oder das App-Passwort ist falsch.';
+
+  @override
+  String get drives => 'Ablagen';
+
+  @override
+  String get sharedWithMe => 'Mit mir geteilt';
+
+  @override
+  String get upload => 'Hochladen';
+
+  @override
+  String get uploading => 'Wird hochgeladen …';
+
+  @override
+  String get searchFiles => 'Namen und Inhalte durchsuchen';
+
+  @override
+  String get share => 'Teilen';
+
+  @override
+  String shareTitle(String name) {
+    return '„$name“ teilen';
+  }
+
+  @override
+  String get findPeople => 'Personen und Gruppen suchen';
+
+  @override
+  String get levelRead => 'Darf ansehen';
+
+  @override
+  String get levelEdit => 'Darf bearbeiten';
+
+  @override
+  String get levelFull => 'Darf bearbeiten und teilen';
+
+  @override
+  String get notShared => 'Noch mit niemandem geteilt.';
+
+  @override
+  String get shared => 'Geteilt';
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String linksTitle(String name) {
+    return 'Links zu „$name“';
+  }
+
+  @override
+  String get linkView => 'Ansehen';
+
+  @override
+  String get linkAdd => 'Ansehen und hinzufügen';
+
+  @override
+  String get linkDrop => 'Nur hinzufügen';
+
+  @override
+  String get expires => 'Läuft ab';
+
+  @override
+  String get never => 'Nie';
+
+  @override
+  String inDays(int days) {
+    return 'In $days Tagen';
+  }
+
+  @override
+  String expiresOn(String date) {
+    return 'Läuft ab $date';
+  }
+
+  @override
+  String get withPassword => 'Mit Passwort';
+
+  @override
+  String get passwordOptional => 'Passwort (optional)';
+
+  @override
+  String get createLink => 'Link erstellen';
+
+  @override
+  String get linkMade => 'Der Link – er wird nur jetzt angezeigt:';
+
+  @override
+  String get noLinks => 'Noch keine Links.';
+
+  @override
+  String get versions => 'Versionen';
+
+  @override
+  String get currentVersion => 'Aktuell';
+
+  @override
+  String get restore => 'Wiederherstellen';
+
+  @override
+  String get restoreConfirm =>
+      'Diese Version wieder zum Inhalt der Datei machen? Der jetzige bleibt als Version erhalten.';
+
+  @override
+  String get copyOrMove => 'Kopieren oder verschieben';
+
+  @override
+  String get copyHere => 'Hierher kopieren';
+
+  @override
+  String get moveHere => 'Hierher verschieben';
+
+  @override
+  String deleteFileConfirm(String name) {
+    return '„$name“ endgültig löschen?';
+  }
+
+  @override
+  String get trashEmptyNote => 'Der Papierkorb ist leer';
+
+  @override
+  String get more => 'Mehr';
+
+  @override
+  String get newFolderName => 'Name des neuen Ordners';
+
+  @override
+  String get newName => 'Neuer Name';
+
+  @override
+  String get drive => 'Ablage';
+
+  @override
+  String get deleteFileForGood => 'Endgültig löschen';
 }

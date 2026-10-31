@@ -284,5 +284,81 @@
       }
     }
   },
-  "appPasswordWrong": "The address or the app password is wrong."
+  "appPasswordWrong": "The address or the app password is wrong.",
+  "drives": "Drives",
+  "sharedWithMe": "Shared with me",
+  "upload": "Upload",
+  "uploading": "Uploading …",
+  "searchFiles": "Search names and contents",
+  "share": "Share",
+  "shareTitle": "Share “{name}”",
+  "@shareTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "findPeople": "Find people and groups",
+  "levelRead": "Can view",
+  "levelEdit": "Can edit",
+  "levelFull": "Can edit and share",
+  "notShared": "Shared with nobody yet.",
+  "shared": "Shared",
+  "link": "Link",
+  "linksTitle": "Links to “{name}”",
+  "@linksTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkView": "View",
+  "linkAdd": "View and add",
+  "linkDrop": "Only add",
+  "expires": "Expires",
+  "never": "Never",
+  "inDays": "In {days} days",
+  "@inDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "expiresOn": "Expires {date}",
+  "@expiresOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "withPassword": "With password",
+  "passwordOptional": "Password (optional)",
+  "createLink": "Make a link",
+  "linkMade": "The link – it is shown only now:",
+  "noLinks": "No links yet.",
+  "versions": "Versions",
+  "currentVersion": "Current",
+  "restore": "Restore",
+  "restoreConfirm": "Make this version the file's content again? The current one stays as a version.",
+  "copyOrMove": "Copy or move",
+  "copyHere": "Copy here",
+  "moveHere": "Move here",
+  "deleteFileConfirm": "Delete “{name}” for good?",
+  "@deleteFileConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "trashEmptyNote": "The trash is empty",
+  "more": "More",
+  "newFolderName": "Name of the new folder",
+  "newName": "New name",
+  "drive": "Drive",
+  "deleteFileForGood": "Delete for good"
 }

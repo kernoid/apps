@@ -24,6 +24,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   emptied – from a folder's menu (right click, or a long press on phones; a page of its own on phones), in the own
   mailbox and in shared ones the user may change. Needs kernoid-client's folder functions (next SDK release).
 - A refused login says that the address or the app password is wrong, in the user's language.
+- Files as the web app has them: the own store, the tenant's drives and what others share, side by side on wide
+  screens and in a menu on phones; new folders, uploads with their progress, searching names and contents; for each
+  file or folder, as far as the user's rights go: sharing with people and groups, links for people without an account
+  (with an expiry and a password), versions (saved, or made current again), moving – and copying to another store –,
+  renaming, deleting into the Trash and out of it for good. OPEN: vaults, a viewer, dropping files onto the window.
 
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on
