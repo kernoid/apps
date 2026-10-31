@@ -96,6 +96,9 @@ class _LoginPageState extends State<LoginPage> {
       final account = await Kernoid.login(server: _server.text, address: _address.text, password: _password.text);
       _password.clear();
       widget.onSignedIn(account);
+    } on KernoidError catch (error) {
+      // The server says only that it did not accept them – the same for a wrong address and a wrong password.
+      setState(() => _error = error.unauthorized ? AppLocalizations.of(context).appPasswordWrong : errorText(error));
     } catch (error) {
       setState(() => _error = errorText(error));
     } finally {

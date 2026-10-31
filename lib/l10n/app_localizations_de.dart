@@ -589,4 +589,55 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get newSubfolder => 'Neuer Ordner darin';
+
+  @override
+  String get rename => 'Umbenennen';
+
+  @override
+  String get moveFolder => 'Verschieben';
+
+  @override
+  String get emptyFolder => 'Leeren';
+
+  @override
+  String get deleteFolder => 'Ordner löschen';
+
+  @override
+  String get newFolder => 'Neuer Ordner';
+
+  @override
+  String get create => 'Anlegen';
+
+  @override
+  String get topLevel => 'Ganz oben';
+
+  @override
+  String get folders => 'Ordner';
+
+  @override
+  String moveFolderTo(String name) {
+    return '„$name“ verschieben nach';
+  }
+
+  @override
+  String emptyFolderConfirm(String name) {
+    return 'Alle Mails in „$name“ endgültig löschen?';
+  }
+
+  @override
+  String deleteFolderConfirm(String name) {
+    return 'Den Ordner „$name“ löschen?';
+  }
+
+  @override
+  String deleteFolderWithEmails(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'die $count Mails', one: 'die Mail');
+    return 'Den Ordner „$name“ und $_temp0 nur darin endgültig löschen?';
+  }
+
+  @override
+  String get appPasswordWrong => 'Die Adresse oder das App-Passwort ist falsch.';
 }

@@ -7,6 +7,7 @@ import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/dialogs.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import '../widgets/e2e.dart';
@@ -274,6 +275,169 @@ class _MailPageState extends State<MailPage> {
     }
   }
 
+  /// What can be done with a folder: a folder in it, and – unless it has a role (Inbox, Sent …) – renaming, moving
+  /// and deleting it; the Trash and Junk are emptied.
+  Future<void> _folderMenu(String accountId, Mailbox box, Offset position) async {
+    final l = AppLocalizations.of(context);
+    final own = box.role == null;
+    final choice = await showPointMenu<String>(
+      context,
+      position: position,
+      items: [
+        ('new', LucideIcons.folderPlus, l.newSubfolder, false),
+        if (own) ('rename', LucideIcons.pencil, l.rename, false),
+        if (own) ('move', LucideIcons.folderInput, l.moveFolder, false),
+        if (box.role == 'trash' || box.role == 'junk') ('empty', LucideIcons.trash, l.emptyFolder, true),
+        if (own) ('delete', LucideIcons.trash2, l.deleteFolder, true),
+      ],
+    );
+    if (choice == null || !mounted) return;
+    await switch (choice) {
+      'new' => _newFolder(accountId, box.id),
+      'rename' => _renameFolder(accountId, box),
+      'move' => _moveFolder(accountId, box),
+      'empty' => _emptyFolder(accountId, box),
+      _ => _deleteFolder(accountId, box),
+    };
+  }
+
+  Future<void> _newFolder(String accountId, String? parent) async {
+    final l = AppLocalizations.of(context);
+    final name = await askText(context, title: l.newFolder, confirm: l.create, label: l.name);
+    if (name == null) return;
+    await _folderAction(
+      accountId,
+      () => widget.account.createMailbox(accountId: accountId, name: name, parentId: parent),
+    );
+  }
+
+  Future<void> _renameFolder(String accountId, Mailbox box) async {
+    final l = AppLocalizations.of(context);
+    final name = await askText(context, title: l.rename, confirm: l.save, initial: box.name, label: l.name);
+    if (name == null || name == box.name) return;
+    await _folderAction(accountId, () => widget.account.renameMailbox(accountId: accountId, id: box.id, name: name));
+  }
+
+  Future<void> _moveFolder(String accountId, Mailbox box) async {
+    final l = AppLocalizations.of(context);
+    final boxes = _boxes[accountId] ?? const <Mailbox>[];
+    // Not into itself or a folder of its own.
+    final below = <String>{box.id};
+    for (final (b, _) in mailboxTree(boxes)) {
+      if (b.parentId != null && below.contains(b.parentId)) below.add(b.id);
+    }
+    final target = await showDialog<(bool, String?)>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l.moveFolderTo(box.name)),
+        content: SizedBox(
+          width: 360,
+          height: 360,
+          child: ListView(
+            children: [
+              KSideItem(
+                key: const ValueKey('folder-top'),
+                icon: LucideIcons.arrowUpToLine,
+                label: l.topLevel,
+                onTap: () => Navigator.of(context).pop((true, null)),
+              ),
+              for (final (b, depth) in mailboxTree(boxes))
+                if (!below.contains(b.id))
+                  KSideItem(
+                    key: ValueKey('folder-to-${b.id}'),
+                    icon: mailboxIcon(b),
+                    label: mailboxName(l, b),
+                    indent: depth * 16.0,
+                    onTap: () => Navigator.of(context).pop((true, b.id)),
+                  ),
+            ],
+          ),
+        ),
+        actions: [KButton(label: l.cancel, tone: KTone.quiet, onPressed: () => Navigator.of(context).pop())],
+      ),
+    );
+    if (target == null || target.$2 == box.parentId) return;
+    await _folderAction(
+      accountId,
+      () => widget.account.moveMailbox(accountId: accountId, id: box.id, parentId: target.$2),
+    );
+  }
+
+  Future<void> _emptyFolder(String accountId, Mailbox box) async {
+    final l = AppLocalizations.of(context);
+    if (!await confirmAction(
+      context,
+      text: l.emptyFolderConfirm(mailboxName(l, box)),
+      confirm: l.emptyFolder,
+      danger: true,
+    )) {
+      return;
+    }
+    await _folderAction(accountId, () => widget.account.emptyMailbox(accountId: accountId, id: box.id));
+    if (_mailbox?.id == box.id) _loadEmails(reset: true);
+  }
+
+  Future<void> _deleteFolder(String accountId, Mailbox box) async {
+    final l = AppLocalizations.of(context);
+    final text = box.total > 0 ? l.deleteFolderWithEmails(box.name, box.total) : l.deleteFolderConfirm(box.name);
+    if (!await confirmAction(context, text: text, confirm: l.deleteFolder, danger: true)) return;
+    await _folderAction(
+      accountId,
+      () => widget.account.destroyMailbox(accountId: accountId, id: box.id, withEmails: box.total > 0),
+    );
+  }
+
+  /// Runs a change of folders and shows the account's folders as they are now; the folder shown, if it went, gives way
+  /// to the inbox.
+  Future<void> _folderAction(String accountId, Future<Object?> Function() action) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
+    try {
+      await action();
+      final boxes = await widget.account.mailboxes(accountId: accountId);
+      if (!mounted) return;
+      setState(() => _boxes[accountId] = boxes);
+      if (accountId == _accountId && !boxes.any((b) => b.id == _mailbox?.id)) {
+        final inbox = boxes.where((b) => b.role == 'inbox').firstOrNull ?? boxes.firstOrNull;
+        if (inbox != null) _select(accountId, inbox);
+      }
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    }
+  }
+
+  /// On phones: the folders of every account on a page of their own, chosen with a tap, managed with a long press.
+  Future<void> _folderPage() async {
+    final l = AppLocalizations.of(context);
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (page) => StatefulBuilder(
+          builder: (page, rebuild) => Scaffold(
+            appBar: KTopBar(title: l.folders),
+            body: _Mailboxes(
+              accounts: _accounts,
+              boxes: _boxes,
+              account: _accountId,
+              selected: _mailbox?.id,
+              onSelect: (accountId, box) {
+                Navigator.of(page).pop();
+                _select(accountId, box);
+              },
+              onMenu: (accountId, box, position) async {
+                await _folderMenu(accountId, box, position);
+                rebuild(() {});
+              },
+              onNew: (accountId) async {
+                await _newFolder(accountId, null);
+                rebuild(() {});
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// The folders again, for their counts.
   Future<void> _refreshCounts() async {
     try {
@@ -336,6 +500,14 @@ class _MailPageState extends State<MailPage> {
       return Scaffold(
         appBar: KTopBar(
           leading: const SizedBox(width: 6),
+          actions: [
+            KIconButton(
+              key: const ValueKey('manage-folders'),
+              icon: LucideIcons.folderTree,
+              tooltip: l.folders,
+              onPressed: _folderPage,
+            ),
+          ],
           titleWidget: Align(
             alignment: Alignment.centerLeft,
             child: PopupMenuButton<(String, Mailbox)>(
@@ -402,6 +574,8 @@ class _MailPageState extends State<MailPage> {
               account: _accountId,
               selected: _query.isEmpty ? _mailbox?.id : null,
               onSelect: _select,
+              onMenu: _folderMenu,
+              onNew: (accountId) => _newFolder(accountId, null),
               write: KButton(
                 key: const ValueKey('write'),
                 label: l.write,
@@ -494,7 +668,9 @@ class _Mailboxes extends StatelessWidget {
     required this.account,
     required this.selected,
     required this.onSelect,
-    required this.write,
+    required this.onMenu,
+    required this.onNew,
+    this.write,
   });
 
   final List<MailAccount> accounts;
@@ -502,7 +678,11 @@ class _Mailboxes extends StatelessWidget {
   final String account;
   final String? selected;
   final void Function(String account, Mailbox mailbox) onSelect;
-  final Widget write;
+  final void Function(String account, Mailbox mailbox, Offset position) onMenu;
+  final ValueChanged<String> onNew;
+
+  /// The button that writes a message, above the folders on wide screens.
+  final Widget? write;
 
   @override
   Widget build(BuildContext context) {
@@ -513,14 +693,33 @@ class _Mailboxes extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(padding: const EdgeInsets.fromLTRB(12, 14, 12, 10), child: write),
+          if (write != null) Padding(padding: const EdgeInsets.fromLTRB(12, 14, 12, 10), child: write),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
               children: [
                 for (final a in accounts) ...[
-                  if (accounts.length > 1)
-                    KOverline(_accountName(l, a), padding: const EdgeInsets.fromLTRB(10, 12, 10, 4)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: KOverline(
+                          accounts.length > 1 ? _accountName(l, a) : l.folders,
+                          padding: const EdgeInsets.fromLTRB(10, 12, 10, 4),
+                        ),
+                      ),
+                      if (!a.readOnly)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: KIconButton(
+                            key: ValueKey('new-folder-${a.id}'),
+                            icon: LucideIcons.folderPlus,
+                            tooltip: l.newFolder,
+                            size: 28,
+                            onPressed: () => onNew(a.id),
+                          ),
+                        ),
+                    ],
+                  ),
                   for (final (b, depth) in mailboxTree(boxes[a.id] ?? const []))
                     KSideItem(
                       key: ValueKey('mailbox-${b.id}'),
@@ -530,6 +729,7 @@ class _Mailboxes extends StatelessWidget {
                       indent: depth * 16.0,
                       selected: a.id == account && b.id == selected,
                       onTap: () => onSelect(a.id, b),
+                      onMenu: a.readOnly ? null : (position) => onMenu(a.id, b, position),
                     ),
                 ],
               ],

@@ -654,6 +654,55 @@ impl Kernoid {
         .await
     }
 
+    /// Makes a folder – in `parent_id`, or at the top – and returns its id.
+    pub async fn create_mailbox(
+        &self,
+        account_id: Option<String>,
+        name: String,
+        parent_id: Option<String>,
+    ) -> Result<String, KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::create_mailbox(&client, &account, name.trim(), parent_id.as_deref()).await }).await
+    }
+
+    pub async fn rename_mailbox(
+        &self,
+        account_id: Option<String>,
+        id: String,
+        name: String,
+    ) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::rename_mailbox(&client, &account, &id, name.trim()).await }).await
+    }
+
+    /// Moves a folder into `parent_id`, or to the top.
+    pub async fn move_mailbox(
+        &self,
+        account_id: Option<String>,
+        id: String,
+        parent_id: Option<String>,
+    ) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::move_mailbox(&client, &account, &id, parent_id.as_deref()).await }).await
+    }
+
+    /// Removes a folder, with the emails only in it when `with_emails`.
+    pub async fn destroy_mailbox(
+        &self,
+        account_id: Option<String>,
+        id: String,
+        with_emails: bool,
+    ) -> Result<(), KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::destroy_mailbox(&client, &account, &id, with_emails).await }).await
+    }
+
+    /// Removes every email of a folder for good – the Trash, Junk – and returns how many.
+    pub async fn empty_mailbox(&self, account_id: Option<String>, id: String) -> Result<i64, KernoidError> {
+        let (client, account) = (self.client.clone(), self.mail_account(account_id)?);
+        run(async move { mail::empty_mailbox(&client, &account, &id).await.map(count) }).await
+    }
+
     /// Marks several emails: `$seen` (read) or `$flagged`, on or off.
     pub async fn mark_emails(
         &self,

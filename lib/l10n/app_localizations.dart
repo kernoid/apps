@@ -1195,6 +1195,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Delete this email for good?} other{Delete these {count} emails for good?}}'**
   String deleteForGood(int count);
+
+  /// No description provided for @newSubfolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder in it'**
+  String get newSubfolder;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @moveFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get moveFolder;
+
+  /// No description provided for @emptyFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty'**
+  String get emptyFolder;
+
+  /// No description provided for @deleteFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete folder'**
+  String get deleteFolder;
+
+  /// No description provided for @newFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get newFolder;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @topLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'At the top'**
+  String get topLevel;
+
+  /// No description provided for @folders.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get folders;
+
+  /// No description provided for @moveFolderTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move “{name}” to'**
+  String moveFolderTo(String name);
+
+  /// No description provided for @emptyFolderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete every email in “{name}” for good?'**
+  String emptyFolderConfirm(String name);
+
+  /// No description provided for @deleteFolderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the folder “{name}”?'**
+  String deleteFolderConfirm(String name);
+
+  /// No description provided for @deleteFolderWithEmails.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the folder “{name}” and the {count, plural, =1{email} other{{count} emails}} only in it, for good?'**
+  String deleteFolderWithEmails(String name, int count);
+
+  /// No description provided for @appPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'The address or the app password is wrong.'**
+  String get appPasswordWrong;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

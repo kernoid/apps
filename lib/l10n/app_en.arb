@@ -239,5 +239,50 @@
         "type": "int"
       }
     }
-  }
+  },
+  "newSubfolder": "New folder in it",
+  "rename": "Rename",
+  "moveFolder": "Move",
+  "emptyFolder": "Empty",
+  "deleteFolder": "Delete folder",
+  "newFolder": "New folder",
+  "create": "Create",
+  "topLevel": "At the top",
+  "folders": "Folders",
+  "moveFolderTo": "Move “{name}” to",
+  "@moveFolderTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emptyFolderConfirm": "Delete every email in “{name}” for good?",
+  "@emptyFolderConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFolderConfirm": "Delete the folder “{name}”?",
+  "@deleteFolderConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFolderWithEmails": "Delete the folder “{name}” and the {count, plural, =1{email} other{{count} emails}} only in it, for good?",
+  "@deleteFolderWithEmails": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appPasswordWrong": "The address or the app password is wrong."
 }

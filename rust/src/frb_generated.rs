@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1882303539;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1766165901;
 
 // Section: executor
 
@@ -222,6 +222,60 @@ fn wire__crate__api__kernoid__Kernoid_contacts_impl(
                         }
                         let api_that_guard = api_that_guard.unwrap();
                         let output_ok = crate::api::kernoid::Kernoid::contacts(&*api_that_guard, api_search).await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_create_mailbox_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_create_mailbox",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_name = <String>::sse_decode(&mut deserializer);
+            let api_parent_id = <Option<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::create_mailbox(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_name,
+                            api_parent_id,
+                        )
+                        .await?;
                         std::result::Result::Ok(output_ok)
                     })()
                     .await,
@@ -434,6 +488,60 @@ fn wire__crate__api__kernoid__Kernoid_destroy_emails_impl(
         },
     )
 }
+fn wire__crate__api__kernoid__Kernoid_destroy_mailbox_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_destroy_mailbox",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_with_emails = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::destroy_mailbox(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_id,
+                            api_with_emails,
+                        )
+                        .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__kernoid__Kernoid_download_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -614,6 +722,55 @@ fn wire__crate__api__kernoid__Kernoid_emails_impl(
                             api_limit,
                         )
                         .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_empty_mailbox_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_empty_mailbox",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok =
+                            crate::api::kernoid::Kernoid::empty_mailbox(&*api_that_guard, api_account_id, api_id)
+                                .await?;
                         std::result::Result::Ok(output_ok)
                     })()
                     .await,
@@ -1258,6 +1415,60 @@ fn wire__crate__api__kernoid__Kernoid_move_emails_impl(
         },
     )
 }
+fn wire__crate__api__kernoid__Kernoid_move_mailbox_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_move_mailbox",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_parent_id = <Option<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::move_mailbox(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_id,
+                            api_parent_id,
+                        )
+                        .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__kernoid__Kernoid_phone_labels_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -1279,6 +1490,60 @@ fn wire__crate__api__kernoid__Kernoid_phone_labels_impl(
                 let output_ok = Ok::<_, ()>(crate::api::kernoid::Kernoid::phone_labels())?;
                 std::result::Result::Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__kernoid__Kernoid_rename_mailbox_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_rename_mailbox",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::rename_mailbox(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_id,
+                            api_name,
+                        )
+                        .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
         },
     )
 }
@@ -2752,36 +3017,41 @@ fn pde_ffi_dispatcher_primary_impl(
         2 => wire__crate__api__kernoid__Kernoid_begin_login_impl(port, ptr, rust_vec_len, data_len),
         3 => wire__crate__api__kernoid__Kernoid_calendars_impl(port, ptr, rust_vec_len, data_len),
         4 => wire__crate__api__kernoid__Kernoid_contacts_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__kernoid__Kernoid_delete_contact_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__kernoid__Kernoid_delete_event_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__kernoid__Kernoid_delete_instance_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__kernoid__Kernoid_destroy_emails_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__kernoid__Kernoid_download_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__kernoid__Kernoid_email_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__kernoid__Kernoid_emails_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__kernoid__Kernoid_event_draft_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__kernoid__Kernoid_events_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__kernoid__Kernoid_files_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__kernoid__Kernoid_finish_login_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__kernoid__Kernoid_key_status_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__kernoid__Kernoid_lock_key_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__kernoid__Kernoid_login_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__kernoid__Kernoid_mailboxes_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__kernoid__Kernoid_make_key_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__kernoid__Kernoid_mark_emails_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__kernoid__Kernoid_move_emails_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__kernoid__Kernoid_reply_draft_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__kernoid__Kernoid_resume_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__crate__api__kernoid__Kernoid_save_contact_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__crate__api__kernoid__Kernoid_save_event_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__crate__api__kernoid__Kernoid_save_instance_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__crate__api__kernoid__Kernoid_save_part_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__crate__api__kernoid__Kernoid_send_draft_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__crate__api__kernoid__Kernoid_send_plan_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__crate__api__kernoid__Kernoid_sign_out_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__crate__api__kernoid__Kernoid_watch_login_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__kernoid__Kernoid_create_mailbox_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__kernoid__Kernoid_delete_contact_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__kernoid__Kernoid_delete_event_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__kernoid__Kernoid_delete_instance_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__kernoid__Kernoid_destroy_emails_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__kernoid__Kernoid_destroy_mailbox_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__kernoid__Kernoid_download_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__kernoid__Kernoid_email_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__kernoid__Kernoid_emails_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__kernoid__Kernoid_empty_mailbox_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__kernoid__Kernoid_event_draft_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__kernoid__Kernoid_events_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__kernoid__Kernoid_files_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__kernoid__Kernoid_finish_login_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__kernoid__Kernoid_key_status_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__kernoid__Kernoid_lock_key_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__kernoid__Kernoid_login_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__kernoid__Kernoid_mailboxes_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__kernoid__Kernoid_make_key_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__kernoid__Kernoid_mark_emails_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__kernoid__Kernoid_move_emails_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__kernoid__Kernoid_move_mailbox_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__crate__api__kernoid__Kernoid_rename_mailbox_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__crate__api__kernoid__Kernoid_reply_draft_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__crate__api__kernoid__Kernoid_resume_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__crate__api__kernoid__Kernoid_save_contact_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__crate__api__kernoid__Kernoid_save_event_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__crate__api__kernoid__Kernoid_save_instance_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__crate__api__kernoid__Kernoid_save_part_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__kernoid__Kernoid_send_draft_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__crate__api__kernoid__Kernoid_send_plan_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__kernoid__Kernoid_sign_out_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__crate__api__kernoid__Kernoid_watch_login_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2794,14 +3064,14 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        11 => wire__crate__api__kernoid__Kernoid_email_labels_impl(ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__kernoid__Kernoid_file_stores_impl(ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__kernoid__Kernoid_kept_login_impl(ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__kernoid__Kernoid_mail_accounts_impl(ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__kernoid__Kernoid_phone_labels_impl(ptr, rust_vec_len, data_len),
-        36 => wire__crate__api__kernoid__Kernoid_server_impl(ptr, rust_vec_len, data_len),
-        39 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__kernoid__OidcLogin_url_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__kernoid__Kernoid_email_labels_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__kernoid__Kernoid_file_stores_impl(ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__kernoid__Kernoid_kept_login_impl(ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__kernoid__Kernoid_mail_accounts_impl(ptr, rust_vec_len, data_len),
+        31 => wire__crate__api__kernoid__Kernoid_phone_labels_impl(ptr, rust_vec_len, data_len),
+        41 => wire__crate__api__kernoid__Kernoid_server_impl(ptr, rust_vec_len, data_len),
+        44 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
+        46 => wire__crate__api__kernoid__OidcLogin_url_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

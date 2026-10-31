@@ -34,6 +34,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// The contacts of every address book, `search` searching them; by name.
   Future<List<Contact>> contacts({required String search});
 
+  /// Makes a folder – in `parent_id`, or at the top – and returns its id.
+  Future<String> createMailbox({String? accountId, required String name, String? parentId});
+
   Future<void> deleteContact({required String accountId, required String contactId});
 
   /// Deletes an event – a recurring one as a whole; the people invited hear of it by email.
@@ -44,6 +47,9 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Removes several emails for good – the app moves them to the Trash first, and removes them only from there.
   Future<void> destroyEmails({String? accountId, required List<String> ids});
+
+  /// Removes a folder, with the emails only in it when `with_emails`.
+  Future<void> destroyMailbox({String? accountId, required String id, required bool withEmails});
 
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
@@ -70,6 +76,9 @@ abstract class Kernoid implements RustOpaqueInterface {
     required int position,
     required int limit,
   });
+
+  /// Removes every email of a folder for good – the Trash, Junk – and returns how many.
+  Future<PlatformInt64> emptyMailbox({String? accountId, required String id});
 
   /// An event as a draft, to change it: for an instance of a recurring event, the event as a whole.
   Future<EventDraft> eventDraft({required String accountId, required String eventId});
@@ -115,8 +124,13 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Moves several emails into one mailbox of their account.
   Future<void> moveEmails({String? accountId, required List<String> ids, required String mailboxId});
 
+  /// Moves a folder into `parent_id`, or to the top.
+  Future<void> moveMailbox({String? accountId, required String id, String? parentId});
+
   /// The labels a phone number may have: where it is, then what it is.
   static List<String> phoneLabels() => RustLib.instance.api.crateApiKernoidKernoidPhoneLabels();
+
+  Future<void> renameMailbox({String? accountId, required String id, required String name});
 
   /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
   /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.

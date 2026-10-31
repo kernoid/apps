@@ -183,5 +183,19 @@
   "flag": "Markieren",
   "moveTo": "Verschieben nach",
   "chosen": "{count, plural, =1{1 ausgewählt} other{{count} ausgewählt}}",
-  "deleteForGood": "{count, plural, =1{Diese Mail endgültig löschen?} other{Diese {count} Mails endgültig löschen?}}"
+  "deleteForGood": "{count, plural, =1{Diese Mail endgültig löschen?} other{Diese {count} Mails endgültig löschen?}}",
+  "newSubfolder": "Neuer Ordner darin",
+  "rename": "Umbenennen",
+  "moveFolder": "Verschieben",
+  "emptyFolder": "Leeren",
+  "deleteFolder": "Ordner löschen",
+  "newFolder": "Neuer Ordner",
+  "create": "Anlegen",
+  "topLevel": "Ganz oben",
+  "folders": "Ordner",
+  "moveFolderTo": "„{name}“ verschieben nach",
+  "emptyFolderConfirm": "Alle Mails in „{name}“ endgültig löschen?",
+  "deleteFolderConfirm": "Den Ordner „{name}“ löschen?",
+  "deleteFolderWithEmails": "Den Ordner „{name}“ und {count, plural, =1{die Mail} other{die {count} Mails}} nur darin endgültig löschen?",
+  "appPasswordWrong": "Die Adresse oder das App-Passwort ist falsch."
 }

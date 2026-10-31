@@ -330,6 +330,7 @@ class KSideItem extends StatefulWidget {
     this.selected = false,
     required this.onTap,
     this.indent = 0,
+    this.onMenu,
   });
 
   final IconData icon;
@@ -338,6 +339,9 @@ class KSideItem extends StatefulWidget {
   final bool selected;
   final VoidCallback onTap;
   final double indent;
+
+  /// A menu of what can be done with the item, opened with a right click or a long press – at that point.
+  final void Function(Offset position)? onMenu;
 
   @override
   State<KSideItem> createState() => _KSideItemState();
@@ -356,6 +360,9 @@ class _KSideItemState extends State<KSideItem> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
+        // Opened once the gesture is over: a menu opened while it lasts leaves its recognizer waiting for the next.
+        onSecondaryTapUp: widget.onMenu == null ? null : (d) => widget.onMenu!(d.globalPosition),
+        onLongPressEnd: widget.onMenu == null ? null : (d) => widget.onMenu!(d.globalPosition),
         child: Container(
           height: KSize.control,
           margin: const EdgeInsets.symmetric(vertical: 1),

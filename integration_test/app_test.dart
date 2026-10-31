@@ -5,11 +5,13 @@
 //     --dart-define=KERNOID_TEST_ADDRESS=alice@demo.localhost --dart-define=KERNOID_TEST_PASSWORD=… \
 //     [--dart-define=KERNOID_TEST_INVITATION=<title> --dart-define=KERNOID_TEST_CONTACT=<name>] \
 //     [--dart-define=KERNOID_TEST_SCREENSHOTS=/a/directory]
-// The account needs mail in its inbox and files at the top of its store. Without a server the test does nothing.
+// The account needs mail in its inbox, and files at the top of its store: Notizen.txt, and Roadmap.md in a folder
+// Projekte. Without a server the test does nothing.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,7 +107,10 @@ void main() {
       if (name == 'wide') {
         await tester.enterText(find.byKey(const ValueKey('password')), 'wrong');
         await tester.tap(find.byKey(const ValueKey('sign-in')));
-        await waitFor(tester, find.textContaining('app password is wrong'));
+        await waitFor(
+          tester,
+          find.text(AppLocalizations.of(tester.element(find.byKey(const ValueKey('server')))).appPasswordWrong),
+        );
         await shoot(tester, '$name-login-error');
       }
 
@@ -114,14 +119,13 @@ void main() {
       await tester.pump();
       await tester.tap(find.byKey(const ValueKey('sign-in')));
       await waitFor(tester, listRows);
-      await waitFor(tester, find.textContaining('Prototypen'));
       await shoot(tester, '$name-inbox');
 
-      await tester.tap(find.textContaining('Prototypen').first);
-      await waitFor(tester, find.textContaining('Dateiansicht'));
+      await tester.tap(listRows.first);
+      await waitFor(tester, find.byKey(const ValueKey('reply')));
       await shoot(tester, '$name-message');
       if (name == 'phone') {
-        await tester.tap(find.byType(BackButton));
+        await tester.tap(find.byKey(const ValueKey('back')));
         await tester.pumpAndSettle();
       }
 
@@ -436,6 +440,94 @@ void main() {
     );
     expect(find.byKey(const ValueKey('reply')), findsOneWidget);
     await shoot(tester, 'mail-shared');
+  });
+
+  testWidgets('mail folders are made, renamed, moved and deleted', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await waitFor(tester, listRows);
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+    final top = 'Ordner $stamp';
+    Finder side(String label) => find.widgetWithText(KSideItem, label);
+    double indent(String label) => tester.widget<KSideItem>(side(label)).indent;
+    Future<void> name(String text) async {
+      await waitFor(tester, find.byKey(const ValueKey('ask-text')));
+      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
+    }
+
+    Future<void> menu(String label, String action) async {
+      // After a dialog: give it the time to fade out.
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+      await tester.pump();
+      // A right click, as on a desktop (phones open the same menu with a long press).
+      await tester.tapAt(tester.getCenter(side(label)), buttons: kSecondaryMouseButton, kind: PointerDeviceKind.mouse);
+      await waitFor(tester, find.byKey(ValueKey('menu-$action')));
+      await settledTap(tester, find.byKey(ValueKey('menu-$action')));
+    }
+
+    // A folder at the top, one in it.
+    await settledTap(tester, find.byWidgetPredicate((w) => '${w.key}'.contains("new-folder-")).first);
+    await name(top);
+    await waitFor(tester, side(top));
+    await menu(top, 'new');
+    await name('Darin');
+    await waitFor(tester, side('Darin'));
+    expect(indent('Darin'), greaterThan(indent(top)));
+    await shoot(tester, 'folders-made');
+
+    // Moved to the top, then renamed.
+    await menu('Darin', 'move');
+    await settledTap(tester, find.byKey(const ValueKey('folder-top')));
+    await waitFor(tester, find.byWidgetPredicate((w) => w is KSideItem && w.label == 'Darin' && w.indent == 0));
+    await menu('Darin', 'rename');
+    await name('Umbenannt $stamp');
+    await waitFor(tester, side('Umbenannt $stamp'));
+
+    // Both deleted.
+    for (final folder in [top, 'Umbenannt $stamp']) {
+      await menu(folder, 'delete');
+      await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+      await waitGone(tester, side(folder));
+    }
+  });
+
+  testWidgets('mail folders on a phone: their own page, a long press', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(390, 844) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await waitFor(tester, listRows);
+    final folder = 'Handy ${DateTime.now().millisecondsSinceEpoch % 100000}';
+    Finder side(String label) => find.widgetWithText(KSideItem, label);
+
+    await settledTap(tester, find.byKey(const ValueKey('manage-folders')));
+    await waitFor(tester, find.byWidgetPredicate((w) => '${w.key}'.contains('new-folder-')));
+    await settledTap(tester, find.byWidgetPredicate((w) => '${w.key}'.contains('new-folder-')).first);
+    await waitFor(tester, find.byKey(const ValueKey('ask-text')));
+    await tester.enterText(find.byKey(const ValueKey('ask-text')), folder);
+    await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
+    await waitFor(tester, side(folder));
+    await shoot(tester, 'folders-phone');
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+    await tester.pump();
+    await tester.longPress(side(folder));
+    await waitFor(tester, find.byKey(const ValueKey('menu-delete')));
+    await settledTap(tester, find.byKey(const ValueKey('menu-delete')));
+    await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+    await waitGone(tester, side(folder));
+
+    // A tap chooses a folder and goes back to its messages.
+    await settledTap(tester, side('Projekte'));
+    await waitFor(tester, find.byKey(const ValueKey('manage-folders')));
   });
 
   testWidgets('a message is written, answered and forwarded', (tester) async {

@@ -20,6 +20,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 - Searching mail, over the whole mailbox.
 - Several messages at once – Ctrl or ⌘ and Shift on desktops, a long press on phones –: marked read or unread,
   flagged, moved to a folder, deleted (into the Trash; out of the Trash or Junk for good, once confirmed).
+- Mail folders are made, renamed, moved and deleted (with their messages, once confirmed), and the Trash and Junk
+  emptied – from a folder's menu (right click, or a long press on phones; a page of its own on phones), in the own
+  mailbox and in shared ones the user may change. Needs kernoid-client's folder functions (next SDK release).
+- A refused login says that the address or the app password is wrong, in the user's language.
 
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on

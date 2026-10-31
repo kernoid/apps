@@ -586,4 +586,55 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get newSubfolder => 'New folder in it';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get moveFolder => 'Move';
+
+  @override
+  String get emptyFolder => 'Empty';
+
+  @override
+  String get deleteFolder => 'Delete folder';
+
+  @override
+  String get newFolder => 'New folder';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get topLevel => 'At the top';
+
+  @override
+  String get folders => 'Folders';
+
+  @override
+  String moveFolderTo(String name) {
+    return 'Move “$name” to';
+  }
+
+  @override
+  String emptyFolderConfirm(String name) {
+    return 'Delete every email in “$name” for good?';
+  }
+
+  @override
+  String deleteFolderConfirm(String name) {
+    return 'Delete the folder “$name”?';
+  }
+
+  @override
+  String deleteFolderWithEmails(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count emails', one: 'email');
+    return 'Delete the folder “$name” and the $_temp0 only in it, for good?';
+  }
+
+  @override
+  String get appPasswordWrong => 'The address or the app password is wrong.';
 }
