@@ -9,6 +9,7 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ### Changed
 
+- On kernoid's Rust SDK 0.2.2 (`kernoid-client`, `kernoid-e2e` from crates.io), released with kernoid 0.2.2.
 - kernoid's own look instead of Material's: the web app's colours (dark, and light when the system is), IBM Plex,
   Lucide icons, a side bar with the word mark on wide screens and a bar of the sections on narrow ones, and widgets of
   its own (`lib/ui`). Mail shows its folders as a tree, its messages with avatars and an unread mark.
@@ -22,7 +23,7 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   flagged, moved to a folder, deleted (into the Trash; out of the Trash or Junk for good, once confirmed).
 - Mail folders are made, renamed, moved and deleted (with their messages, once confirmed), and the Trash and Junk
   emptied – from a folder's menu (right click, or a long press on phones; a page of its own on phones), in the own
-  mailbox and in shared ones the user may change. Needs kernoid-client's folder functions (next SDK release).
+  mailbox and in shared ones the user may change.
 - A refused login says that the address or the app password is wrong, in the user's language.
 - Files as the web app has them: the own store, the tenant's drives and what others share, side by side on wide
   screens and in a menu on phones; new folders, uploads with their progress, searching names and contents; for each
@@ -33,8 +34,7 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   its dates, subject and text, the end-to-end key; with a login of OpenID Connect also the name, the picture, the
   language of kernoid's emails and the mail settings (the address mail comes from, undo sending, how long the Trash
   keeps mail) – with an app password, given to other programs, those stay in the web app. Password, second factors,
-  passkeys, app passwords and sessions are the web app's, a click away. Needs kernoid's next release (its API takes
-  the apps' token for these settings, and the SDK's `account`). OPEN: cutting a picture to a square.
+  passkeys, app passwords and sessions are the web app's, a click away. OPEN: cutting a picture to a square.
 
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on
