@@ -820,4 +820,78 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openWebApp => 'Open in the browser';
+
+  @override
+  String get profile => 'Name and picture';
+
+  @override
+  String get displayName => 'Display name';
+
+  @override
+  String get changePicture => 'Change picture';
+
+  @override
+  String get removePicture => 'Remove picture';
+
+  @override
+  String get pictureHint => 'PNG, JPEG or WebP, up to 1 MiB – best square. Others in your organisation see it.';
+
+  @override
+  String get emailLanguage => 'Language of emails from kernoid';
+
+  @override
+  String get emailLanguageHint =>
+      'Invitations sent for you and notices to you are written in it; the app follows your system.';
+
+  @override
+  String asTenantLanguage(String language) {
+    return 'As the organisation ($language)';
+  }
+
+  @override
+  String get languageNamede => 'Deutsch';
+
+  @override
+  String get languageNameen => 'English';
+
+  @override
+  String get mailSettings => 'Writing and the Trash';
+
+  @override
+  String get sendFrom => 'Send from';
+
+  @override
+  String get myAddress => 'My address';
+
+  @override
+  String get undoSend => 'Undo sending';
+
+  @override
+  String get off => 'Off';
+
+  @override
+  String seconds(int count) {
+    return '$count seconds';
+  }
+
+  @override
+  String get keepTrash => 'Keep emails in the Trash';
+
+  @override
+  String asTenantDays(int days) {
+    return 'As the organisation sets it ($days days)';
+  }
+
+  @override
+  String get asTenantForever => 'As the organisation sets it (until deleted)';
+
+  @override
+  String get ownDays => 'My own: days';
+
+  @override
+  String get securityHintApp =>
+      'Your password, two-factor sign-in, passkeys, app passwords and sessions are changed in the web app, where you sign in with your password.';
+
+  @override
+  String get asTenant => 'As the organisation';
 }

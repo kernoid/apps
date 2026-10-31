@@ -1621,6 +1621,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in the browser'**
   String get openWebApp;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and picture'**
+  String get profile;
+
+  /// No description provided for @displayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayName;
+
+  /// No description provided for @changePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Change picture'**
+  String get changePicture;
+
+  /// No description provided for @removePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove picture'**
+  String get removePicture;
+
+  /// No description provided for @pictureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PNG, JPEG or WebP, up to 1 MiB – best square. Others in your organisation see it.'**
+  String get pictureHint;
+
+  /// No description provided for @emailLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language of emails from kernoid'**
+  String get emailLanguage;
+
+  /// No description provided for @emailLanguageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitations sent for you and notices to you are written in it; the app follows your system.'**
+  String get emailLanguageHint;
+
+  /// No description provided for @asTenantLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'As the organisation ({language})'**
+  String asTenantLanguage(String language);
+
+  /// No description provided for @languageNamede.
+  ///
+  /// In en, this message translates to:
+  /// **'Deutsch'**
+  String get languageNamede;
+
+  /// No description provided for @languageNameen.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageNameen;
+
+  /// No description provided for @mailSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing and the Trash'**
+  String get mailSettings;
+
+  /// No description provided for @sendFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Send from'**
+  String get sendFrom;
+
+  /// No description provided for @myAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'My address'**
+  String get myAddress;
+
+  /// No description provided for @undoSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo sending'**
+  String get undoSend;
+
+  /// No description provided for @off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get off;
+
+  /// No description provided for @seconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} seconds'**
+  String seconds(int count);
+
+  /// No description provided for @keepTrash.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep emails in the Trash'**
+  String get keepTrash;
+
+  /// No description provided for @asTenantDays.
+  ///
+  /// In en, this message translates to:
+  /// **'As the organisation sets it ({days} days)'**
+  String asTenantDays(int days);
+
+  /// No description provided for @asTenantForever.
+  ///
+  /// In en, this message translates to:
+  /// **'As the organisation sets it (until deleted)'**
+  String get asTenantForever;
+
+  /// No description provided for @ownDays.
+  ///
+  /// In en, this message translates to:
+  /// **'My own: days'**
+  String get ownDays;
+
+  /// No description provided for @securityHintApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password, two-factor sign-in, passkeys, app passwords and sessions are changed in the web app, where you sign in with your password.'**
+  String get securityHintApp;
+
+  /// No description provided for @asTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'As the organisation'**
+  String get asTenant;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -9,10 +9,12 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
+  Future<AccountLanguage> accountLanguage();
+
   /// Answers an invitation: `accepted`, `tentative` or `declined`; the organizer hears of it by email.
   Future<void> answerEvent({
     required String accountId,
@@ -152,6 +154,8 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// The mail accounts the user reaches – their own first, then the shared mailboxes by name.
   List<MailAccount> mailAccounts();
 
+  Future<MailSettings> mailSettings();
+
   Future<List<Mailbox>> mailboxes({String? accountId});
 
   /// Makes the account's key here and returns its recovery code – to be shown once.
@@ -166,6 +170,12 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Moves a folder into `parent_id`, or to the top.
   Future<void> moveMailbox({String? accountId, required String id, String? parentId});
 
+  /// The account's own picture, or none.
+  Future<Uint8List?> ownAvatar();
+
+  /// The account's display name.
+  Future<String> ownName();
+
   /// The labels a phone number may have: where it is, then what it is.
   static List<String> phoneLabels() => RustLib.instance.api.crateApiKernoidKernoidPhoneLabels();
 
@@ -173,6 +183,8 @@ abstract class Kernoid implements RustOpaqueInterface {
   Future<List<Principal>> principals({required List<String> ids});
 
   Future<void> removeFileLink({required String accountId, required String id});
+
+  Future<void> removeOwnAvatar();
 
   Future<void> renameFile({required String accountId, required String id, required String name});
 
@@ -235,7 +247,21 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   String get server;
 
+  /// Chooses the language of kernoid's emails; none follows the tenant's.
+  Future<void> setAccountLanguage({String? language});
+
+  Future<void> setMailSettings({required MailSettings settings});
+
+  /// Sets the picture: a PNG, JPEG or WebP image of up to 1 MiB.
+  Future<void> setOwnAvatar({required List<int> image, required String mediaType});
+
+  Future<void> setOwnName({required String name});
+
   Future<void> setVacation({required VacationResponse vacation});
+
+  /// Whether the login reaches the account's everyday settings: a login with OpenID Connect does, an app password –
+  /// given to other programs – does not.
+  bool settingsAvailable();
 
   /// Sets with whom a directory is shared, replacing what was.
   Future<void> shareDirectory({required String accountId, required String id, required List<FileShare> shares});
@@ -263,6 +289,28 @@ abstract class Kernoid implements RustOpaqueInterface {
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<OidcLogin>>
 abstract class OidcLogin implements RustOpaqueInterface {
   String get url;
+}
+
+/// The language kernoid writes its emails to the account in: its own choice (none follows the tenant's), the one used,
+/// and those there are.
+class AccountLanguage {
+  final String? language;
+  final String used;
+  final List<String> available;
+
+  const AccountLanguage({this.language, required this.used, required this.available});
+
+  @override
+  int get hashCode => language.hashCode ^ used.hashCode ^ available.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AccountLanguage &&
+          runtimeType == other.runtimeType &&
+          language == other.language &&
+          used == other.used &&
+          available == other.available;
 }
 
 class Address {
@@ -1199,6 +1247,51 @@ class MailAccount {
           name == other.name &&
           isPersonal == other.isPersonal &&
           readOnly == other.readOnly;
+}
+
+/// How the account writes mail and how long its Trash keeps it.
+class MailSettings {
+  /// Days the Trash keeps an email; none follows the tenant.
+  final int? trashRetentionDays;
+
+  /// The tenant's days, only read; none keeps them until they are deleted.
+  final int? tenantTrashRetentionDays;
+
+  /// The address new emails come from; none is the account's own.
+  final String? defaultFrom;
+
+  /// Seconds an email waits, to be taken back (0 to 30).
+  final int undoSendSeconds;
+
+  /// The addresses the account may send from.
+  final List<String> senders;
+
+  const MailSettings({
+    this.trashRetentionDays,
+    this.tenantTrashRetentionDays,
+    this.defaultFrom,
+    required this.undoSendSeconds,
+    required this.senders,
+  });
+
+  @override
+  int get hashCode =>
+      trashRetentionDays.hashCode ^
+      tenantTrashRetentionDays.hashCode ^
+      defaultFrom.hashCode ^
+      undoSendSeconds.hashCode ^
+      senders.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MailSettings &&
+          runtimeType == other.runtimeType &&
+          trashRetentionDays == other.trashRetentionDays &&
+          tenantTrashRetentionDays == other.tenantTrashRetentionDays &&
+          defaultFrom == other.defaultFrom &&
+          undoSendSeconds == other.undoSendSeconds &&
+          senders == other.senders;
 }
 
 class Mailbox {

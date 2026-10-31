@@ -817,6 +817,85 @@ void main() {
     expect(await tester.runAsync(KeptLogin.resume), isNull);
   });
 
+  testWidgets('with OpenID Connect: name, language and mail settings in the app', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 1000) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    // The app's login is ended and forgotten however the test ends; resuming it here would rotate its refresh token
+    // under the app – kernoid then ends the login.
+    addTearDown(() => tester.runAsync(KeptLogin.forget));
+    // Logged in as the system's browser would, kept – and resumed by the app at its start.
+    await tester.runAsync(() async {
+      final login = await Kernoid.beginLogin(
+        server: server,
+        redirectUri: 'http://127.0.0.1:47615/oauth',
+        address: address,
+      );
+      final account = await Kernoid.finishLogin(login: login, callback: await browser(login.url, address, password));
+      await KeptLogin.keep(account);
+    });
+    await tester.pumpWidget(const KernoidApp());
+    await waitFor(tester, find.byKey(const ValueKey('nav-account')), timeout: const Duration(seconds: 60));
+    await settledTap(tester, find.byKey(const ValueKey('nav-account')));
+    await waitFor(tester, find.byKey(const ValueKey('display-name')));
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('display-name'))));
+    Future<void> saved(String note) async {
+      await waitFor(tester, find.byWidgetPredicate((w) => w is Text && w.key == ValueKey(note) && w.data == l.saved));
+    }
+
+    // The page anew, from the server.
+    Future<void> reload() async {
+      await settledTap(tester, find.byKey(const ValueKey('nav-mail')));
+      await waitFor(tester, find.byKey(const ValueKey('write')));
+      await settledTap(tester, find.byKey(const ValueKey('nav-account')));
+      await waitFor(tester, find.byKey(const ValueKey('undo-send')));
+    }
+
+    Future<void> choose(String dropdown, String label) async {
+      await tester.ensureVisible(find.byKey(ValueKey(dropdown)));
+      await settledTap(tester, find.byKey(ValueKey(dropdown)));
+      await waitFor(tester, find.text(label).hitTestable());
+      await settledTap(tester, find.text(label).hitTestable().last);
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    // The name, changed and back.
+    final before = tester.widget<TextField>(find.byKey(const ValueKey('display-name'))).controller!.text;
+    await tester.enterText(find.byKey(const ValueKey('display-name')), 'Alice aus der App');
+    await settledTap(tester, find.byKey(const ValueKey('name-save')));
+    await saved('profile-note');
+    await reload();
+    expect(tester.widget<TextField>(find.byKey(const ValueKey('display-name'))).controller!.text, 'Alice aus der App');
+    await tester.enterText(find.byKey(const ValueKey('display-name')), before.isEmpty ? address : before);
+    await settledTap(tester, find.byKey(const ValueKey('name-save')));
+    await saved('profile-note');
+
+    // The language of kernoid's emails, and back to the tenant's.
+    await choose('email-language', l.languageNamede);
+    await saved('language-note');
+    await shoot(tester, 'account-oidc');
+    await choose('email-language', l.asTenant);
+    await saved('language-note');
+
+    // Undo sending for 10 seconds, kept at the server, then off again.
+    await choose('undo-send', l.seconds(10));
+    await tester.ensureVisible(find.byKey(const ValueKey('mail-settings-save')));
+    await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
+    await saved('mail-settings-note');
+    await reload();
+    expect(tester.widget<DropdownButton<int>>(find.byKey(const ValueKey('undo-send'))).value, 10);
+    await choose('undo-send', l.off);
+    await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
+    await saved('mail-settings-note');
+
+    await tester.ensureVisible(find.byKey(const ValueKey('sign-out')));
+    await settledTap(tester, find.byKey(const ValueKey('sign-out')));
+    await waitFor(tester, find.byKey(const ValueKey('sign-in')));
+  });
+
   testWidgets('a key is made in the app', (tester) async {
     if (server.isEmpty || newAddress.isEmpty) {
       markTestSkipped('no KERNOID_TEST_NEW_ADDRESS');

@@ -293,6 +293,30 @@ pub struct VacationResponse {
     pub text: String,
 }
 
+/// The language kernoid writes its emails to the account in: its own choice (none follows the tenant's), the one used,
+/// and those there are.
+#[derive(Debug, Clone)]
+pub struct AccountLanguage {
+    pub language: Option<String>,
+    pub used: String,
+    pub available: Vec<String>,
+}
+
+/// How the account writes mail and how long its Trash keeps it.
+#[derive(Debug, Clone)]
+pub struct MailSettings {
+    /// Days the Trash keeps an email; none follows the tenant.
+    pub trash_retention_days: Option<i32>,
+    /// The tenant's days, only read; none keeps them until they are deleted.
+    pub tenant_trash_retention_days: Option<i32>,
+    /// The address new emails come from; none is the account's own.
+    pub default_from: Option<String>,
+    /// Seconds an email waits, to be taken back (0 to 30).
+    pub undo_send_seconds: i32,
+    /// The addresses the account may send from.
+    pub senders: Vec<String>,
+}
+
 /// How far an upload is: the file (its index among those chosen) and its bytes.
 #[derive(Debug, Clone)]
 pub struct UploadProgress {
@@ -1369,6 +1393,84 @@ impl Kernoid {
         };
         let client = self.client.clone();
         run(async move { mail::set_vacation(&client, &vacation).await }).await
+    }
+
+    /// Whether the login reaches the account's everyday settings: a login with OpenID Connect does, an app password –
+    /// given to other programs – does not.
+    #[frb(sync)]
+    pub fn settings_available(&self) -> bool {
+        self.login.is_some()
+    }
+
+    /// The account's display name.
+    pub async fn own_name(&self) -> Result<String, KernoidError> {
+        let client = self.client.clone();
+        let own = self.account(client::PRINCIPALS)?;
+        let found = run(async move { files::principals(&client, &[own.as_str()]).await }).await?;
+        Ok(found.into_iter().next().map(|p| p.name).unwrap_or_default())
+    }
+
+    pub async fn set_own_name(&self, name: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { client::account::set_name(&client, name.trim()).await }).await
+    }
+
+    pub async fn account_language(&self) -> Result<AccountLanguage, KernoidError> {
+        let client = self.client.clone();
+        let l = run(async move { client::account::language(&client).await }).await?;
+        Ok(AccountLanguage { language: l.language, used: l.used, available: l.available })
+    }
+
+    /// Chooses the language of kernoid's emails; none follows the tenant's.
+    pub async fn set_account_language(&self, language: Option<String>) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { client::account::set_language(&client, language.as_deref()).await }).await
+    }
+
+    pub async fn mail_settings(&self) -> Result<MailSettings, KernoidError> {
+        let client = self.client.clone();
+        let account = self.account(client::MAIL)?;
+        run(async move {
+            let settings = client::account::mail_settings(&client).await?;
+            let senders = mail::identities(&client, &account).await?.into_iter().map(|i| i.email).collect();
+            Ok(MailSettings {
+                trash_retention_days: settings.trash_retention_days,
+                tenant_trash_retention_days: settings.tenant_trash_retention_days,
+                default_from: settings.default_from,
+                undo_send_seconds: settings.undo_send_seconds,
+                senders,
+            })
+        })
+        .await
+    }
+
+    pub async fn set_mail_settings(&self, settings: MailSettings) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        let settings = client::account::MailSettings {
+            trash_retention_days: settings.trash_retention_days,
+            tenant_trash_retention_days: None,
+            default_from: settings.default_from,
+            undo_send_seconds: settings.undo_send_seconds,
+        };
+        run(async move { client::account::set_mail_settings(&client, &settings).await }).await
+    }
+
+    /// The account's own picture, or none.
+    pub async fn own_avatar(&self) -> Result<Option<Vec<u8>>, KernoidError> {
+        let client = self.client.clone();
+        let own = self.account(client::PRINCIPALS)?;
+        run(async move { client::account::avatar(&client, &own).await }).await
+    }
+
+    /// Sets the picture: a PNG, JPEG or WebP image of up to 1 MiB.
+    pub async fn set_own_avatar(&self, image: Vec<u8>, media_type: String) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { client::account::set_avatar(&client, image, &media_type).await }).await
+    }
+
+    pub async fn remove_own_avatar(&self) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move { client::account::remove_avatar(&client).await }).await
     }
 
     /// Whether the server makes links for people without an account.

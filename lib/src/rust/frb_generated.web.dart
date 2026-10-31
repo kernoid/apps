@@ -60,6 +60,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  AccountLanguage dco_decode_account_language(dynamic raw);
+
+  @protected
   Address dco_decode_address(dynamic raw);
 
   @protected
@@ -79,6 +82,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FileNode dco_decode_box_autoadd_file_node(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_i_32(dynamic raw);
+
+  @protected
+  MailSettings dco_decode_box_autoadd_mail_settings(dynamic raw);
 
   @protected
   ReplyPhrases dco_decode_box_autoadd_reply_phrases(dynamic raw);
@@ -142,6 +151,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FoundFile dco_decode_found_file(dynamic raw);
+
+  @protected
+  int dco_decode_i_32(dynamic raw);
 
   @protected
   PlatformInt64 dco_decode_i_64(dynamic raw);
@@ -210,6 +222,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Participant> dco_decode_list_participant(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -217,6 +232,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MailAccount dco_decode_mail_account(dynamic raw);
+
+  @protected
+  MailSettings dco_decode_mail_settings(dynamic raw);
 
   @protected
   Mailbox dco_decode_mailbox(dynamic raw);
@@ -228,10 +246,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FileNode? dco_decode_opt_box_autoadd_file_node(dynamic raw);
 
   @protected
+  int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
   VacationResponse? dco_decode_opt_box_autoadd_vacation_response(dynamic raw);
+
+  @protected
+  Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
   Participant dco_decode_participant(dynamic raw);
@@ -306,6 +330,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  AccountLanguage sse_decode_account_language(SseDeserializer deserializer);
+
+  @protected
   Address sse_decode_address(SseDeserializer deserializer);
 
   @protected
@@ -325,6 +352,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FileNode sse_decode_box_autoadd_file_node(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
+  MailSettings sse_decode_box_autoadd_mail_settings(SseDeserializer deserializer);
 
   @protected
   ReplyPhrases sse_decode_box_autoadd_reply_phrases(SseDeserializer deserializer);
@@ -388,6 +421,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FoundFile sse_decode_found_file(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
@@ -456,6 +492,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Participant> sse_decode_list_participant(SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -463,6 +502,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MailAccount sse_decode_mail_account(SseDeserializer deserializer);
+
+  @protected
+  MailSettings sse_decode_mail_settings(SseDeserializer deserializer);
 
   @protected
   Mailbox sse_decode_mailbox(SseDeserializer deserializer);
@@ -474,10 +516,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FileNode? sse_decode_opt_box_autoadd_file_node(SseDeserializer deserializer);
 
   @protected
+  int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
   VacationResponse? sse_decode_opt_box_autoadd_vacation_response(SseDeserializer deserializer);
+
+  @protected
+  Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
   Participant sse_decode_participant(SseDeserializer deserializer);
@@ -508,9 +556,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VacationResponse sse_decode_vacation_response(SseDeserializer deserializer);
-
-  @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer);
@@ -561,6 +606,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_account_language(AccountLanguage self, SseSerializer serializer);
+
+  @protected
   void sse_encode_address(Address self, SseSerializer serializer);
 
   @protected
@@ -580,6 +628,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_file_node(FileNode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_mail_settings(MailSettings self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_reply_phrases(ReplyPhrases self, SseSerializer serializer);
@@ -643,6 +697,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_found_file(FoundFile self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
@@ -711,6 +768,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_participant(List<Participant> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
 
   @protected
@@ -718,6 +778,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_mail_account(MailAccount self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_mail_settings(MailSettings self, SseSerializer serializer);
 
   @protected
   void sse_encode_mailbox(Mailbox self, SseSerializer serializer);
@@ -729,10 +792,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_file_node(FileNode? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_vacation_response(VacationResponse? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_list_prim_u_8_strict(Uint8List? self, SseSerializer serializer);
 
   @protected
   void sse_encode_participant(Participant self, SseSerializer serializer);
@@ -763,9 +832,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_vacation_response(VacationResponse self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
 }
 
 // Section: wire_class

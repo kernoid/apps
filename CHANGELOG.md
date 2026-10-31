@@ -30,9 +30,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   (with an expiry and a password), versions (saved, or made current again), moving – and copying to another store –,
   renaming, deleting into the Trash and out of it for good. OPEN: vaults, a viewer, dropping files onto the window.
 - The account page in kernoid's look: light, dark or as the system (kept on the device), the vacation response with
-  its dates, subject and text, the end-to-end key, and the way to the web app for what needs a login with the password
-  – password, second factors, passkeys, app passwords, sessions, name, picture, language and mail settings: the apps'
-  own login reaches only the data.
+  its dates, subject and text, the end-to-end key; with a login of OpenID Connect also the name, the picture, the
+  language of kernoid's emails and the mail settings (the address mail comes from, undo sending, how long the Trash
+  keeps mail) – with an app password, given to other programs, those stay in the web app. Password, second factors,
+  passkeys, app passwords and sessions are the web app's, a click away. Needs kernoid's next release (its API takes
+  the apps' token for these settings, and the SDK's `account`). OPEN: cutting a picture to a square.
 
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on

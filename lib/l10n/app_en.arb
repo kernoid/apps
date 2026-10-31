@@ -376,5 +376,48 @@
   "notSet": "Not set",
   "security": "Sign-in and security",
   "securityHint": "Your password, two-factor sign-in, passkeys, app passwords and sessions – and your name, picture, language and mail settings – are changed in the web app, where you sign in with your password.",
-  "openWebApp": "Open in the browser"
+  "openWebApp": "Open in the browser",
+  "profile": "Name and picture",
+  "displayName": "Display name",
+  "changePicture": "Change picture",
+  "removePicture": "Remove picture",
+  "pictureHint": "PNG, JPEG or WebP, up to 1 MiB – best square. Others in your organisation see it.",
+  "emailLanguage": "Language of emails from kernoid",
+  "emailLanguageHint": "Invitations sent for you and notices to you are written in it; the app follows your system.",
+  "asTenantLanguage": "As the organisation ({language})",
+  "@asTenantLanguage": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageNamede": "Deutsch",
+  "languageNameen": "English",
+  "mailSettings": "Writing and the Trash",
+  "sendFrom": "Send from",
+  "myAddress": "My address",
+  "undoSend": "Undo sending",
+  "off": "Off",
+  "seconds": "{count} seconds",
+  "@seconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "keepTrash": "Keep emails in the Trash",
+  "asTenantDays": "As the organisation sets it ({days} days)",
+  "@asTenantDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "asTenantForever": "As the organisation sets it (until deleted)",
+  "ownDays": "My own: days",
+  "securityHintApp": "Your password, two-factor sign-in, passkeys, app passwords and sessions are changed in the web app, where you sign in with your password.",
+  "asTenant": "As the organisation"
 }

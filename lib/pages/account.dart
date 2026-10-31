@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+import 'dart:typed_data';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -13,9 +16,10 @@ import '../ui/widgets.dart';
 import '../widgets/e2e.dart';
 
 /// The user's own account – never administration, which stays in the web app and the terminal app (docs/plan.md, 2):
-/// who is signed in, the look on this device, the vacation response, the end-to-end key. What needs a login with the
-/// password – the password itself, second factors, passkeys, app passwords, sessions, also name, picture, language and
-/// mail settings – is the web app's: the app's own login reaches only the data (JMAP), and a page there is a click away.
+/// who is signed in, the look on this device, the vacation response, the end-to-end key – and, with a login of
+/// OpenID Connect, name, picture, language and mail settings (an app password reaches none of them). What needs a login
+/// with the password – the password itself, second factors, passkeys, app passwords, sessions – is the web app's, a
+/// click away.
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key, required this.account, required this.onSignOut});
 
@@ -73,12 +77,17 @@ class AccountPage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (account.settingsAvailable()) ...[
+                    _ProfileSection(account: account),
+                    _LanguageSection(account: account),
+                    _MailSettingsSection(account: account),
+                  ],
                   _VacationSection(account: account),
                   _KeyCard(account: account),
                   KSection(
                     title: l.security,
                     icon: LucideIcons.shieldCheck,
-                    description: l.securityHint,
+                    description: account.settingsAvailable() ? l.securityHintApp : l.securityHint,
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: KButton(
@@ -95,6 +104,424 @@ class AccountPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A section that loads something, shows it, and saves changes – with a line saying how it went.
+abstract class _SettingsState<T extends StatefulWidget> extends State<T> {
+  bool loaded = false;
+  bool busy = false;
+  String? note;
+  bool failed = false;
+
+  Future<void> load();
+
+  @override
+  void initState() {
+    super.initState();
+    // After the first frame: loading changes the state, which a widget cannot while it is first built.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _guard(load, after: () => loaded = true, say: false));
+  }
+
+  Future<void> save(Future<void> Function() work) => _guard(work, say: true);
+
+  Future<void> _guard(Future<void> Function() work, {void Function()? after, required bool say}) async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      busy = true;
+      note = null;
+    });
+    try {
+      await work();
+      if (mounted && say) {
+        setState(() {
+          note = l.saved;
+          failed = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          note = errorText(error);
+          failed = true;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          busy = false;
+          after?.call();
+        });
+      }
+    }
+  }
+
+  Widget noteLine(String key) => note == null
+      ? const SizedBox.shrink()
+      : Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text(
+            note!,
+            key: ValueKey(key),
+            style: KText.small(context.k).copyWith(color: failed ? context.k.error : context.k.accent),
+          ),
+        );
+}
+
+/// The name others see and the picture beside it.
+class _ProfileSection extends StatefulWidget {
+  const _ProfileSection({required this.account});
+
+  final Kernoid account;
+
+  @override
+  State<_ProfileSection> createState() => _ProfileSectionState();
+}
+
+class _ProfileSectionState extends _SettingsState<_ProfileSection> {
+  final _name = TextEditingController();
+  Uint8List? _picture;
+
+  @override
+  Future<void> load() async {
+    final (name, picture) = (await widget.account.ownName(), await widget.account.ownAvatar());
+    _name.text = name;
+    _picture = picture;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _choose() async {
+    final file = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(
+          label: 'images',
+          extensions: ['png', 'jpg', 'jpeg', 'webp'],
+          mimeTypes: ['image/png', 'image/jpeg', 'image/webp'],
+          uniformTypeIdentifiers: ['public.png', 'public.jpeg', 'org.webmproject.webp'],
+        ),
+      ],
+    );
+    if (file == null) return;
+    await save(() async {
+      final bytes = await file.readAsBytes();
+      final name = file.name.toLowerCase();
+      final type = name.endsWith('.png')
+          ? 'image/png'
+          : name.endsWith('.webp')
+          ? 'image/webp'
+          : 'image/jpeg';
+      await widget.account.setOwnAvatar(image: bytes, mediaType: type);
+      _picture = bytes;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return KSection(
+      title: l.profile,
+      icon: LucideIcons.circleUser,
+      description: l.pictureHint,
+      child: !loaded
+          ? const LinearProgressIndicator()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    KAvatar(
+                      key: const ValueKey('own-avatar'),
+                      name: _name.text.isEmpty ? widget.account.username : _name.text,
+                      size: 56,
+                      image: _picture,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          KButton(
+                            key: const ValueKey('change-picture'),
+                            label: l.changePicture,
+                            icon: LucideIcons.imageUp,
+                            onPressed: busy ? null : _choose,
+                          ),
+                          if (_picture != null)
+                            KButton(
+                              key: const ValueKey('remove-picture'),
+                              label: l.removePicture,
+                              icon: LucideIcons.trash2,
+                              tone: KTone.quiet,
+                              onPressed: busy
+                                  ? null
+                                  : () => save(() async {
+                                      await widget.account.removeOwnAvatar();
+                                      _picture = null;
+                                    }),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: const ValueKey('display-name'),
+                        controller: _name,
+                        decoration: InputDecoration(labelText: l.displayName),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    KButton(
+                      key: const ValueKey('name-save'),
+                      label: l.save,
+                      tone: KTone.primary,
+                      onPressed: busy ? null : () => save(() => widget.account.setOwnName(name: _name.text)),
+                    ),
+                  ],
+                ),
+                noteLine('profile-note'),
+              ],
+            ),
+    );
+  }
+}
+
+String _languageName(AppLocalizations l, String code) => switch (code) {
+  'de' => l.languageNamede,
+  'en' => l.languageNameen,
+  _ => code,
+};
+
+/// The language kernoid writes its emails to the account in.
+class _LanguageSection extends StatefulWidget {
+  const _LanguageSection({required this.account});
+
+  final Kernoid account;
+
+  @override
+  State<_LanguageSection> createState() => _LanguageSectionState();
+}
+
+class _LanguageSectionState extends _SettingsState<_LanguageSection> {
+  AccountLanguage? _language;
+
+  @override
+  Future<void> load() async => _language = await widget.account.accountLanguage();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final language = _language;
+    return KSection(
+      title: l.emailLanguage,
+      icon: LucideIcons.languages,
+      description: l.emailLanguageHint,
+      child: !loaded || language == null
+          ? (loaded ? noteLine('language-note') : const LinearProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButton<String>(
+                  key: const ValueKey('email-language'),
+                  value: language.language ?? '',
+                  underline: const SizedBox(),
+                  items: [
+                    DropdownMenuItem(
+                      value: '',
+                      // What the tenant chose is known only while it is the one used.
+                      child: Text(
+                        language.language == null ? l.asTenantLanguage(_languageName(l, language.used)) : l.asTenant,
+                      ),
+                    ),
+                    for (final code in language.available)
+                      DropdownMenuItem(value: code, child: Text(_languageName(l, code))),
+                  ],
+                  onChanged: busy
+                      ? null
+                      : (code) => save(() async {
+                          await widget.account.setAccountLanguage(language: code == '' ? null : code);
+                          _language = await widget.account.accountLanguage();
+                        }),
+                ),
+                noteLine('language-note'),
+              ],
+            ),
+    );
+  }
+}
+
+/// Which address new emails come from, how long one can take them back, how long the Trash keeps them.
+class _MailSettingsSection extends StatefulWidget {
+  const _MailSettingsSection({required this.account});
+
+  final Kernoid account;
+
+  @override
+  State<_MailSettingsSection> createState() => _MailSettingsSectionState();
+}
+
+class _MailSettingsSectionState extends _SettingsState<_MailSettingsSection> {
+  MailSettings? _settings;
+  String _from = '';
+  int _undo = 0;
+  bool _own = false;
+  final _days = TextEditingController();
+
+  @override
+  Future<void> load() async {
+    final s = await widget.account.mailSettings();
+    _settings = s;
+    _from = s.defaultFrom ?? '';
+    _undo = s.undoSendSeconds;
+    _own = s.trashRetentionDays != null;
+    _days.text = '${s.trashRetentionDays ?? s.tenantTrashRetentionDays ?? 30}';
+  }
+
+  @override
+  void dispose() {
+    _days.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    final s = _settings;
+    if (loaded && s == null) return const SizedBox.shrink();
+    final undoChoices = {0, 5, 10, 20, 30, _undo}.toList()..sort();
+    Widget row(String label, Widget field) => Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(width: 150, child: Text(label, style: KText.small(k))),
+          Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: field),
+          ),
+        ],
+      ),
+    );
+    return KSection(
+      title: l.mailSettings,
+      icon: LucideIcons.mailCheck,
+      child: s == null
+          ? const LinearProgressIndicator()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                row(
+                  l.sendFrom,
+                  DropdownButton<String>(
+                    key: const ValueKey('send-from'),
+                    value: _from,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    items: [
+                      DropdownMenuItem(value: '', child: Text(l.myAddress)),
+                      for (final address in {...s.senders, if (_from.isNotEmpty) _from})
+                        DropdownMenuItem(
+                          value: address,
+                          child: Text(address, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _from = v ?? ''),
+                  ),
+                ),
+                row(
+                  l.undoSend,
+                  DropdownButton<int>(
+                    key: const ValueKey('undo-send'),
+                    value: _undo,
+                    underline: const SizedBox(),
+                    items: [
+                      for (final n in undoChoices)
+                        DropdownMenuItem(value: n, child: Text(n == 0 ? l.off : l.seconds(n))),
+                    ],
+                    onChanged: (v) => setState(() => _undo = v ?? 0),
+                  ),
+                ),
+                KOverline(l.keepTrash, padding: const EdgeInsets.only(top: 6, bottom: 4)),
+                RadioGroup<bool>(
+                  groupValue: _own,
+                  onChanged: (v) => setState(() => _own = v ?? false),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Radio<bool>(key: ValueKey('trash-tenant'), value: false),
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _own = false),
+                              child: Text(
+                                s.tenantTrashRetentionDays == null
+                                    ? l.asTenantForever
+                                    : l.asTenantDays(s.tenantTrashRetentionDays!),
+                                style: KText.body(k),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Radio<bool>(key: ValueKey('trash-own'), value: true),
+                          GestureDetector(
+                            onTap: () => setState(() => _own = true),
+                            child: Text(l.ownDays, style: KText.body(k)),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              key: const ValueKey('trash-days'),
+                              controller: _days,
+                              enabled: _own,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: KButton(
+                    key: const ValueKey('mail-settings-save'),
+                    label: l.save,
+                    tone: KTone.primary,
+                    onPressed: busy
+                        ? null
+                        : () => save(
+                            () => widget.account.setMailSettings(
+                              settings: MailSettings(
+                                trashRetentionDays: _own ? int.tryParse(_days.text.trim()) : null,
+                                tenantTrashRetentionDays: s.tenantTrashRetentionDays,
+                                defaultFrom: _from.isEmpty ? null : _from,
+                                undoSendSeconds: _undo,
+                                senders: s.senders,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                noteLine('mail-settings-note'),
+              ],
+            ),
     );
   }
 }

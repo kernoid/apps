@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -430,10 +432,13 @@ class KBadge extends StatelessWidget {
 
 /// Initials in a colour of the person's own, as in the web app (ui/Avatar.svelte).
 class KAvatar extends StatelessWidget {
-  const KAvatar({super.key, required this.name, this.size = 32});
+  const KAvatar({super.key, required this.name, this.size = 32, this.image});
 
   final String name;
   final double size;
+
+  /// The person's picture; without one, their initials.
+  final Uint8List? image;
 
   static int hue(String name) {
     var h = 0;
@@ -464,18 +469,24 @@ class KAvatar extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-      child: Text(
-        initials(name),
-        style: TextStyle(
-          fontFamily: KFont.sans,
-          fontSize: size * 0.38,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.3,
-          color: foreground,
-          height: 1,
-        ),
+      decoration: BoxDecoration(
+        color: background,
+        shape: BoxShape.circle,
+        image: image == null ? null : DecorationImage(image: MemoryImage(image!), fit: BoxFit.cover),
       ),
+      child: image != null
+          ? null
+          : Text(
+              initials(name),
+              style: TextStyle(
+                fontFamily: KFont.sans,
+                fontSize: size * 0.38,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+                color: foreground,
+                height: 1,
+              ),
+            ),
     );
   }
 }
