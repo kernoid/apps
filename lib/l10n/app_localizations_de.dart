@@ -545,4 +545,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get asHtml => 'Formatiert';
+
+  @override
+  String get mailboxes => 'Ordner';
 }

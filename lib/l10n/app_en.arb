@@ -214,5 +214,6 @@
   "openLink": "Open this link?",
   "open": "Open",
   "asText": "As text",
-  "asHtml": "Formatted"
+  "asHtml": "Formatted",
+  "mailboxes": "Folders"
 }

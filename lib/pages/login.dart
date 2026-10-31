@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -153,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: _busy ? null : _signInWithBrowser,
                       icon: _busy
                           ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.key_outlined),
+                          : const Icon(LucideIcons.keyRound),
                       label: Text(l.signInBrowser),
                     ),
                     const SizedBox(height: 6),

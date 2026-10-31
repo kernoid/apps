@@ -14,11 +14,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kernoid/app/kept_login.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
 import 'package:kernoid/src/rust/api/kernoid.dart';
 import 'package:kernoid/src/rust/frb_generated.dart';
+import 'package:kernoid/ui/widgets.dart';
 
 const server = String.fromEnvironment('KERNOID_TEST_SERVER');
 const address = String.fromEnvironment('KERNOID_TEST_ADDRESS');
@@ -94,7 +96,7 @@ void main() {
       tester.view.physicalSize = size * tester.view.devicePixelRatio;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(const KernoidApp());
-      await tester.pumpAndSettle();
+      await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
 
       await tester.enterText(find.byKey(const ValueKey('server')), server);
       await tester.enterText(find.byKey(const ValueKey('address')), address);
@@ -110,7 +112,7 @@ void main() {
       await tester.enterText(find.byKey(const ValueKey('password')), password);
       await tester.pump();
       await tester.tap(find.byKey(const ValueKey('sign-in')));
-      await waitFor(tester, find.byType(ListTile));
+      await waitFor(tester, listRows);
       await waitFor(tester, find.textContaining('Prototypen'));
       await shoot(tester, '$name-inbox');
 
@@ -122,13 +124,13 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      await tester.tap(find.byIcon(Icons.folder_outlined).first);
+      await tester.tap(find.byKey(const ValueKey('nav-files')));
       await waitFor(tester, find.text('Notizen.txt'));
       await tester.tap(find.text('Projekte'));
       await waitFor(tester, find.text('Roadmap.md'));
       await shoot(tester, '$name-files');
 
-      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.tap(find.byKey(const ValueKey('nav-account')));
       await waitFor(tester, find.byKey(const ValueKey('sign-out')));
       await shoot(tester, '$name-account');
       await tester.tap(find.byKey(const ValueKey('sign-out')));
@@ -147,7 +149,7 @@ void main() {
       await signIn(tester, address, password);
 
       // The invitation among the next two weeks, answered from the event.
-      await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+      await tester.tap(find.byKey(const ValueKey('nav-calendar')));
       await waitFor(tester, find.text(invitation));
       await shoot(tester, '$name-calendar');
       await tester.tap(find.text(invitation));
@@ -163,7 +165,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // A contact found by search; its address starts an email to it.
-      await tester.tap(find.byIcon(Icons.contacts_outlined));
+      await tester.tap(find.byKey(const ValueKey('nav-contacts')));
       await waitFor(tester, find.text(contact));
       await tester.enterText(find.byType(SearchBar), contact.split(' ').first);
       await waitFor(tester, find.text(contact));
@@ -195,7 +197,7 @@ void main() {
     final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
 
     // An event made for the next hour, inviting someone; changed; deleted.
-    await settledTap(tester, find.byIcon(Icons.calendar_month_outlined));
+    await settledTap(tester, find.byKey(const ValueKey('nav-calendar')));
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
     await settledTap(tester, find.byKey(const ValueKey('new-event')));
     await waitFor(tester, find.byKey(const ValueKey('event-title')));
@@ -220,12 +222,12 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('confirm-delete')));
     await settledTap(tester, find.byKey(const ValueKey('confirm-delete')));
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
-    await waitGone(tester, find.descendant(of: find.byType(ListTile), matching: find.textContaining('Probe $stamp')));
+    await waitGone(tester, find.descendant(of: listRows, matching: find.textContaining('Probe $stamp')));
     // The snack bar that says so covers the button of the next page until it has gone.
     await waitGone(tester, find.byType(SnackBar));
 
     // A contact made, changed and deleted.
-    await settledTap(tester, find.byIcon(Icons.contacts_outlined));
+    await settledTap(tester, find.byKey(const ValueKey('nav-contacts')));
     await waitFor(tester, find.byKey(const ValueKey('new-contact')));
     await settledTap(tester, find.byKey(const ValueKey('new-contact')));
     await waitFor(tester, find.byKey(const ValueKey('contact-name')));
@@ -257,7 +259,7 @@ void main() {
     await waitFor(
       tester,
       find.descendant(
-        of: find.ancestor(of: find.text('Erika Probe $stamp'), matching: find.byType(ListTile)),
+        of: find.ancestor(of: find.text('Erika Probe $stamp'), matching: listRows),
         matching: find.text('Probe AG'),
       ),
     );
@@ -283,7 +285,7 @@ void main() {
     final title = 'Serie $stamp';
 
     // A weekly event: two of its instances in the next two weeks.
-    await settledTap(tester, find.byIcon(Icons.calendar_month_outlined));
+    await settledTap(tester, find.byKey(const ValueKey('nav-calendar')));
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
     await settledTap(tester, find.byKey(const ValueKey('new-event')));
     await waitFor(tester, find.byKey(const ValueKey('event-title')));
@@ -342,8 +344,35 @@ void main() {
     // Back on the calendar once deleted, the list loaded again without the series.
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
     await waitGone(tester, find.byType(CircularProgressIndicator));
-    await waitGone(tester, find.descendant(of: find.byType(ListTile), matching: find.textContaining(title)));
+    await waitGone(tester, find.descendant(of: listRows, matching: find.textContaining(title)));
   });
+
+  for (final (name, size) in [('wide', const Size(1280, 800)), ('phone', const Size(390, 844))]) {
+    testWidgets('a tour of the screens – $name', (tester) async {
+      if (server.isEmpty) {
+        markTestSkipped('no KERNOID_TEST_SERVER');
+        return;
+      }
+      tester.view.physicalSize = size * tester.view.devicePixelRatio;
+      addTearDown(tester.view.reset);
+      await signIn(tester, address, password);
+      await waitFor(tester, listRows);
+      await shoot(tester, 'tour-$name-mail');
+      await tester.tap(listRows.first);
+      await waitFor(tester, find.byKey(const ValueKey('reply')));
+      await shoot(tester, 'tour-$name-message');
+      if (name == 'phone') {
+        await tester.tap(find.byKey(const ValueKey('back')));
+        await tester.pumpAndSettle();
+      }
+      for (final section in ['calendar', 'contacts', 'files', 'account']) {
+        await settledTap(tester, find.byKey(ValueKey('nav-$section')));
+        await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+        await tester.pump();
+        await shoot(tester, 'tour-$name-$section');
+      }
+    });
+  }
 
   testWidgets('a message is written, answered and forwarded', (tester) async {
     if (server.isEmpty) {
@@ -370,7 +399,7 @@ void main() {
     await waitGone(tester, find.byType(SnackBar));
 
     // Found in Sent and answered to all: the user is not among the copies, the text quoted.
-    await settledTap(tester, find.byIcon(Icons.send_outlined).first);
+    await settledTap(tester, find.byIcon(LucideIcons.send).first);
     await waitFor(tester, inList(subject));
     await settledTap(tester, inList(subject));
     await waitFor(tester, find.byKey(const ValueKey('replyAll')));
@@ -446,7 +475,7 @@ void main() {
     tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
     addTearDown(tester.view.reset);
     await signIn(tester, newAddress, newPassword);
-    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.tap(find.byKey(const ValueKey('nav-account')));
     await waitFor(tester, find.byKey(const ValueKey('sign-out')));
     final make = find.byKey(const ValueKey('make-key'));
     const states = [ValueKey('make-key'), ValueKey('unlock-key'), ValueKey('lock-key')];
@@ -474,10 +503,10 @@ void main() {
     await signIn(tester, address, password);
 
     // Locked, the encrypted message in Sent shows nothing of itself.
-    await tester.tap(find.byIcon(Icons.send_outlined).first);
-    await waitFor(tester, find.byIcon(Icons.lock_outline));
+    await tester.tap(find.byIcon(LucideIcons.send).first);
+    await waitFor(tester, find.byIcon(LucideIcons.lock));
     await shoot(tester, 'e2e-locked-list');
-    await tester.tap(find.byIcon(Icons.lock_outline).first);
+    await tester.tap(find.byIcon(LucideIcons.lock).first);
     await waitFor(tester, find.byKey(const ValueKey('unlock-to-read')));
     await shoot(tester, 'e2e-locked-message');
 
@@ -487,7 +516,7 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('recovery-code')), recoveryCode);
     await tester.tap(find.byKey(const ValueKey('unlock')));
     await waitFor(tester, find.textContaining('Nur für mich'), timeout: const Duration(seconds: 60));
-    await waitFor(tester, find.byIcon(Icons.verified_outlined));
+    await waitFor(tester, find.byIcon(LucideIcons.badgeCheck));
     await shoot(tester, 'e2e-message');
 
     // Writing to someone with a key: it says beforehand that it goes encrypted.
@@ -495,7 +524,7 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('to')));
     await tester.enterText(find.byKey(const ValueKey('to')), address);
     await waitFor(tester, find.byKey(const ValueKey('send-plan')));
-    expect(find.byIcon(Icons.lock), findsWidgets);
+    expect(find.byIcon(LucideIcons.lock), findsWidgets);
     await shoot(tester, 'e2e-compose');
     await tester.enterText(find.byKey(const ValueKey('subject')), 'Aus der App');
     await tester.enterText(find.byKey(const ValueKey('text')), 'Verschlüsselt aus Flutter.');
@@ -546,7 +575,10 @@ Future<String> browser(String loginUrl, String address, String password) async {
 }
 
 /// A text in a list entry – not the same text in a field of a form still open.
-Finder inList(String text) => find.descendant(of: find.byType(ListTile), matching: find.text(text));
+/// Rows of a list – the app's own (KListRow) or Material's.
+final Finder listRows = find.byWidgetPredicate((w) => w is ListTile || w is KListRow);
+
+Finder inList(String text) => find.descendant(of: listRows, matching: find.text(text));
 
 /// The entry of an open menu of labels that sets `label`.
 Finder menuItem(String label) => find.byWidgetPredicate((w) => w is CheckedPopupMenuItem<String> && w.value == label);

@@ -11,7 +11,9 @@ import '../src/rust/api/kernoid.dart';
 class KeptLogin {
   KeptLogin._();
 
-  static const _key = 'kernoid.login';
+  /// The integration test (`KERNOID_TEST_SERVER` set) keeps its logins apart, so that it never resumes or ends the
+  /// login of someone using the app on the same machine.
+  static const _key = String.fromEnvironment('KERNOID_TEST_SERVER') == '' ? 'kernoid.login' : 'kernoid.login.test';
   static const _storage = FlutterSecureStorage(
     // This device only, readable after the first unlock – also for the sync in the background later.
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),

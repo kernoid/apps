@@ -3,9 +3,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/widgets.dart';
 import '../widgets/states.dart';
 import '../app/format.dart';
 import 'compose.dart';
@@ -72,7 +74,7 @@ class _ContactsPageState extends State<ContactsPage> {
             child: SearchBar(
               controller: _search,
               hintText: l.searchContacts,
-              leading: const Icon(Icons.search),
+              leading: const Icon(LucideIcons.search),
               onChanged: _searchChanged,
               elevation: const WidgetStatePropertyAll(0),
             ),
@@ -84,7 +86,7 @@ class _ContactsPageState extends State<ContactsPage> {
         key: const ValueKey('new-contact'),
         tooltip: l.newContact,
         onPressed: () => _show(ContactFormPage(account: widget.account), dialog: true),
-        child: const Icon(Icons.person_add_outlined),
+        child: const Icon(LucideIcons.userPlus),
       ),
     );
   }
@@ -100,7 +102,7 @@ class _ContactsPageState extends State<ContactsPage> {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final contacts = _contacts;
     if (contacts == null) return const Center(child: CircularProgressIndicator());
-    if (contacts.isEmpty) return EmptyView(l.noContacts, icon: Icons.person_search_outlined);
+    if (contacts.isEmpty) return EmptyView(l.noContacts, icon: LucideIcons.userSearch);
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.builder(
@@ -109,7 +111,7 @@ class _ContactsPageState extends State<ContactsPage> {
           final c = contacts[i];
           final details = c.organization ?? c.emails.firstOrNull?.value ?? c.phones.firstOrNull?.value;
           return ListTile(
-            leading: CircleAvatar(child: Text(_initials(c.name))),
+            leading: KAvatar(name: c.name),
             title: Text(c.name),
             subtitle: details == null ? null : Text(details),
             onTap: () => _show(ContactPage(account: widget.account, contact: c)),
@@ -123,13 +125,6 @@ class _ContactsPageState extends State<ContactsPage> {
 /// `Email · work`: what it is, and its labels.
 String _labelled(AppLocalizations l, String kind, List<String> labels) =>
     [kind, ...labels.map((label) => labelName(l, label))].join(' · ');
-
-String _initials(String name) {
-  final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-  if (words.isEmpty) return '?';
-  final first = words.first.characters.first;
-  return words.length > 1 ? '$first${words.last.characters.first}'.toUpperCase() : first.toUpperCase();
-}
 
 /// One contact: organisation, addresses – each starts an email –, phone numbers to copy, notes. Pops `true` when it
 /// was changed or deleted.
@@ -188,46 +183,44 @@ class ContactPage extends StatelessWidget {
             key: const ValueKey('edit-contact'),
             tooltip: l.edit,
             onPressed: edit,
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(LucideIcons.pencil),
           ),
           IconButton(
             key: const ValueKey('delete-contact'),
             tooltip: l.delete,
             onPressed: delete,
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(LucideIcons.trash2),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Center(
-            child: CircleAvatar(radius: 36, child: Text(_initials(c.name), style: theme.textTheme.headlineSmall)),
-          ),
+          Center(child: KAvatar(name: c.name, size: 72)),
           const SizedBox(height: 8),
           Center(child: Text(c.name, style: theme.textTheme.titleLarge)),
           if (c.organization != null) Center(child: Text(c.organization!)),
           const SizedBox(height: 16),
           for (final email in c.emails)
             ListTile(
-              leading: const Icon(Icons.mail_outline),
+              leading: const Icon(LucideIcons.mail),
               title: Text(email.value),
               subtitle: Text(_labelled(l, l.emails, email.labels)),
               trailing: IconButton(
                 key: ValueKey('write-to-${email.value}'),
                 tooltip: l.writeEmail,
-                icon: const Icon(Icons.send_outlined),
+                icon: const Icon(LucideIcons.send),
                 onPressed: () => writeMessage(context, account, to: email.value),
               ),
             ),
           for (final phone in c.phones)
             ListTile(
-              leading: const Icon(Icons.phone_outlined),
+              leading: const Icon(LucideIcons.phone),
               title: Text(phone.value),
               subtitle: Text(_labelled(l, l.phones, phone.labels)),
               trailing: IconButton(
                 tooltip: l.copy,
-                icon: const Icon(Icons.copy_outlined),
+                icon: const Icon(LucideIcons.copy),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: phone.value));
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied)));

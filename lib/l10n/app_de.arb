@@ -172,5 +172,6 @@
   "openLink": "Diesen Link öffnen?",
   "open": "Öffnen",
   "asText": "Als Text",
-  "asHtml": "Formatiert"
+  "asHtml": "Formatiert",
+  "mailboxes": "Ordner"
 }

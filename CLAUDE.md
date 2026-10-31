@@ -40,6 +40,11 @@ layout and the checks.
 - `lib/src/rust/` and `rust/src/frb_generated.rs` are generated (`flutter_rust_bridge_codegen generate`, see
   `flutter_rust_bridge.yaml`) – change `rust/src/api/` and generate again, never edit them.
 - Strings in `lib/l10n/app_en.arb` and `app_de.arb`; English is the source.
+- **kernoid's look, not Material's:** pages are built from `lib/ui/` – colours, sizes and text from `KTokens`
+  (`context.k`, the web app's values, light and dark), the widgets `KButton`, `KIconButton`, `KTopBar`, `KListRow`,
+  `KSideItem`, `KAvatar`, `KBadge`, `KSegmented`, `KSection`. Icons are Lucide (`lucide_icons_flutter`), text IBM Plex.
+  Material stays only underneath (navigation, text input, overlays) and is themed in `ui/theme.dart`; a new widget
+  that is seen goes into `lib/ui/` rather than taking Material's.
 - Dart lines up to 120 characters (`analysis_options.yaml`), like the Rust side (`rust/rustfmt.toml`).
 
 ## Building – what is not obvious

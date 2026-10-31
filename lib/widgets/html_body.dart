@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -68,7 +69,7 @@ class _HtmlBodyState extends State<HtmlBody> {
           Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              leading: const Icon(Icons.image_not_supported_outlined),
+              leading: const Icon(LucideIcons.imageOff),
               title: Text(l.imagesBlocked),
               trailing: TextButton(
                 key: const ValueKey('load-images'),

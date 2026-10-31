@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/kept_login.dart';
-import 'app/theme.dart';
+import 'ui/theme.dart';
 import 'l10n/app_localizations.dart';
 import 'pages/home.dart';
 import 'pages/login.dart';

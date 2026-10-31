@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -146,7 +147,7 @@ class _RecoveryDialogState extends State<_RecoveryDialog> {
                   await Clipboard.setData(ClipboardData(text: widget.code));
                   messenger.showSnackBar(SnackBar(content: Text(l.copied)));
                 },
-                icon: const Icon(Icons.copy, size: 18),
+                icon: const Icon(LucideIcons.copy, size: 18),
                 label: Text(l.copy),
               ),
             ),
@@ -199,11 +200,11 @@ class SealBadge extends StatelessWidget {
       spacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Icon(Icons.lock, size: 16, color: scheme.primary),
+        Icon(LucideIcons.lock, size: 16, color: scheme.primary),
         Text(l.e2eEncrypted, style: TextStyle(color: scheme.primary)),
         Text('·', style: TextStyle(color: scheme.onSurfaceVariant)),
         Icon(
-          good ? Icons.verified_outlined : Icons.help_outline,
+          good ? LucideIcons.badgeCheck : LucideIcons.circleHelp,
           size: 16,
           color: good ? scheme.primary : scheme.error,
         ),

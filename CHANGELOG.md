@@ -9,6 +9,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ### Changed
 
+- kernoid's own look instead of Material's: the web app's colours (dark, and light when the system is), IBM Plex,
+  Lucide icons, a side bar with the word mark on wide screens and a bar of the sections on narrow ones, and widgets of
+  its own (`lib/ui`). Mail shows its folders as a tree, its messages with avatars and an unread mark.
+
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on
   x64, Linux on x64 and arm64.

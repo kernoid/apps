@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/widgets.dart';
 import '../widgets/e2e.dart';
 
 /// The user's own account – never administration, which stays in the web app and the terminal app (docs/plan.md, 2).
@@ -23,7 +25,7 @@ class AccountPage extends StatelessWidget {
         children: [
           Card(
             child: ListTile(
-              leading: CircleAvatar(child: Text(account.username.characters.first.toUpperCase())),
+              leading: KAvatar(name: account.username, size: 40),
               title: Text(account.username),
               subtitle: Text('${l.signedInAs} · ${account.server}'),
             ),
@@ -36,7 +38,7 @@ class AccountPage extends StatelessWidget {
             child: OutlinedButton.icon(
               key: const ValueKey('sign-out'),
               onPressed: onSignOut,
-              icon: const Icon(Icons.logout),
+              icon: const Icon(LucideIcons.logOut),
               label: Text(l.signOut),
             ),
           ),
@@ -106,7 +108,7 @@ class _KeyCardState extends State<_KeyCard> {
     final children = <Widget>[
       Row(
         children: [
-          Icon(s?.unlocked ?? false ? Icons.lock_open : Icons.lock_outline, color: theme.colorScheme.primary),
+          Icon(s?.unlocked ?? false ? LucideIcons.lockOpen : LucideIcons.lock, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
           Expanded(child: Text(l.e2eTitle, style: theme.textTheme.titleMedium)),
           if (_busy) const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)),
@@ -125,7 +127,7 @@ class _KeyCardState extends State<_KeyCard> {
         FilledButton.icon(
           key: const ValueKey('make-key'),
           onPressed: _busy ? null : _make,
-          icon: const Icon(Icons.key),
+          icon: const Icon(LucideIcons.keyRound),
           label: Text(l.e2eMakeKey),
         ),
       ]);
@@ -141,13 +143,13 @@ class _KeyCardState extends State<_KeyCard> {
             ? OutlinedButton.icon(
                 key: const ValueKey('lock-key'),
                 onPressed: _busy ? null : _lock,
-                icon: const Icon(Icons.lock_outline),
+                icon: const Icon(LucideIcons.lock),
                 label: Text(l.lock),
               )
             : FilledButton.icon(
                 key: const ValueKey('unlock-key'),
                 onPressed: _busy ? null : _unlock,
-                icon: const Icon(Icons.lock_open),
+                icon: const Icon(LucideIcons.lockOpen),
                 label: Text(l.unlock),
               ),
       ]);

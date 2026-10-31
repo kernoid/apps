@@ -1129,6 +1129,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Formatted'**
   String get asHtml;
+
+  /// No description provided for @mailboxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get mailboxes;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

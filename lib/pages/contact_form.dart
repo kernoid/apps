@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -116,7 +117,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
               rows: _emails,
               allowed: Kernoid.emailLabels(),
               keyboard: TextInputType.emailAddress,
-              icon: Icons.mail_outline,
+              icon: LucideIcons.mail,
               validator: (v) => (v ?? '').trim().isNotEmpty && !v!.contains('@') ? l.emailsField : null,
               onChanged: () => setState(() {}),
             ),
@@ -128,7 +129,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
               rows: _phones,
               allowed: Kernoid.phoneLabels(),
               keyboard: TextInputType.phone,
-              icon: Icons.phone_outlined,
+              icon: LucideIcons.phone,
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 8),
@@ -244,7 +245,7 @@ class _LabelledFields extends StatelessWidget {
               ),
               IconButton(
                 tooltip: l.remove,
-                icon: const Icon(Icons.close),
+                icon: const Icon(LucideIcons.x),
                 onPressed: () {
                   rows.removeAt(i).text.dispose();
                   onChanged();
@@ -258,7 +259,7 @@ class _LabelledFields extends StatelessWidget {
             rows.add(_Row('', const []));
             onChanged();
           },
-          icon: const Icon(Icons.add),
+          icon: const Icon(LucideIcons.plus),
           label: Text(add),
         ),
       ],

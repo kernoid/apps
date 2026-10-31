@@ -542,4 +542,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get asHtml => 'Formatted';
+
+  @override
+  String get mailboxes => 'Folders';
 }

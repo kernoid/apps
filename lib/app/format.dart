@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
@@ -50,13 +51,13 @@ String mailboxName(AppLocalizations l, Mailbox m) => switch (m.role) {
 };
 
 IconData mailboxIcon(Mailbox m) => switch (m.role) {
-  'inbox' => Icons.inbox_outlined,
-  'drafts' => Icons.edit_note_outlined,
-  'sent' => Icons.send_outlined,
-  'archive' => Icons.archive_outlined,
-  'junk' => Icons.report_gmailerrorred_outlined,
-  'trash' => Icons.delete_outline,
-  _ => Icons.folder_outlined,
+  'inbox' => LucideIcons.inbox,
+  'drafts' => LucideIcons.filePen,
+  'sent' => LucideIcons.send,
+  'archive' => LucideIcons.archive,
+  'junk' => LucideIcons.shieldAlert,
+  'trash' => LucideIcons.trash2,
+  _ => LucideIcons.folder,
 };
 
 /// The message of an error from Rust, or of anything else.

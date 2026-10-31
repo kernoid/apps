@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -212,7 +213,7 @@ class _ComposePageState extends State<ComposePage> {
             child: FilledButton.icon(
               key: const ValueKey('send'),
               onPressed: _busy || _loading ? null : _send,
-              icon: Icon(plan?.encrypted ?? false ? Icons.lock : Icons.send),
+              icon: Icon(plan?.encrypted ?? false ? LucideIcons.lock : LucideIcons.send),
               label: Text(l.send),
             ),
           ),
@@ -265,7 +266,7 @@ class _ComposePageState extends State<ComposePage> {
                       child: Row(
                         children: [
                           Icon(
-                            plan.encrypted ? Icons.lock : Icons.lock_open,
+                            plan.encrypted ? LucideIcons.lock : LucideIcons.lockOpen,
                             size: 16,
                             color: plan.encrypted ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                           ),
@@ -307,7 +308,7 @@ class _ComposePageState extends State<ComposePage> {
                       for (final a in _forwarded)
                         InputChip(
                           key: ValueKey('attachment-${a.name}'),
-                          avatar: const Icon(Icons.attach_file, size: 18),
+                          avatar: const Icon(LucideIcons.paperclip, size: 18),
                           label: Text('${a.name} · ${bytes(a.size)}'),
                           deleteButtonTooltipMessage: l.remove,
                           onDeleted: () => setState(() => _forwarded.remove(a)),
@@ -315,7 +316,7 @@ class _ComposePageState extends State<ComposePage> {
                       for (final p in _forwardedParts)
                         InputChip(
                           key: ValueKey('attachment-${p.name}'),
-                          avatar: const Icon(Icons.lock_outline, size: 18),
+                          avatar: const Icon(LucideIcons.lock, size: 18),
                           label: Text('${p.name} · ${bytes(p.size)}'),
                           deleteButtonTooltipMessage: l.remove,
                           onDeleted: () => setState(() => _forwardedParts.remove(p)),
@@ -323,7 +324,7 @@ class _ComposePageState extends State<ComposePage> {
                       for (final file in _files)
                         InputChip(
                           key: ValueKey('attachment-${file.name}'),
-                          avatar: const Icon(Icons.attach_file, size: 18),
+                          avatar: const Icon(LucideIcons.paperclip, size: 18),
                           label: Text(file.name),
                           deleteButtonTooltipMessage: l.remove,
                           onDeleted: () => setState(() => _files.remove(file)),
@@ -331,7 +332,7 @@ class _ComposePageState extends State<ComposePage> {
                       TextButton.icon(
                         key: const ValueKey('attach'),
                         onPressed: _busy ? null : _attach,
-                        icon: const Icon(Icons.attach_file),
+                        icon: const Icon(LucideIcons.paperclip),
                         label: Text(l.attachFile),
                       ),
                     ],

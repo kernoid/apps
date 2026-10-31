@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../app/save.dart';
@@ -64,7 +65,7 @@ class _FilesPageState extends State<FilesPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final store = _store;
-    if (store == null) return EmptyView(l.folderEmpty, icon: Icons.folder_off_outlined);
+    if (store == null) return EmptyView(l.folderEmpty, icon: LucideIcons.folderX);
     return Scaffold(
       appBar: AppBar(
         title: _stores.length > 1
@@ -79,7 +80,7 @@ class _FilesPageState extends State<FilesPage> {
                 ),
               )
             : Text(_storeName(l, store)),
-        actions: [IconButton(tooltip: l.refresh, onPressed: _load, icon: const Icon(Icons.refresh))],
+        actions: [IconButton(tooltip: l.refresh, onPressed: _load, icon: const Icon(LucideIcons.refreshCw))],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(36),
           child: SizedBox(
@@ -90,7 +91,7 @@ class _FilesPageState extends State<FilesPage> {
               children: [
                 TextButton(onPressed: () => _up(0), child: Text(_storeName(l, store))),
                 for (final (i, d) in _path.indexed) ...[
-                  const Icon(Icons.chevron_right, size: 18),
+                  const Icon(LucideIcons.chevronRight, size: 18),
                   TextButton(onPressed: () => _up(i + 1), child: Text(d.name)),
                 ],
               ],
@@ -106,7 +107,7 @@ class _FilesPageState extends State<FilesPage> {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final nodes = _nodes;
     if (nodes == null) return const Center(child: CircularProgressIndicator());
-    if (nodes.isEmpty) return EmptyView(l.folderEmpty, icon: Icons.folder_open_outlined);
+    if (nodes.isEmpty) return EmptyView(l.folderEmpty, icon: LucideIcons.folderOpen);
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.separated(
@@ -119,15 +120,15 @@ class _FilesPageState extends State<FilesPage> {
             if (n.modified != null) shortDate(context, n.modified!),
           ].join(' · ');
           return ListTile(
-            leading: Icon(n.isDirectory ? Icons.folder_outlined : _fileIcon(n.mediaType)),
+            leading: Icon(n.isDirectory ? LucideIcons.folder : _fileIcon(n.mediaType)),
             title: Text(n.name),
             subtitle: details.isEmpty ? null : Text(details),
             onTap: n.isDirectory ? () => _enter(n) : null,
             trailing: n.isDirectory
-                ? const Icon(Icons.chevron_right)
+                ? const Icon(LucideIcons.chevronRight)
                 : IconButton(
                     tooltip: l.save,
-                    icon: const Icon(Icons.download_outlined),
+                    icon: const Icon(LucideIcons.download),
                     onPressed: () => saveBlob(
                       context,
                       widget.account,
@@ -146,10 +147,10 @@ class _FilesPageState extends State<FilesPage> {
 
 IconData _fileIcon(String? type) {
   final t = type ?? '';
-  if (t.startsWith('image/')) return Icons.image_outlined;
-  if (t.startsWith('audio/')) return Icons.audio_file_outlined;
-  if (t.startsWith('video/')) return Icons.video_file_outlined;
-  if (t == 'application/pdf') return Icons.picture_as_pdf_outlined;
-  if (t.startsWith('text/')) return Icons.description_outlined;
-  return Icons.insert_drive_file_outlined;
+  if (t.startsWith('image/')) return LucideIcons.image;
+  if (t.startsWith('audio/')) return LucideIcons.fileAudio;
+  if (t.startsWith('video/')) return LucideIcons.fileVideo;
+  if (t == 'application/pdf') return LucideIcons.fileText;
+  if (t.startsWith('text/')) return LucideIcons.fileText;
+  return LucideIcons.file;
 }

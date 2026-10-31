@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -132,11 +133,11 @@ class _CalendarPageState extends State<CalendarPage> {
             key: const ValueKey('calendar-view'),
             tooltip: month == null ? l.monthView : l.listView,
             onPressed: _toggleMonth,
-            icon: Icon(month == null ? Icons.calendar_view_month : Icons.view_agenda_outlined),
+            icon: Icon(month == null ? LucideIcons.calendarDays : LucideIcons.list),
           ),
-          IconButton(tooltip: l.earlier, onPressed: () => _move(-1), icon: const Icon(Icons.chevron_left)),
+          IconButton(tooltip: l.earlier, onPressed: () => _move(-1), icon: const Icon(LucideIcons.chevronLeft)),
           TextButton(onPressed: () => _move(0), child: Text(l.today)),
-          IconButton(tooltip: l.later, onPressed: () => _move(1), icon: const Icon(Icons.chevron_right)),
+          IconButton(tooltip: l.later, onPressed: () => _move(1), icon: const Icon(LucideIcons.chevronRight)),
         ],
       ),
       body: _body(l, locale),
@@ -146,7 +147,7 @@ class _CalendarPageState extends State<CalendarPage> {
               key: const ValueKey('new-event'),
               tooltip: l.newEvent,
               onPressed: _new,
-              child: const Icon(Icons.add),
+              child: const Icon(LucideIcons.plus),
             ),
     );
   }
@@ -179,7 +180,7 @@ class _CalendarPageState extends State<CalendarPage> {
     if (events == null) return const Center(child: CircularProgressIndicator());
     final month = _month;
     if (month != null) return _grid(l, locale, month, events);
-    if (events.isEmpty) return EmptyView(l.noEvents, icon: Icons.event_available_outlined);
+    if (events.isEmpty) return EmptyView(l.noEvents, icon: LucideIcons.calendarCheck);
     final days = _byDay(events, _from, _from.add(const Duration(days: _span)));
     final today = _day(DateTime.now());
     final entries = days.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
@@ -492,7 +493,7 @@ class _EventTile extends StatelessWidget {
       ),
       subtitle: Text(event.cancelled ? '${l.cancelled} · $details' : details),
       trailing: event.invitationKey != null && (event.myStatus ?? 'needs-action') == 'needs-action'
-          ? Icon(Icons.mark_email_unread_outlined, color: theme.colorScheme.primary)
+          ? Icon(LucideIcons.mailWarning, color: theme.colorScheme.primary)
           : null,
       onTap: onTap,
     );
@@ -667,13 +668,13 @@ class _EventPageState extends State<EventPage> {
                 key: const ValueKey('edit-event'),
                 tooltip: l.edit,
                 onPressed: _edit,
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(LucideIcons.pencil),
               ),
               IconButton(
                 key: const ValueKey('delete-event'),
                 tooltip: l.deleteEvent,
                 onPressed: _delete,
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(LucideIcons.trash2),
               ),
             ],
           ],
@@ -688,14 +689,14 @@ class _EventPageState extends State<EventPage> {
               ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.schedule, color: widget.color),
+              leading: Icon(LucideIcons.clock, color: widget.color),
               title: Text(start == null ? '' : DateFormat.yMMMMEEEEd(locale).format(start)),
               subtitle: Text([_times(l, locale, e), if (e.recurring) l.recurring].join(' · ')),
             ),
             if (e.location != null)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.place_outlined),
+                leading: const Icon(LucideIcons.mapPin),
                 title: Text(e.location!),
               ),
             if (e.description != null) ...[const SizedBox(height: 8), SelectableText(e.description!)],
@@ -706,7 +707,7 @@ class _EventPageState extends State<EventPage> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  leading: const Icon(Icons.person_outline),
+                  leading: const Icon(LucideIcons.user),
                   title: Text(p.name ?? p.email ?? ''),
                   subtitle: Text(
                     [if (p.name != null && p.email != null) p.email!, _statusText(l, p.status)].join(' · '),
