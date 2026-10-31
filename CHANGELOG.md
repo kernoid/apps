@@ -9,8 +9,9 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ### Changed
 
-- macOS: Apple silicon only – the app and its Rust side are no longer built for Intel Macs, which halves the macOS
-  build and the app's size.
+- The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
+  and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on
+  x64, Linux on x64 and arm64.
 
 ## [0.2.1] – 2026-10-31
 

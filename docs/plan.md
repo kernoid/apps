@@ -34,10 +34,15 @@ kernoid is split along one line – **open protocols** – with one shared clien
 
 ## 2. Platforms and order
 
+The versions and architectures built for are falkOSS's (starter pack, `docs/practices.md`, Platforms): macOS 27 and
+later on Apple silicon (no Intel build), iOS and iPadOS 27 and later, Android 13 (API 33) and later on `arm64-v8a`,
+Windows 11 and later on x64, Linux on x64 and arm64; x64 for Android and Arm64 for Windows once the community asks.
+The Rust toolchain lists only these targets.
+
 All five platforms are built **from the start and at the same time** – one code base, one CI matrix. Where work has to
 be ordered (native parts, polish, store release), the priority is:
 
-1. **macOS** – Apple silicon only (decided 2026-10-31): no Intel build, which halves the Rust build and the app's size
+1. **macOS**
 2. **iOS**
 3. **Linux**
 4. **Android**
