@@ -8,8 +8,9 @@ import '../src/rust/api/kernoid.dart';
 import '../widgets/states.dart';
 import 'event_form.dart';
 
-/// The calendars the account reaches, two weeks at a time as a list of days; events are made, changed and deleted, and
-/// an invitation is answered from the event. **OPEN**: one instance of a recurring event on its own, a month view.
+/// The calendars the account reaches, two weeks at a time as a list of days or a month at a time as a grid; events are
+/// made, changed and deleted – one instance of a recurring event alone or the whole series –, and an invitation is
+/// answered from the event.
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key, required this.account});
 
@@ -24,8 +25,25 @@ const _span = 14;
 
 DateTime _day(DateTime t) => DateTime(t.year, t.month, t.day);
 
+/// The first day of the grid of the month `month` is in: the start of its first week.
+DateTime _gridStart(DateTime month, int firstWeekday) {
+  final first = DateTime(month.year, month.month);
+  // DateTime.weekday is 1 (Monday) to 7 (Sunday); MaterialLocalizations counts from 0 (Sunday).
+  final back = (first.weekday % 7 - firstWeekday) % 7;
+  return first.subtract(Duration(days: back));
+}
+
+/// Six weeks: every month fits.
+const _gridDays = 42;
+
 class _CalendarPageState extends State<CalendarPage> {
   DateTime _from = _day(DateTime.now());
+
+  /// The month shown as a grid, or none for the list of days.
+  DateTime? _month;
+
+  /// The day of the month chosen in the grid; its events are listed below it.
+  DateTime _chosen = _day(DateTime.now());
   List<Calendar> _calendars = const [];
   List<Event>? _events;
   Object? _error;
@@ -41,11 +59,13 @@ class _CalendarPageState extends State<CalendarPage> {
       _events = null;
       _error = null;
     });
-    final to = _from.add(const Duration(days: _span));
+    final month = _month;
+    final from = month == null ? _from : _gridStart(month, _firstWeekday);
+    final to = from.add(Duration(days: month == null ? _span : _gridDays));
     try {
       final calendars = await widget.account.calendars();
       final events = await widget.account.events(
-        from: _from.toUtc().toIso8601String(),
+        from: from.toUtc().toIso8601String(),
         to: to.toUtc().toIso8601String(),
       );
       if (mounted) {
@@ -59,8 +79,33 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  void _move(int days) {
-    _from = days == 0 ? _day(DateTime.now()) : _from.add(Duration(days: days));
+  int get _firstWeekday => MaterialLocalizations.of(context).firstDayOfWeekIndex;
+
+  /// Earlier (-1), later (1) or to today (0): by two weeks in the list, by a month in the grid.
+  void _move(int step) {
+    final today = _day(DateTime.now());
+    final month = _month;
+    if (month == null) {
+      _from = step == 0 ? today : _from.add(Duration(days: step * _span));
+    } else {
+      _month = step == 0 ? DateTime(today.year, today.month) : DateTime(month.year, month.month + step);
+      _chosen = step == 0 ? today : _month!;
+    }
+    _load();
+  }
+
+  void _toggleMonth() {
+    final today = _day(DateTime.now());
+    setState(() {
+      if (_month == null) {
+        final around = today.isBefore(_from) || !today.isBefore(_from.add(const Duration(days: _span))) ? _from : today;
+        _month = DateTime(around.year, around.month);
+        _chosen = around;
+      } else {
+        _from = _chosen;
+        _month = null;
+      }
+    });
     _load();
   }
 
@@ -74,13 +119,24 @@ class _CalendarPageState extends State<CalendarPage> {
     final l = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final last = _from.add(const Duration(days: _span - 1));
+    final month = _month;
     return Scaffold(
       appBar: AppBar(
-        title: Text('${DateFormat.MMMd(locale).format(_from)} – ${DateFormat.MMMd(locale).format(last)}'),
+        title: Text(
+          month == null
+              ? '${DateFormat.MMMd(locale).format(_from)} – ${DateFormat.MMMd(locale).format(last)}'
+              : DateFormat.yMMMM(locale).format(month),
+        ),
         actions: [
-          IconButton(tooltip: l.earlier, onPressed: () => _move(-_span), icon: const Icon(Icons.chevron_left)),
+          IconButton(
+            key: const ValueKey('calendar-view'),
+            tooltip: month == null ? l.monthView : l.listView,
+            onPressed: _toggleMonth,
+            icon: Icon(month == null ? Icons.calendar_view_month : Icons.view_agenda_outlined),
+          ),
+          IconButton(tooltip: l.earlier, onPressed: () => _move(-1), icon: const Icon(Icons.chevron_left)),
           TextButton(onPressed: () => _move(0), child: Text(l.today)),
-          IconButton(tooltip: l.later, onPressed: () => _move(_span), icon: const Icon(Icons.chevron_right)),
+          IconButton(tooltip: l.later, onPressed: () => _move(1), icon: const Icon(Icons.chevron_right)),
         ],
       ),
       body: _body(l, locale),
@@ -99,7 +155,11 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> _new() async {
     final today = _day(DateTime.now());
-    final day = today.isBefore(_from) || !today.isBefore(_from.add(const Duration(days: _span))) ? _from : today;
+    final day = _month != null
+        ? _chosen
+        : today.isBefore(_from) || !today.isBefore(_from.add(const Duration(days: _span)))
+        ? _from
+        : today;
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
@@ -117,23 +177,10 @@ class _CalendarPageState extends State<CalendarPage> {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final events = _events;
     if (events == null) return const Center(child: CircularProgressIndicator());
+    final month = _month;
+    if (month != null) return _grid(l, locale, month, events);
     if (events.isEmpty) return EmptyView(l.noEvents, icon: Icons.event_available_outlined);
-    // Every day an event touches – one that runs over several days shows on each.
-    final days = <DateTime, List<Event>>{};
-    for (final e in events) {
-      final start = _when(e, e.start);
-      if (start == null) continue;
-      final end = _when(e, e.end) ?? start;
-      var day = _day(start).isBefore(_from) ? _from : _day(start);
-      // An all-day event ends the day before its end; one at a time ends on the day it ends (not at midnight after).
-      final lastDay = e.allDay
-          ? _day(end).subtract(const Duration(days: 1))
-          : _day(end.subtract(const Duration(seconds: 1)));
-      do {
-        if (day.isBefore(_from.add(const Duration(days: _span)))) days.putIfAbsent(day, () => []).add(e);
-        day = day.add(const Duration(days: 1));
-      } while (!day.isAfter(lastDay));
-    }
+    final days = _byDay(events, _from, _from.add(const Duration(days: _span)));
     final today = _day(DateTime.now());
     final entries = days.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
     return RefreshIndicator(
@@ -158,6 +205,110 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
+  /// Every day from `from` to before `to` an event touches – one that runs over several days is on each.
+  Map<DateTime, List<Event>> _byDay(List<Event> events, DateTime from, DateTime to) {
+    final days = <DateTime, List<Event>>{};
+    for (final e in events) {
+      final start = _when(e, e.start);
+      if (start == null) continue;
+      final end = _when(e, e.end) ?? start;
+      var day = _day(start).isBefore(from) ? from : _day(start);
+      // An all-day event ends the day before its end; one at a time ends on the day it ends (not at midnight after).
+      final lastDay = e.allDay
+          ? _day(end).subtract(const Duration(days: 1))
+          : _day(end.subtract(const Duration(seconds: 1)));
+      do {
+        if (day.isBefore(to)) days.putIfAbsent(day, () => []).add(e);
+        day = day.add(const Duration(days: 1));
+      } while (!day.isAfter(lastDay));
+    }
+    return days;
+  }
+
+  /// The month as six weeks of days, each with its events as far as they fit; the chosen day's events below.
+  Widget _grid(AppLocalizations l, String locale, DateTime month, List<Event> events) {
+    final theme = Theme.of(context);
+    final start = _gridStart(month, _firstWeekday);
+    final days = _byDay(events, start, start.add(const Duration(days: _gridDays)));
+    final today = _day(DateTime.now());
+    final weekdays = DateFormat.E(locale);
+    final chosen = days[_chosen] ?? const <Event>[];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Titles where a cell is wide enough, dots where it is not (phones).
+        final titles = constraints.maxWidth / 7 >= 90;
+        final grid = Column(
+          children: [
+            Row(
+              children: [
+                for (var i = 0; i < 7; i++)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        weekdays.format(start.add(Duration(days: i))),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            for (var week = 0; week < 6; week++)
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < 7; i++)
+                      Expanded(
+                        child: _DayCell(
+                          day: DateUtils.addDaysToDate(start, week * 7 + i),
+                          inMonth: DateUtils.addDaysToDate(start, week * 7 + i).month == month.month,
+                          today: DateUtils.addDaysToDate(start, week * 7 + i) == today,
+                          chosen: DateUtils.addDaysToDate(start, week * 7 + i) == _chosen,
+                          events: days[DateUtils.addDaysToDate(start, week * 7 + i)] ?? const [],
+                          titles: titles,
+                          color: _color,
+                          onTap: () => setState(() => _chosen = DateUtils.addDaysToDate(start, week * 7 + i)),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        );
+        final list = ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Text(DateFormat.MMMMEEEEd(locale).format(_chosen), style: theme.textTheme.titleSmall),
+            ),
+            if (chosen.isEmpty)
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text(l.noEvents)),
+            for (final e in chosen) _EventTile(event: e, color: _color(e), onTap: () => _open(e)),
+          ],
+        );
+        // Side by side where there is room, the list under the grid where there is not.
+        if (constraints.maxWidth >= 900) {
+          return Row(
+            children: [
+              Expanded(flex: 3, child: grid),
+              const VerticalDivider(width: 1),
+              Expanded(flex: 2, child: list),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            Expanded(flex: 3, child: grid),
+            const Divider(height: 1),
+            Expanded(flex: 2, child: list),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _open(Event e) async {
     final answered = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -176,6 +327,24 @@ DateTime? _when(Event e, String? text) {
   return e.allDay ? DateTime.tryParse(text) : _local(text);
 }
 
+/// One instance of a recurring event as a draft, to change it alone: its own title, times, place and description.
+EventDraft instanceDraft(Event e) {
+  final start = _when(e, e.start) ?? DateTime.now();
+  final end = _when(e, e.end) ?? start;
+  return EventDraft(
+    calendarId: e.calendarIds.firstOrNull ?? '',
+    accountId: e.accountId,
+    title: e.title,
+    allDay: e.allDay,
+    start: localTime(start),
+    // An all-day event's draft ends on its last day, not the day after.
+    end: localTime(e.allDay ? end.subtract(const Duration(days: 1)) : end),
+    location: e.location ?? '',
+    description: e.description ?? '',
+    participants: const [],
+  );
+}
+
 Color? _parseColor(String? css) {
   final hex = css?.trim();
   if (hex == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(hex)) return null;
@@ -190,6 +359,112 @@ String _times(AppLocalizations l, String locale, Event e) {
   if (start == null) return '';
   final format = DateFormat.Hm(locale);
   return end == null ? format.format(start) : '${format.format(start)} – ${format.format(end)}';
+}
+
+/// A day of the month grid: its number, and its events – as titles, or as dots where there is no room.
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.day,
+    required this.inMonth,
+    required this.today,
+    required this.chosen,
+    required this.events,
+    required this.titles,
+    required this.color,
+    required this.onTap,
+  });
+
+  final DateTime day;
+  final bool inMonth;
+  final bool today;
+  final bool chosen;
+  final List<Event> events;
+  final bool titles;
+  final Color? Function(Event) color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final number = Container(
+      width: 24,
+      height: 24,
+      alignment: Alignment.center,
+      decoration: today ? BoxDecoration(color: scheme.primary, shape: BoxShape.circle) : null,
+      child: Text(
+        '${day.day}',
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: today
+              ? scheme.onPrimary
+              : inMonth
+              ? null
+              : scheme.onSurface.withValues(alpha: 0.4),
+        ),
+      ),
+    );
+    return InkWell(
+      key: ValueKey('day-${DateFormat('yyyy-MM-dd').format(day)}'),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: chosen ? scheme.primaryContainer.withValues(alpha: 0.5) : null,
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3), width: 0.5),
+        ),
+        padding: const EdgeInsets.all(2),
+        child: Column(
+          crossAxisAlignment: titles ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          children: [
+            number,
+            if (titles)
+              Expanded(
+                child: ClipRect(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final e in events)
+                        Container(
+                          margin: const EdgeInsets.only(top: 1),
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            color: (color(e) ?? scheme.primary).withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            e.title.isEmpty ? '–' : e.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              decoration: e.cancelled ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              )
+            else if (events.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Wrap(
+                  spacing: 2,
+                  runSpacing: 2,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final e in events.take(4))
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(color: color(e) ?? scheme.primary, shape: BoxShape.circle),
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _EventTile extends StatelessWidget {
@@ -273,12 +548,41 @@ class _EventPageState extends State<EventPage> {
     }
   }
 
+  /// For an instance of a recurring event: whether the user means only it (`true`), the whole series (`false`), or
+  /// neither (`null`).
+  Future<bool?> _which(String question) {
+    final l = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(question),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.cancel)),
+          TextButton(
+            key: const ValueKey('whole-series'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l.wholeSeries),
+          ),
+          FilledButton(
+            key: const ValueKey('this-event'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l.thisEvent),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _edit() async {
     final e = widget.event;
     final messenger = ScaffoldMessenger.of(context);
     final l = AppLocalizations.of(context);
+    final one = e.recurrenceId == null ? false : await _which(l.changeWhich);
+    if (one == null || !mounted) return;
     try {
-      final draft = await widget.account.eventDraft(accountId: e.accountId, eventId: e.eventId);
+      final draft = one
+          ? instanceDraft(e)
+          : await widget.account.eventDraft(accountId: e.accountId, eventId: e.eventId);
       if (!mounted) return;
       final calendars = widget.calendars.isEmpty
           ? [Calendar(id: draft.calendarId, accountId: draft.accountId, name: '', writable: true)]
@@ -286,8 +590,13 @@ class _EventPageState extends State<EventPage> {
       final saved = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (_) =>
-              EventFormPage(account: widget.account, calendars: calendars, draft: draft, eventId: e.eventId),
+          builder: (_) => EventFormPage(
+            account: widget.account,
+            calendars: calendars,
+            draft: draft,
+            eventId: e.eventId,
+            recurrenceId: one ? e.recurrenceId : null,
+          ),
         ),
       );
       if ((saved ?? false) && mounted) {
@@ -303,23 +612,33 @@ class _EventPageState extends State<EventPage> {
     final e = widget.event;
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(e.recurring ? l.deleteRecurringConfirm : l.deleteEventConfirm),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
-          FilledButton(
-            key: const ValueKey('confirm-delete'),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.delete),
-          ),
-        ],
-      ),
-    );
-    if (!(sure ?? false)) return;
+    final bool? one;
+    if (e.recurrenceId != null) {
+      one = await _which(l.deleteWhich);
+    } else {
+      final sure = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(e.recurring ? l.deleteRecurringConfirm : l.deleteEventConfirm),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
+            FilledButton(
+              key: const ValueKey('confirm-delete'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l.delete),
+            ),
+          ],
+        ),
+      );
+      one = (sure ?? false) ? false : null;
+    }
+    if (one == null) return;
     try {
-      await widget.account.deleteEvent(accountId: e.accountId, eventId: e.eventId);
+      if (one) {
+        await widget.account.deleteInstance(accountId: e.accountId, eventId: e.eventId, recurrenceId: e.recurrenceId!);
+      } else {
+        await widget.account.deleteEvent(accountId: e.accountId, eventId: e.eventId);
+      }
       messenger.showSnackBar(SnackBar(content: Text(l.deleted)));
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {

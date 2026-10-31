@@ -7,9 +7,9 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `html_of`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -39,6 +39,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Deletes an event – a recurring one as a whole; the people invited hear of it by email.
   Future<void> deleteEvent({required String accountId, required String eventId});
 
+  /// Leaves one instance of a recurring event out; the people invited hear of it by email.
+  Future<void> deleteInstance({required String accountId, required String eventId, required String recurrenceId});
+
   /// Downloads a blob of a store – or of the mail account, for `None` – into `directory` under `name` (made unique)
   /// and returns the path.
   Future<String> download({
@@ -51,6 +54,9 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// One message to read – an encrypted one decrypted here, with its signature checked.
   Future<Email> email({required String id});
+
+  /// The labels an email address may have.
+  static List<String> emailLabels() => RustLib.instance.api.crateApiKernoidKernoidEmailLabels();
 
   /// A page of a mailbox; encrypted emails with their summary decrypted, when the key is unlocked.
   Future<EmailPage> emails({required String mailboxId, required int position, required int limit});
@@ -90,6 +96,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Makes the account's key here and returns its recovery code – to be shown once.
   Future<String> makeKey();
 
+  /// The labels a phone number may have: where it is, then what it is.
+  static List<String> phoneLabels() => RustLib.instance.api.crateApiKernoidKernoidPhoneLabels();
+
   /// A reply (`reply`, `replyAll`) to or a forward (`forward`) of an email: recipients, `Re:`/`Fwd:`, the text quoted
   /// – an encrypted email's decrypted text, when the key is unlocked –, the thread, the attachments forwarded.
   Future<EmailDraft> replyDraft({required String emailId, required String kind, required ReplyPhrases phrases});
@@ -106,6 +115,15 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Makes an event, or – with `event_id` – changes one; the people invited hear of it by email. The time zone is the
   /// device's.
   Future<void> saveEvent({String? eventId, required EventDraft draft});
+
+  /// Changes one instance of a recurring event alone – its title, time, place and description; the people invited
+  /// hear of it by email.
+  Future<void> saveInstance({
+    required String accountId,
+    required String eventId,
+    required String recurrenceId,
+    required EventDraft draft,
+  });
 
   /// Saves an attachment of a decrypted message – read from the message decrypted here, never from the server.
   Future<String> savePart({
@@ -231,8 +249,8 @@ class Contact {
   final String accountId;
   final String name;
   final String? organization;
-  final List<String> emails;
-  final List<String> phones;
+  final List<LabelledValue> emails;
+  final List<LabelledValue> phones;
   final List<String> notes;
 
   const Contact({
@@ -273,8 +291,8 @@ class Contact {
 class ContactDraft {
   final String name;
   final String organization;
-  final List<String> emails;
-  final List<String> phones;
+  final List<LabelledValue> emails;
+  final List<LabelledValue> phones;
   final String note;
 
   const ContactDraft({
@@ -381,6 +399,9 @@ class Email {
   final String subject;
   final String receivedAt;
   final String text;
+
+  /// The HTML of the email, when it has HTML: shown by the app without running anything or loading what it links.
+  final String? html;
   final List<Attachment> attachments;
   final bool encrypted;
   final bool locked;
@@ -397,6 +418,7 @@ class Email {
     required this.subject,
     required this.receivedAt,
     required this.text,
+    this.html,
     required this.attachments,
     required this.encrypted,
     required this.locked,
@@ -413,6 +435,7 @@ class Email {
       subject.hashCode ^
       receivedAt.hashCode ^
       text.hashCode ^
+      html.hashCode ^
       attachments.hashCode ^
       encrypted.hashCode ^
       locked.hashCode ^
@@ -431,6 +454,7 @@ class Email {
           subject == other.subject &&
           receivedAt == other.receivedAt &&
           text == other.text &&
+          html == other.html &&
           attachments == other.attachments &&
           encrypted == other.encrypted &&
           locked == other.locked &&
@@ -578,6 +602,9 @@ class Event {
 
   /// The event changes go to: for an instance, the recurring event it is of.
   final String eventId;
+
+  /// For an instance of a recurring event: which one it is, to change or delete it alone.
+  final String? recurrenceId;
   final String accountId;
   final List<String> calendarIds;
   final String title;
@@ -606,6 +633,7 @@ class Event {
   const Event({
     required this.id,
     required this.eventId,
+    this.recurrenceId,
     required this.accountId,
     required this.calendarIds,
     required this.title,
@@ -626,6 +654,7 @@ class Event {
   int get hashCode =>
       id.hashCode ^
       eventId.hashCode ^
+      recurrenceId.hashCode ^
       accountId.hashCode ^
       calendarIds.hashCode ^
       title.hashCode ^
@@ -648,6 +677,7 @@ class Event {
           runtimeType == other.runtimeType &&
           id == other.id &&
           eventId == other.eventId &&
+          recurrenceId == other.recurrenceId &&
           accountId == other.accountId &&
           calendarIds == other.calendarIds &&
           title == other.title &&
@@ -811,6 +841,22 @@ class KernoidError implements FrbException {
           runtimeType == other.runtimeType &&
           unauthorized == other.unauthorized &&
           message == other.message;
+}
+
+/// An address or number with its labels: `work`, `private`, and for a phone what it is (`mobile`, `fax` …).
+class LabelledValue {
+  final String value;
+  final List<String> labels;
+
+  const LabelledValue({required this.value, required this.labels});
+
+  @override
+  int get hashCode => value.hashCode ^ labels.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LabelledValue && runtimeType == other.runtimeType && value == other.value && labels == other.labels;
 }
 
 class Mailbox {

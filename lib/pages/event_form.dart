@@ -7,9 +7,17 @@ import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 
 /// Making or changing an event: title, calendar, when (or all day), where, who is invited, how it repeats, a
-/// description. A recurring event is changed as a whole. Pops `true` once saved.
+/// description. A recurring event is changed as a whole, or – with `recurrenceId` – one of its instances alone, in what
+/// an instance may differ in. Pops `true` once saved.
 class EventFormPage extends StatefulWidget {
-  const EventFormPage({super.key, required this.account, required this.calendars, required this.draft, this.eventId});
+  const EventFormPage({
+    super.key,
+    required this.account,
+    required this.calendars,
+    required this.draft,
+    this.eventId,
+    this.recurrenceId,
+  });
 
   final Kernoid account;
 
@@ -19,6 +27,9 @@ class EventFormPage extends StatefulWidget {
 
   /// The event changed; none for a new one.
   final String? eventId;
+
+  /// The instance of the recurring event `eventId` changed alone.
+  final String? recurrenceId;
 
   /// A new event: the next full hour, an hour long, in the first calendar.
   static EventDraft fresh(Calendar calendar, DateTime day) {
@@ -118,21 +129,29 @@ class _EventFormPageState extends State<EventFormPage> {
       _error = null;
     });
     try {
-      await widget.account.saveEvent(
-        eventId: widget.eventId,
-        draft: EventDraft(
-          calendarId: calendar,
-          accountId: account,
-          title: _title.text,
-          allDay: _allDay,
-          start: localTime(start),
-          end: localTime(end),
-          location: _location.text,
-          description: _description.text,
-          participants: _invite.text.split(RegExp(r'[,;\s]+')).where((a) => a.contains('@')).toList(),
-          repeat: _repeat,
-        ),
+      final draft = EventDraft(
+        calendarId: calendar,
+        accountId: account,
+        title: _title.text,
+        allDay: _allDay,
+        start: localTime(start),
+        end: localTime(end),
+        location: _location.text,
+        description: _description.text,
+        participants: _invite.text.split(RegExp(r'[,;\s]+')).where((a) => a.contains('@')).toList(),
+        repeat: _repeat,
       );
+      final instance = widget.recurrenceId;
+      if (instance != null) {
+        await widget.account.saveInstance(
+          accountId: account,
+          eventId: widget.eventId!,
+          recurrenceId: instance,
+          draft: draft,
+        );
+      } else {
+        await widget.account.saveEvent(eventId: widget.eventId, draft: draft);
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted) setState(() => _error = errorText(error));
@@ -145,6 +164,7 @@ class _EventFormPageState extends State<EventFormPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final one = widget.recurrenceId != null;
     final day = DateFormat.yMMMEd(locale);
     final hm = DateFormat.Hm(locale);
     Widget when(String label, bool start) {
@@ -169,7 +189,13 @@ class _EventFormPageState extends State<EventFormPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.eventId == null ? l.newEvent : l.editEvent),
+        title: Text(
+          widget.eventId == null
+              ? l.newEvent
+              : one
+              ? l.editThisEvent
+              : l.editEvent,
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -216,34 +242,38 @@ class _EventFormPageState extends State<EventFormPage> {
             ),
             when(l.starts, true),
             when(l.ends, false),
-            DropdownButtonFormField<String?>(
-              initialValue: _repeat,
-              decoration: InputDecoration(labelText: l.repeat),
-              items: [
-                for (final (value, label) in [
-                  (null, l.repeatNone),
-                  ('daily', l.repeatDaily),
-                  ('weekly', l.repeatWeekly),
-                  ('monthly', l.repeatMonthly),
-                  ('yearly', l.repeatYearly),
-                ])
-                  DropdownMenuItem(value: value, child: Text(label)),
-              ],
-              onChanged: (v) => setState(() => _repeat = v),
-            ),
+            if (!one)
+              DropdownButtonFormField<String?>(
+                key: const ValueKey('event-repeat'),
+                initialValue: _repeat,
+                decoration: InputDecoration(labelText: l.repeat),
+                items: [
+                  for (final (value, label) in [
+                    (null, l.repeatNone),
+                    ('daily', l.repeatDaily),
+                    ('weekly', l.repeatWeekly),
+                    ('monthly', l.repeatMonthly),
+                    ('yearly', l.repeatYearly),
+                  ])
+                    DropdownMenuItem(value: value, child: Text(label)),
+                ],
+                onChanged: (v) => setState(() => _repeat = v),
+              ),
             const SizedBox(height: 8),
             TextFormField(
               key: const ValueKey('event-location'),
               controller: _location,
               decoration: InputDecoration(labelText: l.location),
             ),
-            const SizedBox(height: 8),
-            TextFormField(
-              key: const ValueKey('event-invite'),
-              controller: _invite,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(labelText: l.invite, helperText: l.inviteHint, helperMaxLines: 2),
-            ),
+            if (!one) ...[
+              const SizedBox(height: 8),
+              TextFormField(
+                key: const ValueKey('event-invite'),
+                controller: _invite,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(labelText: l.invite, helperText: l.inviteHint, helperMaxLines: 2),
+              ),
+            ],
             const SizedBox(height: 8),
             TextFormField(
               key: const ValueKey('event-description'),
@@ -252,7 +282,10 @@ class _EventFormPageState extends State<EventFormPage> {
               maxLines: 8,
               decoration: InputDecoration(labelText: l.description, alignLabelWithHint: true),
             ),
-            if (widget.eventId != null && widget.draft.repeat != null) ...[
+            if (one) ...[
+              const SizedBox(height: 8),
+              Text(l.instanceEditsOne, style: Theme.of(context).textTheme.bodySmall),
+            ] else if (widget.eventId != null && widget.draft.repeat != null) ...[
               const SizedBox(height: 8),
               Text(l.recurringEditsAll, style: Theme.of(context).textTheme.bodySmall),
             ],

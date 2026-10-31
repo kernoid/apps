@@ -103,12 +103,16 @@ kept in the system's key store (the refresh token, rotated and kept again with e
 signing out revokes it. Calendars and contacts came on the SDK (2026-10-30): the
 calendars as two weeks of days with recurring events as their instances and all-day events as dates, invitations
 answered from the event, events made, changed and deleted (inviting people by address); contacts with search,
-made, changed and deleted, an email started from an address (OPEN: one instance of a recurring event on its own,
-a month view, labels of addresses and numbers in the form). Writing mail grew the same day: replies, replies to all
+made, changed and deleted, an email started from an address. On 2026-10-31 followed one instance of a recurring event
+changed or deleted on its own, a month view (the chosen day's events beside or below the grid) and the labels of
+addresses and numbers in the contact form. Writing mail grew the same day: replies, replies to all
 (without the user's own addresses) and forwards – quoted in the user's language, the thread kept, a forward carrying
 its attachments – on the SDK's `reply` (shared with the terminal app), Cc and Bcc, and files of the device attached
-through file_selector – inside the encrypted message when it goes end-to-end encrypted, uploaded otherwise (OPEN:
-forwarding the attachments of an encrypted message, HTML mail).
+through file_selector – inside the encrypted message when it goes end-to-end encrypted, uploaded otherwise. HTML mail is
+shown since 2026-10-31 (flutter_widget_from_html_core: drawn as widgets, nothing run; images from the internet only
+when the user asks, none from the device; a link shows its address before it opens). OPEN: forwarding the attachments
+of an encrypted message – the SDK takes files to send only from paths, and writing them decrypted to disk is not an
+option –, writing HTML.
 
 ## 5. Files in the operating system
 

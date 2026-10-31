@@ -464,4 +464,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get date => 'Date';
+
+  @override
+  String get thisEvent => 'This event';
+
+  @override
+  String get wholeSeries => 'The whole series';
+
+  @override
+  String get changeWhich => 'Change only this event or the whole series?';
+
+  @override
+  String get deleteWhich => 'Delete only this event or the whole series? Everyone invited hears of it.';
+
+  @override
+  String get editThisEvent => 'Change this event';
+
+  @override
+  String get instanceEditsOne => 'Only this event of the series changes; who is invited stays as in the series.';
+
+  @override
+  String get monthView => 'Month';
+
+  @override
+  String get listView => 'List';
+
+  @override
+  String get labelWork => 'work';
+
+  @override
+  String get labelPrivate => 'private';
+
+  @override
+  String get labelMobile => 'mobile';
+
+  @override
+  String get labelVoice => 'voice';
+
+  @override
+  String get labelText => 'text';
+
+  @override
+  String get labelVideo => 'video';
+
+  @override
+  String get labelFax => 'fax';
+
+  @override
+  String get labelPager => 'pager';
+
+  @override
+  String get labelTextphone => 'textphone';
+
+  @override
+  String get labels => 'Labels';
+
+  @override
+  String get addEmail => 'Add an address';
+
+  @override
+  String get addPhone => 'Add a number';
+
+  @override
+  String get loadImages => 'Load images';
+
+  @override
+  String get imagesBlocked => 'Images from the internet are not loaded until you ask for them.';
+
+  @override
+  String get openLink => 'Open this link?';
+
+  @override
+  String get open => 'Open';
+
+  @override
+  String get asText => 'As text';
+
+  @override
+  String get asHtml => 'Formatted';
 }

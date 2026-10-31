@@ -973,6 +973,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Date'**
   String get date;
+
+  /// No description provided for @thisEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'This event'**
+  String get thisEvent;
+
+  /// No description provided for @wholeSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'The whole series'**
+  String get wholeSeries;
+
+  /// No description provided for @changeWhich.
+  ///
+  /// In en, this message translates to:
+  /// **'Change only this event or the whole series?'**
+  String get changeWhich;
+
+  /// No description provided for @deleteWhich.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete only this event or the whole series? Everyone invited hears of it.'**
+  String get deleteWhich;
+
+  /// No description provided for @editThisEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Change this event'**
+  String get editThisEvent;
+
+  /// No description provided for @instanceEditsOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this event of the series changes; who is invited stays as in the series.'**
+  String get instanceEditsOne;
+
+  /// No description provided for @monthView.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get monthView;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get listView;
+
+  /// No description provided for @labelWork.
+  ///
+  /// In en, this message translates to:
+  /// **'work'**
+  String get labelWork;
+
+  /// No description provided for @labelPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'private'**
+  String get labelPrivate;
+
+  /// No description provided for @labelMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'mobile'**
+  String get labelMobile;
+
+  /// No description provided for @labelVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'voice'**
+  String get labelVoice;
+
+  /// No description provided for @labelText.
+  ///
+  /// In en, this message translates to:
+  /// **'text'**
+  String get labelText;
+
+  /// No description provided for @labelVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'video'**
+  String get labelVideo;
+
+  /// No description provided for @labelFax.
+  ///
+  /// In en, this message translates to:
+  /// **'fax'**
+  String get labelFax;
+
+  /// No description provided for @labelPager.
+  ///
+  /// In en, this message translates to:
+  /// **'pager'**
+  String get labelPager;
+
+  /// No description provided for @labelTextphone.
+  ///
+  /// In en, this message translates to:
+  /// **'textphone'**
+  String get labelTextphone;
+
+  /// No description provided for @labels.
+  ///
+  /// In en, this message translates to:
+  /// **'Labels'**
+  String get labels;
+
+  /// No description provided for @addEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an address'**
+  String get addEmail;
+
+  /// No description provided for @addPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a number'**
+  String get addPhone;
+
+  /// No description provided for @loadImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Load images'**
+  String get loadImages;
+
+  /// No description provided for @imagesBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Images from the internet are not loaded until you ask for them.'**
+  String get imagesBlocked;
+
+  /// No description provided for @openLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this link?'**
+  String get openLink;
+
+  /// No description provided for @open.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get open;
+
+  /// No description provided for @asText.
+  ///
+  /// In en, this message translates to:
+  /// **'As text'**
+  String get asText;
+
+  /// No description provided for @asHtml.
+  ///
+  /// In en, this message translates to:
+  /// **'Formatted'**
+  String get asHtml;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

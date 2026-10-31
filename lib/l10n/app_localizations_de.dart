@@ -467,4 +467,82 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get date => 'Datum';
+
+  @override
+  String get thisEvent => 'Nur dieser Termin';
+
+  @override
+  String get wholeSeries => 'Die ganze Serie';
+
+  @override
+  String get changeWhich => 'Nur diesen Termin oder die ganze Serie ändern?';
+
+  @override
+  String get deleteWhich => 'Nur diesen Termin oder die ganze Serie löschen? Alle Eingeladenen erfahren davon.';
+
+  @override
+  String get editThisEvent => 'Diesen Termin ändern';
+
+  @override
+  String get instanceEditsOne => 'Nur dieser Termin der Serie ändert sich; die Eingeladenen bleiben wie in der Serie.';
+
+  @override
+  String get monthView => 'Monat';
+
+  @override
+  String get listView => 'Liste';
+
+  @override
+  String get labelWork => 'Arbeit';
+
+  @override
+  String get labelPrivate => 'privat';
+
+  @override
+  String get labelMobile => 'Mobil';
+
+  @override
+  String get labelVoice => 'Sprache';
+
+  @override
+  String get labelText => 'SMS';
+
+  @override
+  String get labelVideo => 'Video';
+
+  @override
+  String get labelFax => 'Fax';
+
+  @override
+  String get labelPager => 'Pager';
+
+  @override
+  String get labelTextphone => 'Schreibtelefon';
+
+  @override
+  String get labels => 'Labels';
+
+  @override
+  String get addEmail => 'Adresse hinzufügen';
+
+  @override
+  String get addPhone => 'Nummer hinzufügen';
+
+  @override
+  String get loadImages => 'Bilder laden';
+
+  @override
+  String get imagesBlocked => 'Bilder aus dem Internet werden erst geladen, wenn du es willst.';
+
+  @override
+  String get openLink => 'Diesen Link öffnen?';
+
+  @override
+  String get open => 'Öffnen';
+
+  @override
+  String get asText => 'Als Text';
+
+  @override
+  String get asHtml => 'Formatiert';
 }

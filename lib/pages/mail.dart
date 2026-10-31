@@ -6,6 +6,7 @@ import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import '../widgets/e2e.dart';
+import '../widgets/html_body.dart';
 import '../widgets/states.dart';
 import 'compose.dart';
 import 'home.dart';
@@ -339,6 +340,9 @@ class EmailView extends StatefulWidget {
 class _EmailViewState extends State<EmailView> {
   late Future<Email> _email = widget.account.email(id: widget.id);
 
+  /// The email's text instead of its HTML.
+  bool _asText = false;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -419,7 +423,23 @@ class _EmailViewState extends State<EmailView> {
                 ],
               ),
               const Divider(height: 32),
-              Text(e.text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+              if (e.html != null && !_asText)
+                HtmlBody(
+                  html: e.html!,
+                  onMailto: (address) => writeMessage(context, widget.account, to: address),
+                )
+              else
+                Text(e.text, style: theme.textTheme.bodyMedium?.copyWith(height: 1.45)),
+              if (e.html != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('html-or-text'),
+                    onPressed: () => setState(() => _asText = !_asText),
+                    icon: Icon(_asText ? Icons.web_outlined : Icons.notes, size: 18),
+                    label: Text(_asText ? l.asHtml : l.asText),
+                  ),
+                ),
               if (e.attachments.isNotEmpty) ...[
                 const Divider(height: 32),
                 Text(l.attachments, style: theme.textTheme.titleSmall),

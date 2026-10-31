@@ -107,7 +107,7 @@ class _ContactsPageState extends State<ContactsPage> {
         itemCount: contacts.length,
         itemBuilder: (context, i) {
           final c = contacts[i];
-          final details = c.organization ?? c.emails.firstOrNull ?? c.phones.firstOrNull;
+          final details = c.organization ?? c.emails.firstOrNull?.value ?? c.phones.firstOrNull?.value;
           return ListTile(
             leading: CircleAvatar(child: Text(_initials(c.name))),
             title: Text(c.name),
@@ -119,6 +119,10 @@ class _ContactsPageState extends State<ContactsPage> {
     );
   }
 }
+
+/// `Email · work`: what it is, and its labels.
+String _labelled(AppLocalizations l, String kind, List<String> labels) =>
+    [kind, ...labels.map((label) => labelName(l, label))].join(' · ');
 
 String _initials(String name) {
   final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
@@ -207,25 +211,25 @@ class ContactPage extends StatelessWidget {
           for (final email in c.emails)
             ListTile(
               leading: const Icon(Icons.mail_outline),
-              title: Text(email),
-              subtitle: Text(l.emails),
+              title: Text(email.value),
+              subtitle: Text(_labelled(l, l.emails, email.labels)),
               trailing: IconButton(
-                key: ValueKey('write-to-$email'),
+                key: ValueKey('write-to-${email.value}'),
                 tooltip: l.writeEmail,
                 icon: const Icon(Icons.send_outlined),
-                onPressed: () => writeMessage(context, account, to: email),
+                onPressed: () => writeMessage(context, account, to: email.value),
               ),
             ),
           for (final phone in c.phones)
             ListTile(
               leading: const Icon(Icons.phone_outlined),
-              title: Text(phone),
-              subtitle: Text(l.phones),
+              title: Text(phone.value),
+              subtitle: Text(_labelled(l, l.phones, phone.labels)),
               trailing: IconButton(
                 tooltip: l.copy,
                 icon: const Icon(Icons.copy_outlined),
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: phone));
+                  Clipboard.setData(ClipboardData(text: phone.value));
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied)));
                 },
               ),

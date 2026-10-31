@@ -182,6 +182,8 @@ pub struct Email {
     pub subject: String,
     pub received_at: String,
     pub text: String,
+    /// The HTML of the email, when it has HTML: shown by the app without running anything or loading what it links.
+    pub html: Option<String>,
     pub attachments: Vec<Attachment>,
     pub encrypted: bool,
     pub locked: bool,
@@ -276,6 +278,8 @@ pub struct Event {
     pub id: String,
     /// The event changes go to: for an instance, the recurring event it is of.
     pub event_id: String,
+    /// For an instance of a recurring event: which one it is, to change or delete it alone.
+    pub recurrence_id: Option<String>,
     pub account_id: String,
     pub calendar_ids: Vec<String>,
     pub title: String,
@@ -315,13 +319,20 @@ pub struct EventDraft {
     pub repeat: Option<String>,
 }
 
+/// An address or number with its labels: `work`, `private`, and for a phone what it is (`mobile`, `fax` …).
+#[derive(Debug, Clone)]
+pub struct LabelledValue {
+    pub value: String,
+    pub labels: Vec<String>,
+}
+
 /// A contact as the user writes it.
 #[derive(Debug, Clone)]
 pub struct ContactDraft {
     pub name: String,
     pub organization: String,
-    pub emails: Vec<String>,
-    pub phones: Vec<String>,
+    pub emails: Vec<LabelledValue>,
+    pub phones: Vec<LabelledValue>,
     pub note: String,
 }
 
@@ -332,8 +343,8 @@ pub struct Contact {
     pub account_id: String,
     pub name: String,
     pub organization: Option<String>,
-    pub emails: Vec<String>,
-    pub phones: Vec<String>,
+    pub emails: Vec<LabelledValue>,
+    pub phones: Vec<LabelledValue>,
     pub notes: Vec<String>,
 }
 
@@ -612,8 +623,10 @@ impl Kernoid {
             if let Some(inner) = &e.inner {
                 opened.lock().await.insert(e.summary.id.clone(), inner.0.clone());
             }
+            let html = if sealed.locked { None } else { html_of(&e) };
             Ok(Email {
                 text: if sealed.locked { String::new() } else { e.text(TEXT_WIDTH) },
+                html,
                 attachments,
                 encrypted,
                 locked: sealed.locked,
@@ -912,6 +925,44 @@ async fn own_addresses(client: &Client) -> Vec<String> {
     own
 }
 
+/// The HTML parts of an email, joined; none when it has no HTML (its HTML body is its text parts then).
+fn html_of(email: &mail::Email) -> Option<String> {
+    let parts: Vec<&str> = email
+        .html_body
+        .iter()
+        .filter(|part| part.kind == "text/html")
+        .filter_map(|part| email.body_values.get(part.part_id.as_ref()?))
+        .map(|value| value.value.as_str())
+        .collect();
+    if parts.is_empty() { None } else { Some(parts.join("\n")) }
+}
+
+/// The SDK's form of an event the user wrote, in the device's time zone; `earlier` is the event as it was, whose answers
+/// stay while its time does.
+fn event_form(draft: EventDraft, earlier: Option<calendars::EventForm>) -> client::Result<calendars::EventForm> {
+    let time = |text: &str| {
+        chrono::NaiveDateTime::parse_from_str(text, "%Y-%m-%dT%H:%M:%S")
+            .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
+    };
+    let form = calendars::EventForm {
+        title: draft.title.trim().to_owned(),
+        all_day: draft.all_day,
+        start: time(&draft.start)?,
+        end: time(&draft.end)?,
+        time_zone: if draft.all_day { None } else { calendars::local_time_zone() },
+        location: draft.location.trim().to_owned(),
+        description: draft.description,
+        participants: draft.participants.iter().map(|a| a.trim().to_owned()).filter(|a| a.contains('@')).collect(),
+        repeat: draft.repeat.filter(|r| !r.is_empty()),
+        answers: earlier.as_ref().map(|form| form.answers.clone()).unwrap_or_default(),
+        was: earlier.map(|form| (form.start, form.end, form.all_day)),
+    };
+    if form.end < form.start {
+        return Err(client::Error::Protocol("the end is before the start".into()));
+    }
+    Ok(form)
+}
+
 fn event(e: calendars::Event, own: &[String]) -> Event {
     let invitation = if e.organized_by(own) { None } else { e.me(own).map(|(key, p)| (key.to_owned(), p.clone())) };
     let rfc3339 = |time: chrono::DateTime<chrono::Utc>| time.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
@@ -928,6 +979,7 @@ fn event(e: calendars::Event, own: &[String]) -> Event {
     };
     Event {
         event_id: e.event_id().to_owned(),
+        recurrence_id: e.recurrence_id.clone().filter(|_| e.base_event_id.is_some()),
         start,
         end,
         cancelled: e.is_cancelled(),
@@ -1042,10 +1094,6 @@ impl Kernoid {
                 .into_iter()
                 .find(|c| c.id == draft.calendar_id && c.account == draft.account_id)
                 .ok_or_else(|| client::Error::Protocol("the calendar is gone".into()))?;
-            let time = |text: &str| {
-                chrono::NaiveDateTime::parse_from_str(text, "%Y-%m-%dT%H:%M:%S")
-                    .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
-            };
             let own = own_addresses(&client).await;
             // A change keeps the answers given, as long as the time stays (RFC 5546, 2.1.4).
             let earlier = match &event_id {
@@ -1054,32 +1102,50 @@ impl Kernoid {
                     .and_then(|event| calendars::EventForm::of(&event, &own)),
                 None => None,
             };
-            let form = calendars::EventForm {
-                title: draft.title.trim().to_owned(),
-                all_day: draft.all_day,
-                start: time(&draft.start)?,
-                end: time(&draft.end)?,
-                time_zone: if draft.all_day { None } else { calendars::local_time_zone() },
-                location: draft.location.trim().to_owned(),
-                description: draft.description,
-                participants: draft
-                    .participants
-                    .iter()
-                    .map(|a| a.trim().to_owned())
-                    .filter(|a| a.contains('@'))
-                    .collect(),
-                repeat: draft.repeat.filter(|r| !r.is_empty()),
-                answers: earlier.as_ref().map(|form| form.answers.clone()).unwrap_or_default(),
-                was: earlier.map(|form| (form.start, form.end, form.all_day)),
-            };
-            if form.end < form.start {
-                return Err(client::Error::Protocol("the end is before the start".into()));
-            }
+            let form = event_form(draft, earlier)?;
             let organizer = client.session.username.clone();
             match event_id {
                 Some(id) => calendars::update(&client, &calendar, &id, &form, &organizer).await,
                 None => calendars::create(&client, &calendar, &form, &organizer).await.map(|_| ()),
             }
+        })
+        .await
+    }
+
+    /// Changes one instance of a recurring event alone – its title, time, place and description; the people invited
+    /// hear of it by email.
+    pub async fn save_instance(
+        &self,
+        account_id: String,
+        event_id: String,
+        recurrence_id: String,
+        draft: EventDraft,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let series = calendars::event(&client, &account_id, &event_id)
+                .await?
+                .ok_or_else(|| client::Error::Protocol("the event is gone".into()))?;
+            let form = event_form(EventDraft { repeat: None, ..draft }, None)?;
+            let organizer = client.session.username.clone();
+            calendars::update_instance(&client, &series, &recurrence_id, &form, &organizer).await
+        })
+        .await
+    }
+
+    /// Leaves one instance of a recurring event out; the people invited hear of it by email.
+    pub async fn delete_instance(
+        &self,
+        account_id: String,
+        event_id: String,
+        recurrence_id: String,
+    ) -> Result<(), KernoidError> {
+        let client = self.client.clone();
+        run(async move {
+            let series = calendars::event(&client, &account_id, &event_id)
+                .await?
+                .ok_or_else(|| client::Error::Protocol("the event is gone".into()))?;
+            calendars::destroy_instance(&client, &series, &recurrence_id).await
         })
         .await
     }
@@ -1109,24 +1175,20 @@ impl Kernoid {
                     .map(|card| (contacts::CardForm::of(&card), card.address_book_ids.keys().next().cloned())),
                 _ => None,
             };
-            let labelled = |values: &[String], before: Option<&Vec<contacts::Labelled>>| -> Vec<contacts::Labelled> {
+            let labelled = |values: Vec<LabelledValue>, allowed: &[&str]| -> Vec<contacts::Labelled> {
                 values
-                    .iter()
-                    .map(|v| v.trim())
-                    .filter(|v| !v.is_empty())
-                    .map(|value| {
-                        let labels = before
-                            .and_then(|list| list.iter().find(|l| l.value == value))
-                            .map(|l| l.labels.clone())
-                            .unwrap_or_default();
-                        contacts::Labelled { value: value.to_owned(), labels }
+                    .into_iter()
+                    .map(|v| contacts::Labelled {
+                        value: v.value.trim().to_owned(),
+                        labels: v.labels.into_iter().filter(|l| allowed.contains(&l.as_str())).collect(),
                     })
+                    .filter(|v| !v.value.is_empty())
                     .collect()
             };
             let form = contacts::CardForm {
                 name: draft.name.trim().to_owned(),
-                emails: labelled(&draft.emails, earlier.as_ref().map(|(form, _)| &form.emails)),
-                phones: labelled(&draft.phones, earlier.as_ref().map(|(form, _)| &form.phones)),
+                emails: labelled(draft.emails, &contacts::CONTEXTS),
+                phones: labelled(draft.phones, &[&contacts::CONTEXTS[..], &contacts::FEATURES[..]].concat()),
                 organizations: Some(draft.organization.trim().to_owned())
                     .filter(|o| !o.is_empty())
                     .into_iter()
@@ -1168,16 +1230,34 @@ impl Kernoid {
         let cards = run(async move { contacts::cards(&client, search.trim()).await }).await?;
         Ok(cards
             .into_iter()
-            .map(|c| Contact {
-                name: c.full_name(),
-                organization: c.organization(),
-                emails: c.emails(),
-                phones: c.phones(),
-                notes: c.notes().into_iter().filter(|n| !n.trim().is_empty()).collect(),
-                account_id: c.account,
-                id: c.id,
+            .map(|c| {
+                let form = contacts::CardForm::of(&c);
+                let values = |list: Vec<contacts::Labelled>| {
+                    list.into_iter().map(|l| LabelledValue { value: l.value, labels: l.labels }).collect()
+                };
+                Contact {
+                    name: c.full_name(),
+                    organization: c.organization(),
+                    emails: values(form.emails),
+                    phones: values(form.phones),
+                    notes: c.notes().into_iter().filter(|n| !n.trim().is_empty()).collect(),
+                    account_id: c.account,
+                    id: c.id,
+                }
             })
             .collect())
+    }
+
+    /// The labels an email address may have.
+    #[frb(sync)]
+    pub fn email_labels() -> Vec<String> {
+        contacts::CONTEXTS.iter().map(|l| (*l).to_owned()).collect()
+    }
+
+    /// The labels a phone number may have: where it is, then what it is.
+    #[frb(sync)]
+    pub fn phone_labels() -> Vec<String> {
+        contacts::CONTEXTS.iter().chain(contacts::FEATURES.iter()).map(|l| (*l).to_owned()).collect()
     }
 }
 

@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:kernoid/app/kept_login.dart';
+import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
 import 'package:kernoid/src/rust/api/kernoid.dart';
 import 'package:kernoid/src/rust/frb_generated.dart';
@@ -229,12 +230,26 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('new-contact')));
     await waitFor(tester, find.byKey(const ValueKey('contact-name')));
     await tester.enterText(find.byKey(const ValueKey('contact-name')), 'Erika Probe $stamp');
-    await tester.enterText(find.byKey(const ValueKey('contact-emails')), 'erika@probe.example');
-    await tester.enterText(find.byKey(const ValueKey('contact-phones')), '+49 40 1');
+    await settledTap(tester, find.byKey(const ValueKey('add-email')));
+    await waitFor(tester, find.byKey(const ValueKey('contact-email-0')));
+    await tester.enterText(find.byKey(const ValueKey('contact-email-0')), 'erika@probe.example');
+    await settledTap(tester, find.byKey(const ValueKey('contact-email-0-labels')));
+    await settledTap(tester, menuItem('work'));
+    await settledTap(tester, find.byKey(const ValueKey('add-phone')));
+    await waitFor(tester, find.byKey(const ValueKey('contact-phone-0')));
+    await tester.enterText(find.byKey(const ValueKey('contact-phone-0')), '+49 40 1');
+    await settledTap(tester, find.byKey(const ValueKey('contact-phone-0-labels')));
+    await settledTap(tester, menuItem('mobile'));
+    await shoot(tester, 'contact-form');
     await settledTap(tester, find.byKey(const ValueKey('save-contact')));
     await waitFor(tester, inList('Erika Probe $stamp'));
     await settledTap(tester, inList('Erika Probe $stamp'));
     await waitFor(tester, find.byKey(const ValueKey('edit-contact')));
+    // The labels came back from the server.
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('edit-contact'))));
+    expect(find.text('${l.emails} · ${l.labelWork}'), findsOneWidget);
+    expect(find.text('${l.phones} · ${l.labelMobile}'), findsOneWidget);
+    await shoot(tester, 'contact-labels');
     await settledTap(tester, find.byKey(const ValueKey('edit-contact')));
     await waitFor(tester, find.byKey(const ValueKey('contact-organization')));
     await tester.enterText(find.byKey(const ValueKey('contact-organization')), 'Probe AG');
@@ -254,6 +269,80 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('confirm-delete')));
     await waitFor(tester, find.byKey(const ValueKey('new-contact')));
     await waitGone(tester, inList('Erika Probe $stamp'));
+  });
+
+  testWidgets('one event of a series is changed and deleted alone; the month', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+    final title = 'Serie $stamp';
+
+    // A weekly event: two of its instances in the next two weeks.
+    await settledTap(tester, find.byIcon(Icons.calendar_month_outlined));
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+    await settledTap(tester, find.byKey(const ValueKey('new-event')));
+    await waitFor(tester, find.byKey(const ValueKey('event-title')));
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('event-title'))));
+    await tester.enterText(find.byKey(const ValueKey('event-title')), title);
+    await settledTap(tester, find.byKey(const ValueKey('event-repeat')));
+    await settledTap(tester, find.text(l.repeatWeekly).last);
+    await settledTap(tester, find.byKey(const ValueKey('save-event')));
+    await waitFor(tester, inList(title));
+    expect(inList(title), findsNWidgets(2));
+
+    // The first one changed alone: the other keeps its title.
+    await settledTap(tester, inList(title).first);
+    await waitFor(tester, find.byKey(const ValueKey('edit-event')));
+    await settledTap(tester, find.byKey(const ValueKey('edit-event')));
+    await waitFor(tester, find.byKey(const ValueKey('this-event')));
+    await settledTap(tester, find.byKey(const ValueKey('this-event')));
+    await waitFor(tester, find.byKey(const ValueKey('event-title')));
+    expect(find.byKey(const ValueKey('event-repeat')), findsNothing);
+    await tester.enterText(find.byKey(const ValueKey('event-title')), '$title einmal');
+    await shoot(tester, 'instance-form');
+    await settledTap(tester, find.byKey(const ValueKey('save-event')));
+    await waitFor(tester, inList('$title einmal'));
+    await waitFor(tester, inList(title));
+    expect(inList(title), findsOneWidget);
+
+    // The other one deleted alone.
+    await settledTap(tester, inList(title));
+    await waitFor(tester, find.byKey(const ValueKey('delete-event')));
+    await settledTap(tester, find.byKey(const ValueKey('delete-event')));
+    await waitFor(tester, find.byKey(const ValueKey('this-event')));
+    await settledTap(tester, find.byKey(const ValueKey('this-event')));
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+    // The list reloads after the deletion: wait for it, then the other one is gone and the changed one stays.
+    await waitGone(tester, find.byType(SnackBar));
+    await waitFor(tester, inList('$title einmal'));
+    await waitGone(tester, inList(title));
+    expect(inList('$title einmal'), findsOneWidget);
+
+    // The month: today is a day of the grid, its events listed beside it.
+    await settledTap(tester, find.byKey(const ValueKey('calendar-view')));
+    final today = DateTime.now();
+    final key = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    await waitFor(tester, find.byKey(ValueKey('day-$key')));
+    await shoot(tester, 'month');
+    await settledTap(tester, find.byKey(const ValueKey('calendar-view')));
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+
+    // The series deleted as a whole.
+    await waitFor(tester, inList('$title einmal'));
+    await settledTap(tester, inList('$title einmal'));
+    await waitFor(tester, find.byKey(const ValueKey('delete-event')));
+    await settledTap(tester, find.byKey(const ValueKey('delete-event')));
+    await waitFor(tester, find.byKey(const ValueKey('whole-series')));
+    await settledTap(tester, find.byKey(const ValueKey('whole-series')));
+    // Back on the calendar once deleted, the list loaded again without the series.
+    await waitFor(tester, find.byKey(const ValueKey('new-event')));
+    await waitGone(tester, find.byType(CircularProgressIndicator));
+    await waitGone(tester, find.descendant(of: find.byType(ListTile), matching: find.textContaining(title)));
   });
 
   testWidgets('a message is written, answered and forwarded', (tester) async {
@@ -459,6 +548,9 @@ Future<String> browser(String loginUrl, String address, String password) async {
 /// A text in a list entry – not the same text in a field of a form still open.
 Finder inList(String text) => find.descendant(of: find.byType(ListTile), matching: find.text(text));
 
+/// The entry of an open menu of labels that sets `label`.
+Finder menuItem(String label) => find.byWidgetPredicate((w) => w is CheckedPopupMenuItem<String> && w.value == label);
+
 /// Taps once the target stopped moving – pages sliding in or out, a button lifted by a snack bar: a tap during a
 /// movement lands on something else.
 Future<void> settledTap(WidgetTester tester, Finder finder) async {
@@ -475,7 +567,8 @@ Future<void> settledTap(WidgetTester tester, Finder finder) async {
 
 Future<void> signIn(WidgetTester tester, String address, String password) async {
   await tester.pumpWidget(const KernoidApp());
-  await tester.pumpAndSettle();
+  // Not pumpAndSettle: while a kept login is tried, the page shows a progress indicator.
+  await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
   await tester.enterText(find.byKey(const ValueKey('server')), server);
   await tester.enterText(find.byKey(const ValueKey('address')), address);
   await tester.tap(find.byKey(const ValueKey('password')));

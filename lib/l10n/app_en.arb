@@ -188,5 +188,31 @@
   },
   "@quoteDateFormat": {
     "description": "How the date above a quote is written: a format of Rust's chrono (strftime)."
-  }
+  },
+  "thisEvent": "This event",
+  "wholeSeries": "The whole series",
+  "changeWhich": "Change only this event or the whole series?",
+  "deleteWhich": "Delete only this event or the whole series? Everyone invited hears of it.",
+  "editThisEvent": "Change this event",
+  "instanceEditsOne": "Only this event of the series changes; who is invited stays as in the series.",
+  "monthView": "Month",
+  "listView": "List",
+  "labelWork": "work",
+  "labelPrivate": "private",
+  "labelMobile": "mobile",
+  "labelVoice": "voice",
+  "labelText": "text",
+  "labelVideo": "video",
+  "labelFax": "fax",
+  "labelPager": "pager",
+  "labelTextphone": "textphone",
+  "labels": "Labels",
+  "addEmail": "Add an address",
+  "addPhone": "Add a number",
+  "loadImages": "Load images",
+  "imagesBlocked": "Images from the internet are not loaded until you ask for them.",
+  "openLink": "Open this link?",
+  "open": "Open",
+  "asText": "As text",
+  "asHtml": "Formatted"
 }

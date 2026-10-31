@@ -126,6 +126,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KernoidError dco_decode_kernoid_error(dynamic raw);
 
   @protected
+  LabelledValue dco_decode_labelled_value(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
@@ -154,6 +157,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<FileStore> dco_decode_list_file_store(dynamic raw);
+
+  @protected
+  List<LabelledValue> dco_decode_list_labelled_value(dynamic raw);
 
   @protected
   List<Mailbox> dco_decode_list_mailbox(dynamic raw);
@@ -303,6 +309,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KernoidError sse_decode_kernoid_error(SseDeserializer deserializer);
 
   @protected
+  LabelledValue sse_decode_labelled_value(SseDeserializer deserializer);
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
@@ -331,6 +340,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<FileStore> sse_decode_list_file_store(SseDeserializer deserializer);
+
+  @protected
+  List<LabelledValue> sse_decode_list_labelled_value(SseDeserializer deserializer);
 
   @protected
   List<Mailbox> sse_decode_list_mailbox(SseDeserializer deserializer);
@@ -489,6 +501,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_kernoid_error(KernoidError self, SseSerializer serializer);
 
   @protected
+  void sse_encode_labelled_value(LabelledValue self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
@@ -517,6 +532,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_file_store(List<FileStore> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_labelled_value(List<LabelledValue> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_mailbox(List<Mailbox> self, SseSerializer serializer);

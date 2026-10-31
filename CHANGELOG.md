@@ -7,6 +7,15 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Added
+
+- One event of a series is changed or deleted on its own, or the whole series – the app asks which.
+- A month view of the calendar, with the chosen day's events beside the grid (below it on phones).
+- Addresses and phone numbers of a contact carry their labels – work, private, and for a number mobile, fax and the
+  like –, set in the form and shown on the contact.
+- HTML mail is shown formatted: nothing in it runs, images from the internet load only when asked for, and a link
+  shows where it goes before it opens. The plain text is a tap away.
+
 ## [0.2.0] – 2026-10-30
 
 The first release, a preview: one Flutter app for macOS, Linux, Windows and Android (iOS builds, but installs only
