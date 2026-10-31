@@ -37,7 +37,7 @@ kernoid is split along one line – **open protocols** – with one shared clien
 All five platforms are built **from the start and at the same time** – one code base, one CI matrix. Where work has to
 be ordered (native parts, polish, store release), the priority is:
 
-1. **macOS**
+1. **macOS** – Apple silicon only (decided 2026-10-31): no Intel build, which halves the Rust build and the app's size
 2. **iOS**
 3. **Linux**
 4. **Android**
