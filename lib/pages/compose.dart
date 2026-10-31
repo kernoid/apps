@@ -69,6 +69,9 @@ class _ComposePageState extends State<ComposePage> {
   List<String> _references = const [];
   final List<DraftAttachment> _forwarded = [];
 
+  /// The attachments of an end-to-end encrypted message forwarded – read from it again, decrypted, when sending.
+  final List<DraftPart> _forwardedParts = [];
+
   /// Files of the device, by path.
   final List<XFile> _files = [];
   late bool _loading = widget.replyTo != null;
@@ -117,6 +120,7 @@ class _ComposePageState extends State<ComposePage> {
         _inReplyTo = draft.inReplyTo;
         _references = draft.references;
         _forwarded.addAll(draft.attachments);
+        _forwardedParts.addAll(draft.parts);
       });
     } catch (error) {
       if (mounted) setState(() => _error = errorText(error));
@@ -182,6 +186,7 @@ class _ComposePageState extends State<ComposePage> {
           inReplyTo: _inReplyTo,
           references: _references,
           attachments: _forwarded,
+          parts: _forwardedParts,
           files: [for (final file in _files) file.path],
         ),
       );
@@ -306,6 +311,14 @@ class _ComposePageState extends State<ComposePage> {
                           label: Text('${a.name} · ${bytes(a.size)}'),
                           deleteButtonTooltipMessage: l.remove,
                           onDeleted: () => setState(() => _forwarded.remove(a)),
+                        ),
+                      for (final p in _forwardedParts)
+                        InputChip(
+                          key: ValueKey('attachment-${p.name}'),
+                          avatar: const Icon(Icons.lock_outline, size: 18),
+                          label: Text('${p.name} · ${bytes(p.size)}'),
+                          deleteButtonTooltipMessage: l.remove,
+                          onDeleted: () => setState(() => _forwardedParts.remove(p)),
                         ),
                       for (final file in _files)
                         InputChip(

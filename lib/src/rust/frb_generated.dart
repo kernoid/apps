@@ -1335,6 +1335,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftPart dco_decode_draft_part(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return DraftPart(
+      emailId: dco_decode_String(arr[0]),
+      partIndex: dco_decode_u_32(arr[1]),
+      name: dco_decode_String(arr[2]),
+      mediaType: dco_decode_String(arr[3]),
+      size: dco_decode_i_64(arr[4]),
+    );
+  }
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1376,7 +1390,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EmailDraft dco_decode_email_draft(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9) throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return EmailDraft(
       to: dco_decode_String(arr[0]),
       cc: dco_decode_String(arr[1]),
@@ -1386,7 +1400,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       inReplyTo: dco_decode_list_String(arr[5]),
       references: dco_decode_list_String(arr[6]),
       attachments: dco_decode_list_draft_attachment(arr[7]),
-      files: dco_decode_list_String(arr[8]),
+      parts: dco_decode_list_draft_part(arr[8]),
+      files: dco_decode_list_String(arr[9]),
     );
   }
 
@@ -1547,6 +1562,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<DraftAttachment> dco_decode_list_draft_attachment(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_draft_attachment).toList();
+  }
+
+  @protected
+  List<DraftPart> dco_decode_list_draft_part(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_draft_part).toList();
   }
 
   @protected
@@ -1881,6 +1902,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DraftPart sse_decode_draft_part(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_emailId = sse_decode_String(deserializer);
+    var var_partIndex = sse_decode_u_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_mediaType = sse_decode_String(deserializer);
+    var var_size = sse_decode_i_64(deserializer);
+    return DraftPart(
+      emailId: var_emailId,
+      partIndex: var_partIndex,
+      name: var_name,
+      mediaType: var_mediaType,
+      size: var_size,
+    );
+  }
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_available = sse_decode_bool(deserializer);
@@ -1945,6 +1983,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_inReplyTo = sse_decode_list_String(deserializer);
     var var_references = sse_decode_list_String(deserializer);
     var var_attachments = sse_decode_list_draft_attachment(deserializer);
+    var var_parts = sse_decode_list_draft_part(deserializer);
     var var_files = sse_decode_list_String(deserializer);
     return EmailDraft(
       to: var_to,
@@ -1955,6 +1994,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       inReplyTo: var_inReplyTo,
       references: var_references,
       attachments: var_attachments,
+      parts: var_parts,
       files: var_files,
     );
   }
@@ -2184,6 +2224,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <DraftAttachment>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_draft_attachment(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<DraftPart> sse_decode_list_draft_part(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DraftPart>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_draft_part(deserializer));
     }
     return ans_;
   }
@@ -2560,6 +2612,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_draft_part(DraftPart self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.emailId, serializer);
+    sse_encode_u_32(self.partIndex, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.mediaType, serializer);
+    sse_encode_i_64(self.size, serializer);
+  }
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_bool(self.available, serializer);
@@ -2600,6 +2662,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_String(self.inReplyTo, serializer);
     sse_encode_list_String(self.references, serializer);
     sse_encode_list_draft_attachment(self.attachments, serializer);
+    sse_encode_list_draft_part(self.parts, serializer);
     sse_encode_list_String(self.files, serializer);
   }
 
@@ -2754,6 +2817,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_draft_attachment(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_draft_part(List<DraftPart> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_draft_part(item, serializer);
     }
   }
 

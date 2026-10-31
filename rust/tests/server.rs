@@ -197,6 +197,7 @@ async fn messages_are_written_replied_to_and_forwarded() {
         in_reply_to: Vec::new(),
         references: Vec::new(),
         attachments: Vec::new(),
+        parts: Vec::new(),
         files: vec![file.to_string_lossy().into_owned()],
     };
     assert!(!app.send_draft(draft).await.expect("send"), "the key is locked: plain");
@@ -233,6 +234,93 @@ async fn messages_are_written_replied_to_and_forwarded() {
     assert_eq!(forwarded.attachments.first().map(|a| a.name.as_str()), Some(attached.name.as_str()));
     assert!(app.reply_draft(written.id, "sideways".into(), reply_phrases()).await.is_err());
     let _ = std::fs::remove_file(file);
+}
+
+/// Forwarding an end-to-end encrypted message with its attachment, as the app does: the key unlocked (or made) as in
+/// `mail_is_encrypted_end_to_end`, a message with a file sent to the account itself encrypted, forwarded – the file
+/// decrypted in memory and put inside the encrypted forward –, and read again from the forward.
+#[tokio::test]
+async fn an_encrypted_message_is_forwarded_with_its_attachment() {
+    use kernoid_bridge::api::kernoid::{EmailDraft, Kernoid};
+
+    let (Ok(server), Ok(address), Ok(password), Ok(recovery)) = (
+        std::env::var("KERNOID_TEST_SERVER"),
+        std::env::var("KERNOID_TEST_ADDRESS"),
+        std::env::var("KERNOID_TEST_PASSWORD"),
+        std::env::var("KERNOID_TEST_RECOVERY_FILE"),
+    ) else {
+        eprintln!("no KERNOID_TEST_SERVER or KERNOID_TEST_RECOVERY_FILE: skipped");
+        return;
+    };
+    let app = Kernoid::login(server, address.clone(), password).await.expect("login");
+    if app.key_status().await.has_key {
+        let code = std::fs::read_to_string(&recovery).expect("the account has a key: its recovery code in the file");
+        app.unlock_key(code).await.expect("unlock");
+    } else {
+        let code = app.make_key().await.expect("key");
+        std::fs::write(&recovery, &code).expect("recovery file");
+        app.unlock_key(code).await.expect("unlock");
+    }
+    let sent_box = app
+        .mailboxes()
+        .await
+        .expect("mailboxes")
+        .into_iter()
+        .find(|b| b.role.as_deref() == Some("sent"))
+        .expect("sent")
+        .id;
+    let in_sent = async |subject: &str| {
+        let page = app.emails(sent_box.clone(), 0, 50).await.expect("sent");
+        let found = page.emails.into_iter().find(|e| e.subject == subject).expect(subject);
+        app.email(found.id).await.expect("email")
+    };
+
+    let file = std::env::temp_dir().join(format!("kernoid-sealed-{}.txt", std::process::id()));
+    std::fs::write(&file, "Nur für uns.\n").expect("file");
+    let subject = format!("Sealed with a file {}", std::process::id());
+    let draft = EmailDraft {
+        to: address.clone(),
+        cc: String::new(),
+        bcc: String::new(),
+        subject: subject.clone(),
+        text: "Siehe Anhang.".into(),
+        in_reply_to: Vec::new(),
+        references: Vec::new(),
+        attachments: Vec::new(),
+        parts: Vec::new(),
+        files: vec![file.to_string_lossy().into_owned()],
+    };
+    assert!(app.send_draft(draft).await.expect("send"), "sent encrypted");
+    let _ = std::fs::remove_file(&file);
+    let written = in_sent(&subject).await;
+    assert!(written.encrypted && !written.locked);
+    assert_eq!(written.attachments.len(), 1);
+    assert!(written.attachments[0].blob_id.is_none(), "inside the encrypted message only");
+
+    let forward = app.reply_draft(written.id.clone(), "forward".into(), reply_phrases()).await.expect("forward");
+    assert!(forward.attachments.is_empty(), "nothing to name by blob");
+    assert_eq!(forward.parts.len(), 1);
+    assert_eq!(forward.parts[0].name, written.attachments[0].name);
+    let forward = EmailDraft { to: address.clone(), ..forward };
+    assert!(app.send_draft(forward).await.expect("send forward"), "forwarded encrypted");
+
+    let forwarded = in_sent(&format!("Fwd: {subject}")).await;
+    assert!(forwarded.encrypted);
+    let part = forwarded.attachments.first().expect("the file in the forward");
+    assert_eq!(part.name, written.attachments[0].name);
+    let directory = std::env::temp_dir().join(format!("kernoid-forwarded-{}", std::process::id()));
+    std::fs::create_dir_all(&directory).expect("directory");
+    let saved = app
+        .save_part(
+            forwarded.id,
+            part.part_index.expect("decrypted part"),
+            part.name.clone(),
+            directory.to_string_lossy().into_owned(),
+        )
+        .await
+        .expect("save");
+    assert_eq!(std::fs::read_to_string(saved).expect("saved"), "Nur für uns.\n");
+    let _ = std::fs::remove_dir_all(directory);
 }
 
 fn reply_phrases() -> kernoid_bridge::api::kernoid::ReplyPhrases {

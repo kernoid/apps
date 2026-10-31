@@ -1931,6 +1931,24 @@ impl SseDecode for crate::api::kernoid::DraftAttachment {
     }
 }
 
+impl SseDecode for crate::api::kernoid::DraftPart {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_emailId = <String>::sse_decode(deserializer);
+        let mut var_partIndex = <u32>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_mediaType = <String>::sse_decode(deserializer);
+        let mut var_size = <i64>::sse_decode(deserializer);
+        return crate::api::kernoid::DraftPart {
+            email_id: var_emailId,
+            part_index: var_partIndex,
+            name: var_name,
+            media_type: var_mediaType,
+            size: var_size,
+        };
+    }
+}
+
 impl SseDecode for crate::api::kernoid::E2eStatus {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1998,6 +2016,7 @@ impl SseDecode for crate::api::kernoid::EmailDraft {
         let mut var_inReplyTo = <Vec<String>>::sse_decode(deserializer);
         let mut var_references = <Vec<String>>::sse_decode(deserializer);
         let mut var_attachments = <Vec<crate::api::kernoid::DraftAttachment>>::sse_decode(deserializer);
+        let mut var_parts = <Vec<crate::api::kernoid::DraftPart>>::sse_decode(deserializer);
         let mut var_files = <Vec<String>>::sse_decode(deserializer);
         return crate::api::kernoid::EmailDraft {
             to: var_to,
@@ -2008,6 +2027,7 @@ impl SseDecode for crate::api::kernoid::EmailDraft {
             in_reply_to: var_inReplyTo,
             references: var_references,
             attachments: var_attachments,
+            parts: var_parts,
             files: var_files,
         };
     }
@@ -2250,6 +2270,18 @@ impl SseDecode for Vec<crate::api::kernoid::DraftAttachment> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::kernoid::DraftAttachment>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::kernoid::DraftPart> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::kernoid::DraftPart>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2670,6 +2702,25 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::DraftAttachment> for
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::DraftPart {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.email_id.into_into_dart().into_dart(),
+            self.part_index.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.media_type.into_into_dart().into_dart(),
+            self.size.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::DraftPart {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::DraftPart> for crate::api::kernoid::DraftPart {
+    fn into_into_dart(self) -> crate::api::kernoid::DraftPart {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::kernoid::E2eStatus {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -2729,6 +2780,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::kernoid::EmailDraft {
             self.in_reply_to.into_into_dart().into_dart(),
             self.references.into_into_dart().into_dart(),
             self.attachments.into_into_dart().into_dart(),
+            self.parts.into_into_dart().into_dart(),
             self.files.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -3096,6 +3148,17 @@ impl SseEncode for crate::api::kernoid::DraftAttachment {
     }
 }
 
+impl SseEncode for crate::api::kernoid::DraftPart {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.email_id, serializer);
+        <u32>::sse_encode(self.part_index, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <String>::sse_encode(self.media_type, serializer);
+        <i64>::sse_encode(self.size, serializer);
+    }
+}
+
 impl SseEncode for crate::api::kernoid::E2eStatus {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3139,6 +3202,7 @@ impl SseEncode for crate::api::kernoid::EmailDraft {
         <Vec<String>>::sse_encode(self.in_reply_to, serializer);
         <Vec<String>>::sse_encode(self.references, serializer);
         <Vec<crate::api::kernoid::DraftAttachment>>::sse_encode(self.attachments, serializer);
+        <Vec<crate::api::kernoid::DraftPart>>::sse_encode(self.parts, serializer);
         <Vec<String>>::sse_encode(self.files, serializer);
     }
 }
@@ -3308,6 +3372,16 @@ impl SseEncode for Vec<crate::api::kernoid::DraftAttachment> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::kernoid::DraftAttachment>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::kernoid::DraftPart> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::kernoid::DraftPart>::sse_encode(item, serializer);
         }
     }
 }

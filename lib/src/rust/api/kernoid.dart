@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `html_of`, `identity`, `kept`, `options`, `own_addresses`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -340,6 +340,37 @@ class DraftAttachment {
           size == other.size;
 }
 
+/// An attachment of a message decrypted here, forwarded: read again from that message when the draft is sent.
+class DraftPart {
+  final String emailId;
+  final int partIndex;
+  final String name;
+  final String mediaType;
+  final PlatformInt64 size;
+
+  const DraftPart({
+    required this.emailId,
+    required this.partIndex,
+    required this.name,
+    required this.mediaType,
+    required this.size,
+  });
+
+  @override
+  int get hashCode => emailId.hashCode ^ partIndex.hashCode ^ name.hashCode ^ mediaType.hashCode ^ size.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DraftPart &&
+          runtimeType == other.runtimeType &&
+          emailId == other.emailId &&
+          partIndex == other.partIndex &&
+          name == other.name &&
+          mediaType == other.mediaType &&
+          size == other.size;
+}
+
 /// Where end-to-end encryption stands for this account (RFC 0006).
 class E2eStatus {
   /// The server has kernoid's end-to-end extension.
@@ -477,6 +508,9 @@ class EmailDraft {
   /// On the server already: the attachments of a message forwarded.
   final List<DraftAttachment> attachments;
 
+  /// The attachments of an end-to-end encrypted message forwarded – decrypted here, held in memory, never on disk.
+  final List<DraftPart> parts;
+
   /// Paths of files on the device.
   final List<String> files;
 
@@ -489,6 +523,7 @@ class EmailDraft {
     required this.inReplyTo,
     required this.references,
     required this.attachments,
+    required this.parts,
     required this.files,
   });
 
@@ -502,6 +537,7 @@ class EmailDraft {
       inReplyTo.hashCode ^
       references.hashCode ^
       attachments.hashCode ^
+      parts.hashCode ^
       files.hashCode;
 
   @override
@@ -517,6 +553,7 @@ class EmailDraft {
           inReplyTo == other.inReplyTo &&
           references == other.references &&
           attachments == other.attachments &&
+          parts == other.parts &&
           files == other.files;
 }
 

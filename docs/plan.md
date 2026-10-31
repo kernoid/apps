@@ -110,9 +110,9 @@ addresses and numbers in the contact form. Writing mail grew the same day: repli
 its attachments – on the SDK's `reply` (shared with the terminal app), Cc and Bcc, and files of the device attached
 through file_selector – inside the encrypted message when it goes end-to-end encrypted, uploaded otherwise. HTML mail is
 shown since 2026-10-31 (flutter_widget_from_html_core: drawn as widgets, nothing run; images from the internet only
-when the user asks, none from the device; a link shows its address before it opens). OPEN: forwarding the attachments
-of an encrypted message – the SDK takes files to send only from paths, and writing them decrypted to disk is not an
-option –, writing HTML.
+when the user asks, none from the device; a link shows its address before it opens). A forward of an encrypted message carries
+its attachments too: decrypted in memory and put inside the encrypted forward (the SDK's `send_with`, kernoid 0.2.1),
+never written to disk decrypted. OPEN: writing HTML.
 
 ## 5. Files in the operating system
 

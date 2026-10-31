@@ -93,6 +93,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DraftAttachment dco_decode_draft_attachment(dynamic raw);
 
   @protected
+  DraftPart dco_decode_draft_part(dynamic raw);
+
+  @protected
   E2eStatus dco_decode_e_2_e_status(dynamic raw);
 
   @protected
@@ -145,6 +148,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<DraftAttachment> dco_decode_list_draft_attachment(dynamic raw);
+
+  @protected
+  List<DraftPart> dco_decode_list_draft_part(dynamic raw);
 
   @protected
   List<EmailSummary> dco_decode_list_email_summary(dynamic raw);
@@ -276,6 +282,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DraftAttachment sse_decode_draft_attachment(SseDeserializer deserializer);
 
   @protected
+  DraftPart sse_decode_draft_part(SseDeserializer deserializer);
+
+  @protected
   E2eStatus sse_decode_e_2_e_status(SseDeserializer deserializer);
 
   @protected
@@ -328,6 +337,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<DraftAttachment> sse_decode_list_draft_attachment(SseDeserializer deserializer);
+
+  @protected
+  List<DraftPart> sse_decode_list_draft_part(SseDeserializer deserializer);
 
   @protected
   List<EmailSummary> sse_decode_list_email_summary(SseDeserializer deserializer);
@@ -468,6 +480,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_draft_attachment(DraftAttachment self, SseSerializer serializer);
 
   @protected
+  void sse_encode_draft_part(DraftPart self, SseSerializer serializer);
+
+  @protected
   void sse_encode_e_2_e_status(E2eStatus self, SseSerializer serializer);
 
   @protected
@@ -520,6 +535,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_draft_attachment(List<DraftAttachment> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_draft_part(List<DraftPart> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_email_summary(List<EmailSummary> self, SseSerializer serializer);

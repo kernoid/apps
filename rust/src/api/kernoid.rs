@@ -225,8 +225,20 @@ pub struct EmailDraft {
     pub references: Vec<String>,
     /// On the server already: the attachments of a message forwarded.
     pub attachments: Vec<DraftAttachment>,
+    /// The attachments of an end-to-end encrypted message forwarded – decrypted here, held in memory, never on disk.
+    pub parts: Vec<DraftPart>,
     /// Paths of files on the device.
     pub files: Vec<String>,
+}
+
+/// An attachment of a message decrypted here, forwarded: read again from that message when the draft is sent.
+#[derive(Debug, Clone)]
+pub struct DraftPart {
+    pub email_id: String,
+    pub part_index: u32,
+    pub name: String,
+    pub media_type: String,
+    pub size: i64,
 }
 
 #[derive(Debug, Clone)]
@@ -666,6 +678,7 @@ impl Kernoid {
         phrases: ReplyPhrases,
     ) -> Result<EmailDraft, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+        let opened = self.opened.clone();
         run(async move {
             let kind = match kind.as_str() {
                 "reply" => reply::Kind::Reply,
@@ -680,6 +693,26 @@ impl Kernoid {
                 .ok_or_else(|| client::Error::Protocol("the email is gone".into()))?;
             let email = e2e.lock().await.open(&client, &account, email).await?;
             let text = email.text(TEXT_WIDTH);
+            // A forward carries the attachments of an encrypted message too: they are read from it again on sending.
+            let parts: Vec<DraftPart> = match (&kind, &email.inner) {
+                (reply::Kind::Forward, Some(inner)) => {
+                    opened.lock().await.insert(email.summary.id.clone(), inner.0.clone());
+                    email
+                        .attachments
+                        .iter()
+                        .filter_map(|part| {
+                            Some(DraftPart {
+                                email_id: email.summary.id.clone(),
+                                part_index: u32::try_from(part.inner?).ok()?,
+                                name: part.name.clone().unwrap_or_else(|| "attachment".into()),
+                                media_type: part.kind.clone(),
+                                size: count(part.size),
+                            })
+                        })
+                        .collect()
+                }
+                _ => Vec::new(),
+            };
             let identities = mail::identities(&client, &account).await?;
             let phrases = reply::Phrases {
                 wrote: phrases.wrote,
@@ -709,6 +742,7 @@ impl Kernoid {
                         size: count(a.size),
                     })
                     .collect(),
+                parts,
                 files: Vec::new(),
             })
         })
@@ -720,7 +754,23 @@ impl Kernoid {
     /// Returns whether it went encrypted.
     pub async fn send_draft(&self, draft: EmailDraft) -> Result<bool, KernoidError> {
         let (client, account, e2e) = (self.client.clone(), self.account(client::MAIL)?, self.e2e.clone());
+        let opened = self.opened.clone();
         run(async move {
+            let mut inline = Vec::new();
+            for part in &draft.parts {
+                let message = opened
+                    .lock()
+                    .await
+                    .get(&part.email_id)
+                    .cloned()
+                    .ok_or_else(|| client::Error::E2e("open the message again: the key was locked".into()))?;
+                inline.push(mail::InlineFile {
+                    name: part.name.clone(),
+                    media_type: part.media_type.clone(),
+                    data: kernoid_e2e::compose::part(&message, part.part_index as usize)
+                        .map_err(client::Error::from)?,
+                });
+            }
             let mut message = mail::Draft {
                 from: None,
                 to: mail::parse_addresses(&draft.to),
@@ -757,12 +807,15 @@ impl Kernoid {
                         files: &files,
                         boxes: &boxes,
                     };
-                    e2e.send(&client, outgoing, &keys).await?;
+                    e2e.send_with(&client, outgoing, &inline, &keys).await?;
                     Ok(true)
                 }
                 Plan::Plain(_) => {
                     for path in &files {
                         message.attachments.push(mail::attach(&client, &account, path).await?);
+                    }
+                    for file in &inline {
+                        message.attachments.push(mail::attach_bytes(&client, &account, file).await?);
                     }
                     mail::send(&client, &account, &identity, &message, &boxes).await?;
                     Ok(false)
