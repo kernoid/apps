@@ -360,5 +360,21 @@
   "newFolderName": "Name of the new folder",
   "newName": "New name",
   "drive": "Drive",
-  "deleteFileForGood": "Delete for good"
+  "deleteFileForGood": "Delete for good",
+  "appearance": "Appearance",
+  "appearanceHint": "Kept on this device.",
+  "themeSystem": "As the system",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "vacation": "Vacation response",
+  "vacationHint": "Answers mail while you are away – each sender once a week, not mailing lists or automatic mail.",
+  "vacationOn": "Answer mail",
+  "fromOptional": "From (optional)",
+  "untilOptional": "Until (optional)",
+  "vacationSubjectHint": "Auto: and the subject of the mail answered",
+  "text": "Text",
+  "notSet": "Not set",
+  "security": "Sign-in and security",
+  "securityHint": "Your password, two-factor sign-in, passkeys, app passwords and sessions – and your name, picture, language and mail settings – are changed in the web app, where you sign in with your password.",
+  "openWebApp": "Open in the browser"
 }

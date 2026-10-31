@@ -770,4 +770,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteFileForGood => 'Delete for good';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get appearanceHint => 'Kept on this device.';
+
+  @override
+  String get themeSystem => 'As the system';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get vacation => 'Vacation response';
+
+  @override
+  String get vacationHint =>
+      'Answers mail while you are away – each sender once a week, not mailing lists or automatic mail.';
+
+  @override
+  String get vacationOn => 'Answer mail';
+
+  @override
+  String get fromOptional => 'From (optional)';
+
+  @override
+  String get untilOptional => 'Until (optional)';
+
+  @override
+  String get vacationSubjectHint => 'Auto: and the subject of the mail answered';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get notSet => 'Not set';
+
+  @override
+  String get security => 'Sign-in and security';
+
+  @override
+  String get securityHint =>
+      'Your password, two-factor sign-in, passkeys, app passwords and sessions – and your name, picture, language and mail settings – are changed in the web app, where you sign in with your password.';
+
+  @override
+  String get openWebApp => 'Open in the browser';
 }

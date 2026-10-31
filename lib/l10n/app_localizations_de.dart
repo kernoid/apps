@@ -774,4 +774,54 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get deleteFileForGood => 'Endgültig löschen';
+
+  @override
+  String get appearance => 'Erscheinungsbild';
+
+  @override
+  String get appearanceHint => 'Gilt auf diesem Gerät.';
+
+  @override
+  String get themeSystem => 'Wie das System';
+
+  @override
+  String get themeLight => 'Hell';
+
+  @override
+  String get themeDark => 'Dunkel';
+
+  @override
+  String get vacation => 'Abwesenheitsnotiz';
+
+  @override
+  String get vacationHint =>
+      'Beantwortet Mail, während du weg bist – jeden Absender einmal pro Woche, keine Verteiler und keine automatischen Mails.';
+
+  @override
+  String get vacationOn => 'Mail beantworten';
+
+  @override
+  String get fromOptional => 'Ab (optional)';
+
+  @override
+  String get untilOptional => 'Bis (optional)';
+
+  @override
+  String get vacationSubjectHint => 'Auto: und der Betreff der beantworteten Mail';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get notSet => 'Nicht gesetzt';
+
+  @override
+  String get security => 'Anmeldung und Sicherheit';
+
+  @override
+  String get securityHint =>
+      'Passwort, Zwei-Faktor-Anmeldung, Passkeys, App-Passwörter und Sitzungen – sowie Name, Bild, Sprache und Mail-Einstellungen – änderst du in der Web-App, wo du dich mit deinem Passwort anmeldest.';
+
+  @override
+  String get openWebApp => 'Im Browser öffnen';
 }

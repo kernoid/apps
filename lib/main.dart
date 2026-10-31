@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'app/appearance.dart';
 import 'app/kept_login.dart';
 import 'ui/theme.dart';
 import 'l10n/app_localizations.dart';
@@ -12,6 +13,7 @@ import 'src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await RustLib.init();
+  await Appearance.load();
   runApp(const KernoidApp());
 }
 
@@ -77,22 +79,26 @@ class _KernoidAppState extends State<KernoidApp> {
     final account = _account;
     return RepaintBoundary(
       key: KernoidApp.screen,
-      child: MaterialApp(
-        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-        theme: kernoidTheme(Brightness.light),
-        darkTheme: kernoidTheme(Brightness.dark),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: _resuming
-            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-            : account == null
-            ? LoginPage(onSignedIn: _signedIn, notice: _resumeError)
-            : HomePage(account: account, onSignOut: _signOut),
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: Appearance.mode,
+        builder: (context, mode, _) => MaterialApp(
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+          theme: kernoidTheme(Brightness.light),
+          darkTheme: kernoidTheme(Brightness.dark),
+          themeMode: mode,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: _resuming
+              ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+              : account == null
+              ? LoginPage(onSignedIn: _signedIn, notice: _resumeError)
+              : HomePage(account: account, onSignOut: _signOut),
+        ),
       ),
     );
   }

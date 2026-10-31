@@ -282,6 +282,17 @@ pub struct FileLink {
     pub created: Option<String>,
 }
 
+/// The vacation response (RFC 8621, 8): on or off, from and until when – local times as `YYYY-MM-DDTHH:MM` –, its
+/// subject and text.
+#[derive(Debug, Clone)]
+pub struct VacationResponse {
+    pub on: bool,
+    pub from: Option<String>,
+    pub until: Option<String>,
+    pub subject: String,
+    pub text: String,
+}
+
 /// How far an upload is: the file (its index among those chosen) and its bytes.
 #[derive(Debug, Clone)]
 pub struct UploadProgress {
@@ -473,6 +484,9 @@ const TEXT_WIDTH: usize = 10_000;
 fn addresses(list: Option<Vec<mail::EmailAddress>>) -> Vec<Address> {
     list.unwrap_or_default().into_iter().map(|a| Address { name: a.name, email: a.email }).collect()
 }
+
+/// Local times as the app reads and writes them.
+const LOCAL_TIME: &str = "%Y-%m-%dT%H:%M";
 
 fn file_node(n: files::FileNode) -> FileNode {
     let rights = n.my_rights;
@@ -1323,6 +1337,38 @@ impl Kernoid {
         })
         .await?;
         Ok(found.into_iter().map(principal).collect())
+    }
+
+    /// The vacation response; none when the server has none for the user.
+    pub async fn vacation(&self) -> Result<Option<VacationResponse>, KernoidError> {
+        let client = self.client.clone();
+        let found = run(async move { mail::vacation(&client).await }).await?;
+        let time = |t: Option<chrono::NaiveDateTime>| t.map(|t| t.format(LOCAL_TIME).to_string());
+        Ok(found.map(|v| VacationResponse {
+            on: v.on,
+            from: time(v.from),
+            until: time(v.until),
+            subject: v.subject,
+            text: v.text,
+        }))
+    }
+
+    pub async fn set_vacation(&self, vacation: VacationResponse) -> Result<(), KernoidError> {
+        let time = |t: Option<String>| -> Result<Option<chrono::NaiveDateTime>, KernoidError> {
+            t.filter(|t| !t.is_empty())
+                .map(|t| chrono::NaiveDateTime::parse_from_str(&t, LOCAL_TIME))
+                .transpose()
+                .map_err(|error| KernoidError { unauthorized: false, message: error.to_string() })
+        };
+        let vacation = mail::Vacation {
+            on: vacation.on,
+            from: time(vacation.from)?,
+            until: time(vacation.until)?,
+            subject: vacation.subject.trim().to_owned(),
+            text: vacation.text,
+        };
+        let client = self.client.clone();
+        run(async move { mail::set_vacation(&client, &vacation).await }).await
     }
 
     /// Whether the server makes links for people without an account.

@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -235,6 +235,8 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   String get server;
 
+  Future<void> setVacation({required VacationResponse vacation});
+
   /// Sets with whom a directory is shared, replacing what was.
   Future<void> shareDirectory({required String accountId, required String id, required List<FileShare> shares});
 
@@ -249,6 +251,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   Stream<UploadProgress> uploadFiles({required String accountId, String? parentId, required List<String> paths});
 
   String get username;
+
+  /// The vacation response; none when the server has none for the user.
+  Future<VacationResponse?> vacation();
 
   /// Hears of every renewal with what to keep from then on: kernoid rotates refresh tokens, and one used before
   /// would end the login at the next start.
@@ -1358,4 +1363,30 @@ class UploadProgress {
           index == other.index &&
           sent == other.sent &&
           total == other.total;
+}
+
+/// The vacation response (RFC 8621, 8): on or off, from and until when – local times as `YYYY-MM-DDTHH:MM` –, its
+/// subject and text.
+class VacationResponse {
+  final bool on_;
+  final String? from;
+  final String? until;
+  final String subject;
+  final String text;
+
+  const VacationResponse({required this.on_, this.from, this.until, required this.subject, required this.text});
+
+  @override
+  int get hashCode => on_.hashCode ^ from.hashCode ^ until.hashCode ^ subject.hashCode ^ text.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VacationResponse &&
+          runtimeType == other.runtimeType &&
+          on_ == other.on_ &&
+          from == other.from &&
+          until == other.until &&
+          subject == other.subject &&
+          text == other.text;
 }

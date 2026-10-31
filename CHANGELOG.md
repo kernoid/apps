@@ -29,6 +29,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   file or folder, as far as the user's rights go: sharing with people and groups, links for people without an account
   (with an expiry and a password), versions (saved, or made current again), moving – and copying to another store –,
   renaming, deleting into the Trash and out of it for good. OPEN: vaults, a viewer, dropping files onto the window.
+- The account page in kernoid's look: light, dark or as the system (kept on the device), the vacation response with
+  its dates, subject and text, the end-to-end key, and the way to the web app for what needs a login with the password
+  – password, second factors, passkeys, app passwords, sessions, name, picture, language and mail settings: the apps'
+  own login reaches only the data.
 
 - The platforms of falkOSS's starter pack: macOS 27 and later on Apple silicon only (no Intel build – half the build
   and the app's size), iOS 27 and later, Android 13 (API 33) and later on 64-bit ARM only, Windows 11 and later on

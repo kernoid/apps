@@ -87,6 +87,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  VacationResponse dco_decode_box_autoadd_vacation_response(dynamic raw);
+
+  @protected
   Calendar dco_decode_calendar(dynamic raw);
 
   @protected
@@ -228,6 +231,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
+  VacationResponse? dco_decode_opt_box_autoadd_vacation_response(dynamic raw);
+
+  @protected
   Participant dco_decode_participant(dynamic raw);
 
   @protected
@@ -253,6 +259,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt dco_decode_usize(dynamic raw);
+
+  @protected
+  VacationResponse dco_decode_vacation_response(dynamic raw);
 
   @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
@@ -322,6 +331,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  VacationResponse sse_decode_box_autoadd_vacation_response(SseDeserializer deserializer);
 
   @protected
   Calendar sse_decode_calendar(SseDeserializer deserializer);
@@ -465,6 +477,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  VacationResponse? sse_decode_opt_box_autoadd_vacation_response(SseDeserializer deserializer);
+
+  @protected
   Participant sse_decode_participant(SseDeserializer deserializer);
 
   @protected
@@ -490,6 +505,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
+  VacationResponse sse_decode_vacation_response(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -568,6 +586,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_vacation_response(VacationResponse self, SseSerializer serializer);
 
   @protected
   void sse_encode_calendar(Calendar self, SseSerializer serializer);
@@ -711,6 +732,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_vacation_response(VacationResponse? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_participant(Participant self, SseSerializer serializer);
 
   @protected
@@ -736,6 +760,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vacation_response(VacationResponse self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);

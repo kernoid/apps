@@ -238,5 +238,21 @@
   "newFolderName": "Name des neuen Ordners",
   "newName": "Neuer Name",
   "drive": "Ablage",
-  "deleteFileForGood": "Endgültig löschen"
+  "deleteFileForGood": "Endgültig löschen",
+  "appearance": "Erscheinungsbild",
+  "appearanceHint": "Gilt auf diesem Gerät.",
+  "themeSystem": "Wie das System",
+  "themeLight": "Hell",
+  "themeDark": "Dunkel",
+  "vacation": "Abwesenheitsnotiz",
+  "vacationHint": "Beantwortet Mail, während du weg bist – jeden Absender einmal pro Woche, keine Verteiler und keine automatischen Mails.",
+  "vacationOn": "Mail beantworten",
+  "fromOptional": "Ab (optional)",
+  "untilOptional": "Bis (optional)",
+  "vacationSubjectHint": "Auto: und der Betreff der beantworteten Mail",
+  "text": "Text",
+  "notSet": "Nicht gesetzt",
+  "security": "Anmeldung und Sicherheit",
+  "securityHint": "Passwort, Zwei-Faktor-Anmeldung, Passkeys, App-Passwörter und Sitzungen – sowie Name, Bild, Sprache und Mail-Einstellungen – änderst du in der Web-App, wo du dich mit deinem Passwort anmeldest.",
+  "openWebApp": "Im Browser öffnen"
 }

@@ -680,6 +680,50 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('new-folder')));
   });
 
+  for (final (name, size) in [('wide', Size(1280, 800)), ('phone', Size(390, 844))]) {
+    testWidgets('the account: the look, the vacation response – $name', (tester) async {
+      if (server.isEmpty) {
+        markTestSkipped('no KERNOID_TEST_SERVER');
+        return;
+      }
+      tester.view.physicalSize = size * tester.view.devicePixelRatio;
+      addTearDown(tester.view.reset);
+      await signIn(tester, address, password);
+      await settledTap(tester, find.byKey(const ValueKey('nav-account')));
+      await waitFor(tester, find.byKey(const ValueKey('vacation-on')));
+      final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('sign-out'))));
+      Brightness brightness() => Theme.of(tester.element(find.byKey(const ValueKey('sign-out')))).brightness;
+
+      // Light, then as the system again.
+      await settledTap(tester, find.byKey(const ValueKey('segment-ThemeMode.light')));
+      await tester.pumpAndSettle();
+      expect(brightness(), Brightness.light);
+      await shoot(tester, 'account-$name-light');
+      await settledTap(tester, find.byKey(const ValueKey('segment-ThemeMode.system')));
+      await tester.pumpAndSettle();
+
+      // The vacation response on, kept at the server, and off again.
+      final subject = 'Weg ${DateTime.now().millisecondsSinceEpoch % 100000}';
+      Future<void> save() async {
+        await tester.ensureVisible(find.byKey(const ValueKey('vacation-save')));
+        await settledTap(tester, find.byKey(const ValueKey('vacation-save')));
+        await waitFor(tester, find.text(l.saved));
+      }
+
+      await tester.enterText(find.byKey(const ValueKey('vacation-subject')), subject);
+      await settledTap(tester, find.byKey(const ValueKey('vacation-on')));
+      await save();
+      await shoot(tester, 'account-$name');
+      await settledTap(tester, find.byKey(const ValueKey('nav-mail')));
+      await waitFor(tester, find.byKey(const ValueKey('write')));
+      await settledTap(tester, find.byKey(const ValueKey('nav-account')));
+      await waitFor(tester, find.text(subject));
+      expect(tester.widget<Switch>(find.byKey(const ValueKey('vacation-on'))).value, isTrue);
+      await settledTap(tester, find.byKey(const ValueKey('vacation-on')));
+      await save();
+    });
+  }
+
   testWidgets('a message is written, answered and forwarded', (tester) async {
     if (server.isEmpty) {
       markTestSkipped('no KERNOID_TEST_SERVER');

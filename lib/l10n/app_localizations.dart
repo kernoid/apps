@@ -1525,6 +1525,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete for good'**
   String get deleteFileForGood;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @appearanceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept on this device.'**
+  String get appearanceHint;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'As the system'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @vacation.
+  ///
+  /// In en, this message translates to:
+  /// **'Vacation response'**
+  String get vacation;
+
+  /// No description provided for @vacationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers mail while you are away – each sender once a week, not mailing lists or automatic mail.'**
+  String get vacationHint;
+
+  /// No description provided for @vacationOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer mail'**
+  String get vacationOn;
+
+  /// No description provided for @fromOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'From (optional)'**
+  String get fromOptional;
+
+  /// No description provided for @untilOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Until (optional)'**
+  String get untilOptional;
+
+  /// No description provided for @vacationSubjectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: and the subject of the mail answered'**
+  String get vacationSubjectHint;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
+
+  /// No description provided for @notSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get notSet;
+
+  /// No description provided for @security.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in and security'**
+  String get security;
+
+  /// No description provided for @securityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password, two-factor sign-in, passkeys, app passwords and sessions – and your name, picture, language and mail settings – are changed in the web app, where you sign in with your password.'**
+  String get securityHint;
+
+  /// No description provided for @openWebApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in the browser'**
+  String get openWebApp;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
