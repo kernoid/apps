@@ -65,7 +65,8 @@ Until then, in this order:
 1. **The Rust SDK** in `kernoid/kernoid`: the protocol layer of the terminal app became `kernoid-client`
    (`apps/client`), async; the terminal app uses it and is AGPL like the rest of the repository (done 2026-10-30).
 2. **`kernoid-sync`** (`apps/sync`): local state, changes, conflicts – tested against a real kernoid in CI (first
-   version 2026-10-30; OPEN: moves as moves, resumed transfers, vaults).
+   version 2026-10-30; moves as moves, resumed transfers, vaults and the file systems' name rules 2026-11-04, for
+   kernoid's next SDK release – OPEN: content hashes, file ids on Windows, vault contents in pieces).
 3. **This repository:** the Flutter app with mail, calendars and contacts, files inside the app – with end-to-end
    encryption (section 6) from its first version, not added later.
 4. **System integration** of files (section 5), in the order of section 2.
@@ -156,6 +157,18 @@ that decides – what changed, what to download, what conflicts – is in `kerno
 - **Stores:** own files, drives and files shared with the user are roots of their own; rights (`mayRead`,
   `mayWrite`, …) decide what the shell offers.
 - **Local state:** SQLite with the server's id, `blobId` and state per node and the journal state per store.
+
+What blocks the shells (2026-11-04), before any of them is begun:
+
+- **Apple:** a File Provider extension runs only in an app signed by a development team, with an app group the app
+  and the extension share (for the state database and the keychain group of section 6). The builds today are
+  unsigned; falkOSS's team comes with its founding. **OPEN**: develop against a maintainer's personal team until then.
+- **Swift/Kotlin ↔ Rust:** UniFFI is MPL-2.0 (section 7). **OPEN**: accept it as an exception, or a C boundary by
+  hand.
+- **Without either:** a folder kept in step by the app itself, on every desktop (Linux's row above) – `kernoid-sync`
+  in the app's process through the bridge, a round after each push and every few minutes, a folder chosen per store.
+  On macOS the sandbox needs `files.user-selected.read-write` and a security-scoped bookmark to keep the folder
+  across starts.
 
 ## 6. End-to-end encryption
 
