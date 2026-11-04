@@ -1723,9 +1723,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-client"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "355e80f119d947ca24b8738e08a00345e99dfc9feb85c279e41c810c6caafc9c"
+checksum = "bc9c311cea382c83869dc5912960f475647abea61fbf113616b7c8250b31578d"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1749,9 +1749,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-e2e"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "463eadd18a5985f2e87302d81a08695f85681e57d6ef33eb69a1ec3295f5c5be"
+checksum = "6fed4767e3faf8ee402e1c30bbb46852e99759a2ac2e8b49eaf961e1b00cf9e1"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",
