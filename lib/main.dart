@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app/appearance.dart';
+import 'app/documents_provider.dart';
 import 'app/kept_login.dart';
 import 'ui/theme.dart';
 import 'l10n/app_localizations.dart';
@@ -67,6 +68,12 @@ class _KernoidAppState extends State<KernoidApp> {
     final account = _account;
     setState(() => _account = null);
     await KeptLogin.forget();
+    // The stores leave the Files app with the account.
+    if (DocumentsProvider.available) {
+      try {
+        await DocumentsProvider.disable();
+      } catch (_) {}
+    }
     try {
       await account?.signOut();
     } catch (_) {

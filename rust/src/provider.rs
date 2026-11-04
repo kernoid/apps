@@ -7,11 +7,12 @@
 //! The boundary is messages, as between omaflake's Swift app and its Rust core: a request is a JSON object with an
 //! `op`, the answer a JSON object with `ok` or `error` (`message`, `unauthorized`). Swift calls [`kernoid_provider_call`]
 //! and frees the answer with [`kernoid_provider_free`] (a C boundary of two functions); Kotlin calls
-//! `dev.kernoid.kernoid.ProviderCore.call` (JNI, `jni.rs`); the Windows shell is Rust and calls [`call`] itself.
+//! `dev.kernoid.kernoid.ProviderCore.call` (JNI, `provider/jni.rs`); the Windows shell is Rust and calls [`call`]
+//! itself.
 //!
 //! A shell has a login of its own (`open` with what the app kept for it): kernoid rotates refresh tokens, and two
-//! processes renewing one login would end it. Its renewals come back as `kept` in the next answer – the shell keeps
-//! the newest. Vaults stay locked in the shells (**OPEN**: the account's key from a `device:` copy in the platform's
+//! processes renewing one login would end it. Its renewals come back as `kept` in the next answer – in `ok` or in
+//! `error` – and the shell keeps the newest. Vaults stay locked in the shells (**OPEN**: the account's key from a `device:` copy in the platform's
 //! key store, plan section 6).
 //!
 //! Operations: `open {kept}` (or `{server, address, password}` with an app password) → `{session, kept}`; `close {session}`; `stores {session}`; `list {session, store,
@@ -29,6 +30,9 @@ use serde_json::{Value, json};
 
 use crate::api::kernoid::{Kernoid, KernoidError, RUNTIME};
 
+#[cfg(target_os = "android")]
+mod jni;
+
 /// Changes asked for at once.
 const MAX_CHANGES: u64 = 500;
 
@@ -43,17 +47,24 @@ struct Session {
 
 /// Answers one request (JSON) with one answer (JSON). Never panics across the boundary.
 pub fn call(request: &str) -> String {
-    let answer = std::panic::catch_unwind(|| {
-        let request: Value = serde_json::from_str(request).map_err(|e| error(&format!("not JSON: {e}")))?;
-        RUNTIME.block_on(dispatch(&request))
+    let answer = std::panic::catch_unwind(|| match serde_json::from_str::<Value>(request) {
+        Ok(request) => RUNTIME.block_on(dispatch(&request)),
+        Err(e) => (Err(error(&format!("not JSON: {e}"))), None),
     });
-    match answer {
-        Ok(Ok(value)) => json!({ "ok": value }).to_string(),
-        Ok(Err(error)) => {
-            json!({ "error": { "message": error.message, "unauthorized": error.unauthorized } }).to_string()
+    let (mut answer, kept) = match answer {
+        Ok((Ok(value), kept)) => (json!({ "ok": value }), kept),
+        Ok((Err(error), kept)) => {
+            (json!({ "error": { "message": error.message, "unauthorized": error.unauthorized } }), kept)
         }
-        Err(_) => json!({ "error": { "message": "the core failed", "unauthorized": false } }).to_string(),
+        Err(_) => (json!({ "error": { "message": "the core failed", "unauthorized": false } }), None),
+    };
+    // A renewal goes with every answer, an error too: the login before it is used up.
+    if let Some(kept) = kept
+        && let Some(inner) = answer.as_object_mut().and_then(|a| a.values_mut().next()).and_then(Value::as_object_mut)
+    {
+        inner.insert("kept".into(), json!(kept));
     }
+    answer.to_string()
 }
 
 /// [`call`] for C: `request` is UTF-8 ending in NUL; the answer is to be given back to [`kernoid_provider_free`].
@@ -96,7 +107,23 @@ fn optional<'a>(request: &'a Value, key: &str) -> Option<&'a str> {
     request.get(key).and_then(Value::as_str)
 }
 
-async fn dispatch(request: &Value) -> Result<Value, KernoidError> {
+/// Answers a request, with the session's login if it was renewed since the last answer.
+async fn dispatch(request: &Value) -> (Result<Value, KernoidError>, Option<String>) {
+    let result = answer(request).await;
+    (result, request.get("session").and_then(Value::as_u64).and_then(renewal))
+}
+
+/// The session's login when it differs from the one last handed to the shell.
+fn renewal(id: u64) -> Option<String> {
+    let mut sessions = SESSIONS.lock().ok()?;
+    let session = sessions.get_mut(&id)?;
+    let now = session.account.kept_login();
+    let renewed = (now != session.kept).then(|| now.clone()).flatten();
+    session.kept = now;
+    renewed
+}
+
+async fn answer(request: &Value) -> Result<Value, KernoidError> {
     let op = text(request, "op")?;
     if op == "open" {
         // The login kept for the shell; or an address with an app password (tests, and systems without a browser).
@@ -118,15 +145,11 @@ async fn dispatch(request: &Value) -> Result<Value, KernoidError> {
         SESSIONS.lock().map_err(|_| error("the sessions are broken"))?.remove(&id);
         return Ok(json!({}));
     }
-    let (client, renewed) = {
-        let mut sessions = SESSIONS.lock().map_err(|_| error("the sessions are broken"))?;
-        let session = sessions.get_mut(&id).ok_or_else(|| error("no such session"))?;
-        let now = session.account.kept_login();
-        let renewed = (now != session.kept).then(|| now.clone()).flatten();
-        session.kept = now;
-        (session.account.sdk_client(), renewed)
+    let client = {
+        let sessions = SESSIONS.lock().map_err(|_| error("the sessions are broken"))?;
+        sessions.get(&id).ok_or_else(|| error("no such session"))?.account.sdk_client()
     };
-    let mut answer = match op {
+    Ok(match op {
         "stores" => stores(&client),
         "list" => {
             let store = text(request, "store")?;
@@ -147,11 +170,7 @@ async fn dispatch(request: &Value) -> Result<Value, KernoidError> {
             json!({})
         }
         other => return Err(error(&format!("no operation `{other}`"))),
-    };
-    if let (Some(kept), Some(object)) = (renewed, answer.as_object_mut()) {
-        object.insert("kept".into(), json!(kept));
-    }
-    Ok(answer)
+    })
 }
 
 fn stores(client: &Client) -> Value {

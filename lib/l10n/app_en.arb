@@ -481,6 +481,12 @@
       }
     }
   },
+  "documentsTitle": "Files app",
+  "documentsHint": "Your stores in Android's Files app and wherever an app lets you pick a file. It signs in on its own, once – the browser opens for it.",
+  "documentsOn": "Your stores are shown in the Files app.",
+  "documentsOff": "Not shown in the Files app.",
+  "documentsEnable": "Show in Files",
+  "documentsDisable": "Remove from Files",
   "syncFailed": "Not synced: {error}",
   "@syncFailed": {
     "placeholders": {

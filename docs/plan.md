@@ -172,6 +172,20 @@ What blocks the shells (2026-11-04), before any of them is begun:
   survives an update. Rounds follow kernoid's pushes and changes in the folder; a tray icon and start at login keep it
   going without the window (built 2026-11-04).
 
+**Android, built (2026-11-04):** the DocumentsProvider needs neither a signing team nor UniFFI – it runs in the app's
+own process and reaches the core (`rust/src/provider.rs`) through two JNI functions written with the jni crate
+(`rust/src/provider/jni.rs`, MIT OR Apache-2.0, already a dependency of reqwest on Android). `KernoidDocumentsProvider`
+(Kotlin) shows one root per store, lists, opens (content fetched into the cache; written content uploaded when the
+file is closed), creates, renames, moves within a store and deletes into the store's Trash; vault items are listed as
+locked. It has a login of its own: the account page signs in once more with OpenID Connect and hands that login over
+(`lib/app/documents_provider.dart`); the provider keeps it encrypted with a key of the Android Keystore and keeps every
+renewal the core reports. The same JNI boundary hands the JVM to rustls-platform-verifier, which reqwest checks
+certificates with on Android – needed by the app itself too; its Kotlin part comes from the rustls project's Maven
+repository on GitHub. **OPEN**: not yet run on a device or emulator; changes made elsewhere reach the Files app only
+when it asks again (no `changes` rounds or push yet); a file whose upload fails on close is dropped, not kept for
+another try; moving between stores; search (`FLAG_SUPPORTS_SEARCH`), recent files, thumbnails; a renewal in flight
+while the idle session closes (after a minute) is lost with it and ends the login.
+
 ## 6. End-to-end encryption
 
 End-to-end encryption is **a focus of the apps**. kernoid's server side is in
@@ -215,6 +229,8 @@ the order in which the vault and calendar parts follow mail.
 | UI | Flutter 3.47, Dart 3.13 | BSD-3-Clause | one code base for five platforms, accessibility on all of them |
 | Dart ↔ Rust | flutter_rust_bridge 2.13 | MIT | async and streams in both directions |
 | Swift/Kotlin ↔ Rust | UniFFI 0.32 | **MPL-2.0** | file-level copyleft, used by Mozilla in its store apps. **OPEN**: accept as an exception, or a C boundary by hand |
+| Kotlin ↔ Rust (built) | JSON messages over JNI, jni 0.22.4 | MIT OR Apache-2.0 | the core of the shells (`rust/src/provider.rs`); jni came already with reqwest on Android |
+| Certificates on Android | rustls-platform-verifier 0.7.1 and its Kotlin part 0.2.0 (the rustls project's Maven repository on GitHub) | MIT OR Apache-2.0 | reqwest's verifier; the JVM is handed to it at start, the Kotlin part's version checked against `rust/Cargo.lock` |
 | Async runtime, HTTP | tokio, an async HTTP client with rustls (AWS-LC) | MIT/Apache-2.0, ISC | decided: async – the engine waits on many transfers and push at once; **OPEN**: which HTTP client |
 | Local state | SQLite | public domain | one file on every system |
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |

@@ -17,6 +17,18 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   app has an icon in the menu bar or notification area (tray_manager 0.5.3, window_manager 0.5.2) and closing the
   window only hides it; it can start with the computer (a login item on macOS, the registry's `Run` key on Windows,
   XDG Autostart on Linux). Needs kernoid's Rust SDK 0.2.4.
+- Android: the stores in the Files app and every document picker (a DocumentsProvider) – one root per store, files
+  opened, written, made, renamed, moved within a store and deleted into the Trash; vault items listed as locked.
+  Switched on in the account with a sign-in of its own; signing out of the app removes it again. Not yet tried on a
+  device.
+
+### Fixed
+
+- Android: certificates are checked against the system's trust store – rustls-platform-verifier, which reqwest uses,
+  is now handed the JVM when the app starts. Without it no connection could be verified (**OPEN**: not yet tried on a
+  device).
+- The core of the file shells hands a renewed login over with an error answer too; before, the renewal was lost and
+  the shell's login ended at its next start.
 
 ## [0.2.3] – 2026-11-04
 
