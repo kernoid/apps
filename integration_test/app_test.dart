@@ -967,6 +967,7 @@ void main() {
     addTearDown(sync.dispose);
     final folder = (await tester.runAsync(() => Directory.systemTemp.createTemp('kernoid-sync')))!;
     await tester.runAsync(() async {
+      await sync.start();
       await sync.add(store.accountId, folder.path);
     });
     expect(sync.statusOf(store.accountId).error, isNull);
@@ -982,6 +983,22 @@ void main() {
     expect(sync.statusOf(store.accountId).report!.uploaded, 1);
     final top = (await tester.runAsync(() => account.files(accountId: store.accountId)))!;
     expect(top.map((n) => n.name), contains(name));
+    // Made on the server, it arrives by itself: kernoid pushes the change, a round follows.
+    final pushed = 'Vom Server ${DateTime.now().millisecondsSinceEpoch % 100000}.txt';
+    await tester.runAsync(() async {
+      final staged = File('${Directory.systemTemp.path}/$pushed');
+      await staged.writeAsString('vom Server');
+      await account.uploadFiles(accountId: store.accountId, paths: [staged.path]).drain<void>();
+      await staged.delete();
+      for (var i = 0; i < 40 && !File('${folder.path}/$pushed').existsSync(); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+    });
+    expect(File('${folder.path}/$pushed').existsSync(), isTrue, reason: 'a round after the push');
+    final pushedNode = (await tester.runAsync(() => account.files(accountId: store.accountId)))!
+        .firstWhere((n) => n.name == pushed);
+    await tester.runAsync(() => account.destroyFile(accountId: store.accountId, id: pushedNode.id));
+
     final again = SyncFolders(account);
     addTearDown(again.dispose);
     await tester.runAsync(again.start);

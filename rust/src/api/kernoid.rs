@@ -1619,6 +1619,17 @@ impl Kernoid {
         .await
     }
 
+    /// Tells which types changed at the server (`FileNode`, `Email` …), as kernoid pushes them (EventSource), until
+    /// the stream is no longer listened to; after a break it connects again by itself.
+    pub fn watch_changes(&self, sink: StreamSink<Vec<String>>) {
+        let client = self.client.clone();
+        let _guard = RUNTIME.enter();
+        kernoid_client::push::listen(client, move |push| match push {
+            kernoid_client::push::Push::Changed(types) => sink.add(types.into_iter().collect()).is_ok(),
+            _ => true,
+        });
+    }
+
     /// One round of keeping a folder of the device in step with a store (kernoid-sync): what changed on both sides is
     /// carried over, conflicts keep both versions. `state` is the round's database, outside the folder and one per
     /// folder. Vaults are kept in step while the account's key is unlocked, else left as they are.

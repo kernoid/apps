@@ -44,8 +44,8 @@ class SyncStatus {
 }
 
 /// The folders of this computer kept in step with the account's stores (desktops only – phones show files through
-/// the system's file provider, docs/plan.md, 5), by kernoid-sync on the Rust side: a round for each every few minutes
-/// while the app is open, and on demand. What is chosen is kept on this device in the app's support directory, per
+/// the system's file provider, docs/plan.md, 5), by kernoid-sync on the Rust side: a round soon after kernoid pushes a
+/// change of files or the folder changes here, every few minutes besides, and on demand – while the app is open. What is chosen is kept on this device in the app's support directory, per
 /// account; each folder's state database lies beside it, never in the folder.
 class SyncFolders extends ChangeNotifier {
   SyncFolders(this.account);
@@ -59,7 +59,14 @@ class SyncFolders extends ChangeNotifier {
   List<SyncFolder> _folders = const [];
   final Map<String, SyncStatus> _status = {};
   Timer? _timer;
+  Timer? _soon;
+  StreamSubscription<List<String>>? _pushes;
+  final Map<String, StreamSubscription<FileSystemEvent>> _watches = {};
+
+  /// On macOS: the paths of folders whose bookmark was opened – the access stays while the folder is kept in step.
+  final Map<String, String> _opened = {};
   bool _round = false;
+  bool _again = false;
   bool _disposed = false;
 
   List<SyncFolder> get folders => _folders;
@@ -77,7 +84,63 @@ class SyncFolders extends ChangeNotifier {
     }
     _changed();
     _timer = Timer.periodic(interval, (_) => syncAll());
+    _pushes = account.watchChanges().listen((types) {
+      if (types.contains('FileNode')) _later(const Duration(seconds: 2));
+    }, onError: (Object _) {});
+    await _openAll();
+    _watchAll();
     unawaited(syncAll());
+  }
+
+  /// Opens the bookmark of each folder not opened yet (macOS) and closes those of folders no longer kept in step.
+  Future<void> _openAll() async {
+    if (!Platform.isMacOS) return;
+    for (final store in [..._opened.keys]) {
+      if (folderOf(store) == null) await _close(store);
+    }
+    for (final folder in _folders) {
+      if (_opened.containsKey(folder.store) || folder.bookmark == null) continue;
+      try {
+        final path = await _bookmarks.invokeMethod<String>('open', folder.bookmark);
+        if (path != null) _opened[folder.store] = path;
+      } on PlatformException catch (error) {
+        _status[folder.store] = SyncStatus(error: error.message ?? error.code);
+      }
+    }
+  }
+
+  Future<void> _close(String store) async {
+    final path = _opened.remove(store);
+    if (path != null) await _bookmarks.invokeMethod<void>('close', path);
+  }
+
+  /// Where a folder is reached: through its opened bookmark on macOS.
+  String _pathOf(SyncFolder folder) => _opened[folder.store] ?? folder.path;
+
+  /// A round shortly – changes come in bursts, one round takes them all.
+  void _later(Duration wait) {
+    _soon?.cancel();
+    _soon = Timer(wait, syncAll);
+  }
+
+  /// Watches each folder for changes made here (recursively where the system can: macOS and Windows; on Linux only
+  /// the folder's top, the timer finds the rest).
+  void _watchAll() {
+    for (final store in [..._watches.keys]) {
+      if (folderOf(store) == null) unawaited(_watches.remove(store)?.cancel());
+    }
+    for (final folder in _folders) {
+      final path = _pathOf(folder);
+      if (_watches.containsKey(folder.store) || !Directory(path).existsSync()) continue;
+      try {
+        _watches[folder.store] = Directory(path)
+            .watch(recursive: !Platform.isLinux)
+            .where((event) => !event.path.endsWith('.kernoid-part'))
+            .listen((_) => _later(const Duration(seconds: 5)), onError: (Object _) {});
+      } catch (_) {
+        // Not watchable here (a sandbox without access yet): the timer still runs.
+      }
+    }
   }
 
   /// Keeps `path` in step with `store` from now on, and syncs it at once.
@@ -87,7 +150,10 @@ class SyncFolders extends ChangeNotifier {
     _folders = [..._folders.where((f) => f.store != store), SyncFolder(store: store, path: path, bookmark: bookmark)];
     _status.remove(store);
     await _save();
+    await _close(store);
+    await _openAll();
     _changed();
+    _watchAll();
     await syncAll();
   }
 
@@ -96,6 +162,8 @@ class SyncFolders extends ChangeNotifier {
     _folders = [..._folders.where((f) => f.store != store)];
     _status.remove(store);
     await _save();
+    await _close(store);
+    _watchAll();
     try {
       for (final suffix in ['', '-wal', '-shm']) {
         final file = File('${(await _state(store)).path}$suffix');
@@ -107,15 +175,23 @@ class SyncFolders extends ChangeNotifier {
     _changed();
   }
 
-  /// A round for every folder, one after the other; skipped while one runs.
+  /// A round for every folder, one after the other; asked while one runs, another follows it (what the round itself
+  /// wrote to the folders is seen again, which costs only a comparison).
   Future<void> syncAll() async {
-    if (_round || _disposed) return;
+    if (_disposed) return;
+    if (_round) {
+      _again = true;
+      return;
+    }
     _round = true;
     try {
-      for (final folder in [..._folders]) {
-        if (_disposed) return;
-        await _sync(folder);
-      }
+      do {
+        _again = false;
+        for (final folder in [..._folders]) {
+          if (_disposed) return;
+          await _sync(folder);
+        }
+      } while (_again && !_disposed);
     } finally {
       _round = false;
     }
@@ -125,26 +201,16 @@ class SyncFolders extends ChangeNotifier {
     final before = statusOf(folder.store);
     _status[folder.store] = SyncStatus(running: true, last: before.last, report: before.report);
     _changed();
-    String? opened;
     try {
-      var path = folder.path;
-      if (Platform.isMacOS && folder.bookmark != null) {
-        opened = await _bookmarks.invokeMethod<String>('open', folder.bookmark);
-        path = opened ?? path;
-      }
       await (await _directory()).create(recursive: true);
       final report = await account.syncFolder(
         accountId: folder.store,
-        root: path,
+        root: _pathOf(folder),
         state: (await _state(folder.store)).path,
       );
       _status[folder.store] = SyncStatus(last: DateTime.now(), report: report);
     } on KernoidError catch (error) {
       _status[folder.store] = SyncStatus(last: before.last, report: before.report, error: error.message);
-    } on PlatformException catch (error) {
-      _status[folder.store] = SyncStatus(last: before.last, report: before.report, error: error.message ?? error.code);
-    } finally {
-      if (opened != null) await _bookmarks.invokeMethod<void>('close', opened);
     }
     _changed();
   }
@@ -173,6 +239,14 @@ class SyncFolders extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _timer?.cancel();
+    _soon?.cancel();
+    unawaited(_pushes?.cancel());
+    for (final watch in _watches.values) {
+      unawaited(watch.cancel());
+    }
+    for (final store in [..._opened.keys]) {
+      unawaited(_close(store));
+    }
     super.dispose();
   }
 }
