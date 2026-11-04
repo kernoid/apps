@@ -16,7 +16,7 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   follows soon after kernoid pushes a change of files or the folder changes here. While folders are kept in step, the
   app has an icon in the menu bar or notification area (tray_manager 0.5.3, window_manager 0.5.2) and closing the
   window only hides it; it can start with the computer (a login item on macOS, the registry's `Run` key on Windows,
-  XDG Autostart on Linux). Needs kernoid's Rust SDK 0.2.4.
+  XDG Autostart on Linux). Needs kernoid's Rust SDK 0.3.0.
 - Android: the stores in the Files app and every document picker (a DocumentsProvider) – one root per store, files
   opened, written, made, renamed, moved within a store and deleted into the Trash; vault items listed as locked.
   Switched on in the account with a sign-in of its own; signing out of the app removes it again. Not yet tried on a

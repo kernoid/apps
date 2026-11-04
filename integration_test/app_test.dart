@@ -1005,13 +1005,6 @@ void main() {
     await tester.runAsync(again.start);
     expect(again.folderOf(store.accountId)?.path, folder.path);
 
-    // The icon in the menu bar comes and goes without disturbing the window.
-    final tray = Tray(labels: (open: 'Open', sync: 'Sync', quit: 'Quit'), onSync: () {});
-    await tester.runAsync(() async {
-      await tray.start();
-      await tray.stop();
-    });
-
     // Stopped: the folder stays as it is.
     await tester.runAsync(() async {
       await again.remove(store.accountId);
@@ -1327,6 +1320,19 @@ void main() {
     await waitFor(tester, find.text('Aus der App'));
     await shoot(tester, 'e2e-sent');
   });
+
+  // Last: window_manager takes over the window, which the tests after it would feel.
+  testWidgets('the icon in the menu bar comes and goes', (tester) async {
+    if (!Tray.available) {
+      markTestSkipped('not a desktop');
+      return;
+    }
+    final tray = Tray(labels: (open: 'Open', sync: 'Sync', quit: 'Quit'), onSync: () {});
+    await tester.runAsync(() async {
+      await tray.start();
+      await tray.stop();
+    });
+  });
 }
 
 /// What the system's browser does in a login with OpenID Connect: kernoid's login page logs in (here with the
@@ -1380,8 +1386,10 @@ Finder menuItem(String label) => find.byWidgetPredicate((w) => w is CheckedPopup
 /// Taps once the target stopped moving – pages sliding in or out, a button lifted by a snack bar: a tap during a
 /// movement lands on something else.
 Future<void> settledTap(WidgetTester tester, Finder finder) async {
-  // What is to be tapped may come a frame or a request later.
+  // What is to be tapped may come a frame or a request later, and lie below the visible part of a page.
   await waitFor(tester, finder);
+  final screen = Offset.zero & tester.view.physicalSize / tester.view.devicePixelRatio;
+  if (!screen.contains(tester.getCenter(finder.first))) await tester.ensureVisible(finder.first);
   Offset? last;
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 100));
