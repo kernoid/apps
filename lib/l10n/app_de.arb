@@ -302,5 +302,13 @@
   "syncDone": "Abgeglichen {time}: {down} geladen, {up} hochgeladen",
   "syncIssues": "{conflicts} auf beiden Seiten geändert (als Kopie behalten), {failed} nicht erledigt – wird wiederholt",
   "syncFailed": "Nicht abgeglichen: {error}",
-  "syncLocked": "{count} Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen"
+  "syncLocked": "{count} Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen",
+  "explorerTitle": "Dateien im Explorer",
+  "explorerHint": "Deine Speicher als Ordner im Explorer: Dateien erscheinen sofort und werden geladen, wenn man sie öffnet, und was du dort änderst, kommt binnen einer Minute bei kernoid an, solange die App offen ist. Der Explorer bekommt eine eigene Anmeldung – die Anmeldeseite von kernoid öffnet sich dafür noch einmal.",
+  "explorerSetUp": "Im Explorer zeigen",
+  "explorerRemove": "Aus dem Explorer entfernen",
+  "explorerStarting": "Wird gestartet …",
+  "explorerLast": "Zuletzt abgeglichen {time}",
+  "explorerSignedOut": "Die Anmeldung für den Explorer ist abgelaufen – zeige die Dateien erneut, um dich neu anzumelden.",
+  "explorerFailed": "Nicht im Explorer gezeigt: {error}"
 }

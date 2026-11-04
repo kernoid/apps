@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../app/explorer_files.dart';
 import '../app/sync_folders.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
@@ -35,15 +36,20 @@ class _HomePageState extends State<HomePage> {
   /// Folders of this computer kept in step while the app is open, whatever page is shown.
   late final _sync = SyncFolders(widget.account);
 
+  /// The stores in Windows' Explorer, kept in step while the app is open.
+  late final _explorer = ExplorerFiles(widget.account);
+
   @override
   void initState() {
     super.initState();
     _sync.start();
+    _explorer.start();
   }
 
   @override
   void dispose() {
     _sync.dispose();
+    _explorer.dispose();
     super.dispose();
   }
 
@@ -62,7 +68,7 @@ class _HomePageState extends State<HomePage> {
       1 => CalendarPage(key: const ValueKey('calendar'), account: widget.account),
       2 => ContactsPage(key: const ValueKey('contacts'), account: widget.account),
       3 => FilesPage(key: const ValueKey('files'), account: widget.account),
-      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync),
+      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync, explorer: _explorer),
     };
     final name = widget.account.username;
     if (MediaQuery.sizeOf(context).width >= wideLayout) {

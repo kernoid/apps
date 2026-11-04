@@ -991,4 +991,34 @@ class AppLocalizationsDe extends AppLocalizations {
   String syncLocked(int count) {
     return '$count Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen';
   }
+
+  @override
+  String get explorerTitle => 'Dateien im Explorer';
+
+  @override
+  String get explorerHint =>
+      'Deine Speicher als Ordner im Explorer: Dateien erscheinen sofort und werden geladen, wenn man sie öffnet, und was du dort änderst, kommt binnen einer Minute bei kernoid an, solange die App offen ist. Der Explorer bekommt eine eigene Anmeldung – die Anmeldeseite von kernoid öffnet sich dafür noch einmal.';
+
+  @override
+  String get explorerSetUp => 'Im Explorer zeigen';
+
+  @override
+  String get explorerRemove => 'Aus dem Explorer entfernen';
+
+  @override
+  String get explorerStarting => 'Wird gestartet …';
+
+  @override
+  String explorerLast(String time) {
+    return 'Zuletzt abgeglichen $time';
+  }
+
+  @override
+  String get explorerSignedOut =>
+      'Die Anmeldung für den Explorer ist abgelaufen – zeige die Dateien erneut, um dich neu anzumelden.';
+
+  @override
+  String explorerFailed(String error) {
+    return 'Nicht im Explorer gezeigt: $error';
+  }
 }

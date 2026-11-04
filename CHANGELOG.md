@@ -14,6 +14,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   broke off go on, both versions are kept when a file changed on both sides, vaults are synced while the key is
   unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. Needs
   kernoid's Rust SDK 0.2.4.
+- Files in Explorer (Windows, not yet tried on Windows): the stores as cloud folders below `%USERPROFILE%\kernoid`
+  through the Cloud Files API – files show at once and are downloaded when opened; deleting, renaming, moving, new and
+  changed files reach kernoid. Set up in the account with a login of its own, kept protected with DPAPI; runs while
+  the app is open.
 
 ## [0.2.3] – 2026-11-04
 

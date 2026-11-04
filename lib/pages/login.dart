@@ -11,6 +11,26 @@ import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 
+/// Where the browser comes back: the app's own scheme on Apple's systems and Android, a loopback address on a port of
+/// our choosing on desktops (RFC 8252, 7.1 and 7.3).
+(String, String) _redirect() {
+  if (Platform.isIOS || Platform.isMacOS || Platform.isAndroid) {
+    return ('dev.kernoid.kernoid:/oauth', 'dev.kernoid.kernoid');
+  }
+  final port = 49152 + Random.secure().nextInt(16000);
+  return ('http://127.0.0.1:$port/oauth', 'http://127.0.0.1:$port');
+}
+
+/// A login with OpenID Connect in the system's browser – for the app, or a separate one for a shell of the system
+/// (Explorer's files), which renews its own refresh token. Throws `PlatformException` with `CANCELED` when the user
+/// closes the browser.
+Future<Kernoid> signInWithBrowser(String server, String? address) async {
+  final (redirect, scheme) = _redirect();
+  final login = await Kernoid.beginLogin(server: server, redirectUri: redirect, address: address);
+  final callback = await FlutterWebAuth2.authenticate(url: login.url, callbackUrlScheme: scheme);
+  return Kernoid.finishLogin(login: login, callback: callback);
+}
+
 /// Signing in: with OpenID Connect in the system's browser – kernoid's login page, with a passkey, a password or a
 /// second factor –, or with an address and an app password. A login with OpenID Connect is kept and resumed at start
 /// (`app/kept_login.dart`); one with an app password is not.
@@ -42,16 +62,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Where the browser comes back: the app's own scheme on Apple's systems and Android, a loopback address on a port
-  /// of our choosing on desktops (RFC 8252, 7.1 and 7.3).
-  (String, String) _redirect() {
-    if (Platform.isIOS || Platform.isMacOS || Platform.isAndroid) {
-      return ('dev.kernoid.kernoid:/oauth', 'dev.kernoid.kernoid');
-    }
-    final port = 49152 + Random.secure().nextInt(16000);
-    return ('http://127.0.0.1:$port/oauth', 'http://127.0.0.1:$port');
-  }
-
   Future<void> _signInWithBrowser() async {
     final l = AppLocalizations.of(context);
     if (_server.text.trim().isEmpty) {
@@ -63,15 +73,8 @@ class _LoginPageState extends State<LoginPage> {
       _error = null;
     });
     try {
-      final (redirect, scheme) = _redirect();
       final address = _address.text.trim();
-      final login = await Kernoid.beginLogin(
-        server: _server.text,
-        redirectUri: redirect,
-        address: address.isEmpty ? null : address,
-      );
-      final callback = await FlutterWebAuth2.authenticate(url: login.url, callbackUrlScheme: scheme);
-      final account = await Kernoid.finishLogin(login: login, callback: callback);
+      final account = await signInWithBrowser(_server.text, address.isEmpty ? null : address);
       widget.onSignedIn(account);
     } on PlatformException catch (error) {
       setState(() => _error = error.code == 'CANCELED' ? l.signInCancelled : error.message ?? error.code);

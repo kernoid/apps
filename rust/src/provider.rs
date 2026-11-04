@@ -29,6 +29,10 @@ use serde_json::{Value, json};
 
 use crate::api::kernoid::{Kernoid, KernoidError, RUNTIME};
 
+// The Windows shell; what decides in it is tested on every system, what calls Windows is built only there.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) mod cloud_files;
+
 /// Changes asked for at once.
 const MAX_CHANGES: u64 = 500;
 

@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/kernoid.dart';
+import 'api/windows_files.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -289,6 +290,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VacationResponse dco_decode_vacation_response(dynamic raw);
 
   @protected
+  WindowsFilesStatus dco_decode_windows_files_status(dynamic raw);
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
 
   @protected
@@ -560,6 +564,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VacationResponse sse_decode_vacation_response(SseDeserializer deserializer);
+
+  @protected
+  WindowsFilesStatus sse_decode_windows_files_status(SseDeserializer deserializer);
 
   @protected
   void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer);
@@ -839,6 +846,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_vacation_response(VacationResponse self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_windows_files_status(WindowsFilesStatus self, SseSerializer serializer);
 }
 
 // Section: wire_class

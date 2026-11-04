@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1460106294;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 721694469;
 
 // Section: executor
 
@@ -3943,6 +3943,139 @@ fn wire__crate__api__kernoid__sync_report_default_impl(
         },
     )
 }
+fn wire__crate__api__windows_files__windows_files_available_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "windows_files_available",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::windows_files::windows_files_available())?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__windows_files__windows_files_configured_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "windows_files_configured",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_state_dir = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::windows_files::windows_files_configured(api_state_dir))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__windows_files__windows_files_start_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "windows_files_start",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_kept = <Option<String>>::sse_decode(&mut deserializer);
+            let api_root_dir = <String>::sse_decode(&mut deserializer);
+            let api_state_dir = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>((move || {
+                    let output_ok =
+                        crate::api::windows_files::windows_files_start(api_kept, api_root_dir, api_state_dir)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__windows_files__windows_files_status_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "windows_files_status",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::windows_files::windows_files_status())?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__windows_files__windows_files_stop_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "windows_files_stop",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_state_dir = <String>::sse_decode(&mut deserializer);
+            let api_forget = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>((move || {
+                    let output_ok = crate::api::windows_files::windows_files_stop(api_state_dir, api_forget)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 
 // Section: related_funcs
 
@@ -5029,6 +5162,24 @@ impl SseDecode for crate::api::kernoid::VacationResponse {
     }
 }
 
+impl SseDecode for crate::api::windows_files::WindowsFilesStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_running = <bool>::sse_decode(deserializer);
+        let mut var_folders = <Vec<String>>::sse_decode(deserializer);
+        let mut var_problems = <Vec<String>>::sse_decode(deserializer);
+        let mut var_signedOut = <bool>::sse_decode(deserializer);
+        let mut var_lastRound = <Option<String>>::sse_decode(deserializer);
+        return crate::api::windows_files::WindowsFilesStatus {
+            running: var_running,
+            folders: var_folders,
+            problems: var_problems,
+            signed_out: var_signedOut,
+            last_round: var_lastRound,
+        };
+    }
+}
+
 fn pde_ffi_dispatcher_primary_impl(
     func_id: i32,
     port: flutter_rust_bridge::for_generated::MessagePort,
@@ -5110,6 +5261,8 @@ fn pde_ffi_dispatcher_primary_impl(
         79 => wire__crate__api__kernoid__Kernoid_watch_login_impl(port, ptr, rust_vec_len, data_len),
         81 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
         82 => wire__crate__api__kernoid__sync_report_default_impl(port, ptr, rust_vec_len, data_len),
+        85 => wire__crate__api__windows_files__windows_files_start_impl(port, ptr, rust_vec_len, data_len),
+        87 => wire__crate__api__windows_files__windows_files_stop_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5132,6 +5285,9 @@ fn pde_ffi_dispatcher_sync_impl(
         71 => wire__crate__api__kernoid__Kernoid_settings_available_impl(ptr, rust_vec_len, data_len),
         77 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
         80 => wire__crate__api__kernoid__OidcLogin_url_impl(ptr, rust_vec_len, data_len),
+        83 => wire__crate__api__windows_files__windows_files_available_impl(ptr, rust_vec_len, data_len),
+        84 => wire__crate__api__windows_files__windows_files_configured_impl(ptr, rust_vec_len, data_len),
+        86 => wire__crate__api__windows_files__windows_files_status_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5803,6 +5959,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::VacationResponse>
     for crate::api::kernoid::VacationResponse
 {
     fn into_into_dart(self) -> crate::api::kernoid::VacationResponse {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::windows_files::WindowsFilesStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.running.into_into_dart().into_dart(),
+            self.folders.into_into_dart().into_dart(),
+            self.problems.into_into_dart().into_dart(),
+            self.signed_out.into_into_dart().into_dart(),
+            self.last_round.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::windows_files::WindowsFilesStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::windows_files::WindowsFilesStatus>
+    for crate::api::windows_files::WindowsFilesStatus
+{
+    fn into_into_dart(self) -> crate::api::windows_files::WindowsFilesStatus {
         self
     }
 }
@@ -6589,6 +6766,17 @@ impl SseEncode for crate::api::kernoid::VacationResponse {
         <Option<String>>::sse_encode(self.until, serializer);
         <String>::sse_encode(self.subject, serializer);
         <String>::sse_encode(self.text, serializer);
+    }
+}
+
+impl SseEncode for crate::api::windows_files::WindowsFilesStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.running, serializer);
+        <Vec<String>>::sse_encode(self.folders, serializer);
+        <Vec<String>>::sse_encode(self.problems, serializer);
+        <bool>::sse_encode(self.signed_out, serializer);
+        <Option<String>>::sse_encode(self.last_round, serializer);
     }
 }
 

@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/kernoid.dart';
+import 'api/windows_files.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -65,7 +66,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1460106294;
+  int get rustContentHash => 721694469;
 
   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
     stem: 'kernoid_bridge',
@@ -449,6 +450,20 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiKernoidInitApp();
 
   Future<SyncReport> crateApiKernoidSyncReportDefault();
+
+  bool crateApiWindowsFilesWindowsFilesAvailable();
+
+  bool crateApiWindowsFilesWindowsFilesConfigured({required String stateDir});
+
+  Future<List<String>> crateApiWindowsFilesWindowsFilesStart({
+    String? kept,
+    required String rootDir,
+    required String stateDir,
+  });
+
+  WindowsFilesStatus crateApiWindowsFilesWindowsFilesStatus();
+
+  Future<void> crateApiWindowsFilesWindowsFilesStop({required String stateDir, required bool forget});
 
   RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_Kernoid;
 
@@ -2529,6 +2544,111 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiKernoidSyncReportDefaultConstMeta =>
       const TaskConstMeta(debugName: "sync_report_default", argNames: []);
 
+  @override
+  bool crateApiWindowsFilesWindowsFilesAvailable() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 83)!;
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_bool, decodeErrorData: null),
+        constMeta: kCrateApiWindowsFilesWindowsFilesAvailableConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowsFilesWindowsFilesAvailableConstMeta =>
+      const TaskConstMeta(debugName: "windows_files_available", argNames: []);
+
+  @override
+  bool crateApiWindowsFilesWindowsFilesConfigured({required String stateDir}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(stateDir, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 84)!;
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_bool, decodeErrorData: null),
+        constMeta: kCrateApiWindowsFilesWindowsFilesConfiguredConstMeta,
+        argValues: [stateDir],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowsFilesWindowsFilesConfiguredConstMeta =>
+      const TaskConstMeta(debugName: "windows_files_configured", argNames: ["stateDir"]);
+
+  @override
+  Future<List<String>> crateApiWindowsFilesWindowsFilesStart({
+    String? kept,
+    required String rootDir,
+    required String stateDir,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_opt_String(kept, serializer);
+          sse_encode_String(rootDir, serializer);
+          sse_encode_String(stateDir, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 85, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_list_String, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiWindowsFilesWindowsFilesStartConstMeta,
+        argValues: [kept, rootDir, stateDir],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowsFilesWindowsFilesStartConstMeta =>
+      const TaskConstMeta(debugName: "windows_files_start", argNames: ["kept", "rootDir", "stateDir"]);
+
+  @override
+  WindowsFilesStatus crateApiWindowsFilesWindowsFilesStatus() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 86)!;
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_windows_files_status, decodeErrorData: null),
+        constMeta: kCrateApiWindowsFilesWindowsFilesStatusConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowsFilesWindowsFilesStatusConstMeta =>
+      const TaskConstMeta(debugName: "windows_files_status", argNames: []);
+
+  @override
+  Future<void> crateApiWindowsFilesWindowsFilesStop({required String stateDir, required bool forget}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(stateDir, serializer);
+          sse_encode_bool(forget, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 87, port: port_);
+        },
+        codec: SseCodec(decodeSuccessData: sse_decode_unit, decodeErrorData: sse_decode_kernoid_error),
+        constMeta: kCrateApiWindowsFilesWindowsFilesStopConstMeta,
+        argValues: [stateDir, forget],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiWindowsFilesWindowsFilesStopConstMeta =>
+      const TaskConstMeta(debugName: "windows_files_stop", argNames: ["stateDir", "forget"]);
+
   RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_Kernoid =>
       wire.rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerKernoid;
 
@@ -3342,6 +3462,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       until: dco_decode_opt_String(arr[2]),
       subject: dco_decode_String(arr[3]),
       text: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  WindowsFilesStatus dco_decode_windows_files_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return WindowsFilesStatus(
+      running: dco_decode_bool(arr[0]),
+      folders: dco_decode_list_String(arr[1]),
+      problems: dco_decode_list_String(arr[2]),
+      signedOut: dco_decode_bool(arr[3]),
+      lastRound: dco_decode_opt_String(arr[4]),
     );
   }
 
@@ -4419,6 +4553,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  WindowsFilesStatus sse_decode_windows_files_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_running = sse_decode_bool(deserializer);
+    var var_folders = sse_decode_list_String(deserializer);
+    var var_problems = sse_decode_list_String(deserializer);
+    var var_signedOut = sse_decode_bool(deserializer);
+    var var_lastRound = sse_decode_opt_String(deserializer);
+    return WindowsFilesStatus(
+      running: var_running,
+      folders: var_folders,
+      problems: var_problems,
+      signedOut: var_signedOut,
+      lastRound: var_lastRound,
+    );
+  }
+
+  @protected
   void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
@@ -5222,6 +5373,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.until, serializer);
     sse_encode_String(self.subject, serializer);
     sse_encode_String(self.text, serializer);
+  }
+
+  @protected
+  void sse_encode_windows_files_status(WindowsFilesStatus self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.running, serializer);
+    sse_encode_list_String(self.folders, serializer);
+    sse_encode_list_String(self.problems, serializer);
+    sse_encode_bool(self.signedOut, serializer);
+    sse_encode_opt_String(self.lastRound, serializer);
   }
 }
 

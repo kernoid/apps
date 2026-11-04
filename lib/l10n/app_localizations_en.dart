@@ -985,4 +985,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncLocked(int count) {
     return '$count vaults left as they are – unlock your key to sync them';
   }
+
+  @override
+  String get explorerTitle => 'Files in Explorer';
+
+  @override
+  String get explorerHint =>
+      'Your stores as folders in Explorer: files show at once and are downloaded when they are opened, and what you change there reaches kernoid within a minute while the app is open. Explorer gets a login of its own – kernoid\'s login page opens once more for it.';
+
+  @override
+  String get explorerSetUp => 'Show in Explorer';
+
+  @override
+  String get explorerRemove => 'Remove from Explorer';
+
+  @override
+  String get explorerStarting => 'Starting …';
+
+  @override
+  String explorerLast(String time) {
+    return 'Last compared $time';
+  }
+
+  @override
+  String get explorerSignedOut => 'The login for Explorer has ended – show the files again to sign in anew.';
+
+  @override
+  String explorerFailed(String error) {
+    return 'Not shown in Explorer: $error';
+  }
 }
