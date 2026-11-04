@@ -323,10 +323,12 @@ pub struct MailSettings {
     pub senders: Vec<String>,
 }
 
-/// How far an upload is: the file (its index among those chosen) and its bytes.
+/// How far an upload is: the file (numbered in the order sent, and its path) and its bytes.
 #[derive(Debug, Clone)]
 pub struct UploadProgress {
     pub index: u32,
+    /// The file's path below the target, `/` between names.
+    pub name: String,
     pub sent: i64,
     pub total: i64,
 }
@@ -595,6 +597,92 @@ fn link_mode_name(mode: files::LinkMode) -> &'static str {
         files::LinkMode::View => "view",
         files::LinkMode::Add => "add",
         files::LinkMode::Drop => "drop",
+    }
+}
+
+/// One step of an upload: a directory to have (its names from the target down) or a file to send into one.
+enum Step {
+    Directory(Vec<String>),
+    File(Vec<String>, std::path::PathBuf),
+}
+
+/// Files the systems leave in directories, not worth uploading.
+const LEFT_OUT: [&str; 3] = [".DS_Store", "Thumbs.db", "desktop.ini"];
+
+/// What `path` holds, in the order to upload it: a file, or a directory and everything in it (names sorted, links
+/// not followed).
+fn walk(path: &std::path::Path, above: &[String], plan: &mut Vec<Step>) -> client::Result<()> {
+    let kind = std::fs::symlink_metadata(path).map_err(client::Error::Io)?.file_type();
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_owned();
+    if kind.is_file() {
+        if !LEFT_OUT.contains(&name.as_str()) {
+            plan.push(Step::File(above.to_vec(), path.to_path_buf()));
+        }
+    } else if kind.is_dir() {
+        let mut names = above.to_vec();
+        names.push(name);
+        plan.push(Step::Directory(names.clone()));
+        let mut entries = std::fs::read_dir(path)
+            .map_err(client::Error::Io)?
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .collect::<Vec<_>>();
+        entries.sort();
+        for entry in entries {
+            walk(&entry, &names, plan)?;
+        }
+    }
+    Ok(())
+}
+
+/// Where an upload goes: the directories it has found or made (by their names below the target) and what is in them.
+struct Target<'a> {
+    client: &'a Client,
+    e2e: &'a Mutex<E2e>,
+    account: &'a str,
+    vault: Option<&'a str>,
+    dirs: HashMap<Vec<String>, Option<String>>,
+    listed: HashMap<Option<String>, Vec<files::FileNode>>,
+}
+
+impl Target<'_> {
+    /// What is in a directory, names opened in a vault.
+    async fn children(&mut self, parent: &Option<String>) -> client::Result<&Vec<files::FileNode>> {
+        if !self.listed.contains_key(parent) {
+            let mut nodes = files::children(self.client, self.account, parent.as_deref()).await?;
+            if self.vault.is_some() {
+                self.e2e.lock().await.open_names(self.client, self.account, &mut nodes).await;
+            }
+            self.listed.insert(parent.clone(), nodes);
+        }
+        Ok(&self.listed[parent])
+    }
+
+    /// The directory at `names` below the target: one of that name already there, or made.
+    async fn directory(&mut self, names: &[String]) -> client::Result<Option<String>> {
+        if let Some(id) = self.dirs.get(names) {
+            return Ok(id.clone());
+        }
+        let (name, above) = names.split_last().expect("the target itself is always known");
+        let parent = Box::pin(self.directory(above)).await?;
+        let find = |nodes: &Vec<files::FileNode>| {
+            nodes.iter().find(|n| n.is_directory() && &n.name == name).map(|n| n.id.clone())
+        };
+        let mut id = find(self.children(&parent).await?);
+        if id.is_none() {
+            match (self.vault, &parent) {
+                (Some(vault), Some(inside)) => {
+                    let mut e2e = self.e2e.lock().await;
+                    e2e.create_directory_in(self.client, self.account, vault, inside, name).await?;
+                }
+                _ => files::create_directory(self.client, self.account, parent.as_deref(), name).await?,
+            }
+            self.listed.remove(&parent);
+            id = find(self.children(&parent).await?);
+        }
+        let id = id.ok_or_else(|| client::Error::Protocol(format!("the directory {name} was not made")))?;
+        self.dirs.insert(names.to_vec(), Some(id.clone()));
+        Ok(Some(id))
     }
 }
 
@@ -1305,9 +1393,10 @@ impl Kernoid {
         run(async move { files::destroy(&client, &account_id, &id).await }).await
     }
 
-    /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
-    /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
-    /// Into a vault (`vault_id`), each file is encrypted here first.
+    /// Uploads files and whole directories into `parent_id` (in `vault_id`, encrypted, when it lies in a vault). A
+    /// directory is made anew or, if one of the same name is there, filled; its files follow in name order. A file of
+    /// the same name gets the new content, and what it had stays as a version. Progress
+    /// is told per file, numbered in the order they are sent, with the path below the target (`Photos/a.jpg`).
     pub fn upload_files(
         &self,
         account_id: String,
@@ -1319,25 +1408,59 @@ impl Kernoid {
         let (client, e2e) = (self.client.clone(), self.e2e.clone());
         RUNTIME.spawn(async move {
             let result = async {
-                let mut existing = files::children(&client, &account_id, parent_id.as_deref()).await?;
-                if vault_id.is_some() {
-                    e2e.lock().await.open_names(&client, &account_id, &mut existing).await;
+                let mut plan = Vec::new();
+                for path in &paths {
+                    walk(std::path::Path::new(path), &[], &mut plan)?;
                 }
-                for (index, path) in paths.iter().enumerate() {
-                    let path = std::path::Path::new(path);
-                    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
-                    let same = existing.iter().find(|node| node.name == name);
-                    let progress = sink.clone();
-                    let index = u32::try_from(index).unwrap_or(u32::MAX);
-                    let tell = move |sent, total| {
-                        let _ = progress.add(UploadProgress { index, sent: count(sent), total: count(total) });
-                    };
-                    match (&vault_id, &parent_id) {
-                        (Some(vault), Some(parent)) => {
-                            let mut e2e = e2e.lock().await;
-                            e2e.upload_into(&client, &account_id, vault, parent, path, same, tell).await?;
+                let mut target = Target {
+                    client: &client,
+                    e2e: &e2e,
+                    account: &account_id,
+                    vault: vault_id.as_deref(),
+                    dirs: HashMap::from([(Vec::new(), parent_id.clone())]),
+                    listed: HashMap::new(),
+                };
+                let mut index = 0u32;
+                for step in plan {
+                    match step {
+                        Step::Directory(names) => {
+                            target.directory(&names).await?;
                         }
-                        _ => files::upload_file(&client, &account_id, parent_id.as_deref(), path, same, tell).await?,
+                        Step::File(names, path) => {
+                            let parent = target.directory(&names).await?;
+                            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default().to_owned();
+                            let same = target.children(&parent).await?.iter().find(|n| n.name == name).cloned();
+                            let shown = names.iter().chain([&name]).cloned().collect::<Vec<_>>().join("/");
+                            let progress = sink.clone();
+                            let _ = progress.add(UploadProgress { index, name: shown.clone(), sent: 0, total: 0 });
+                            let tell = move |sent, total| {
+                                let _ = progress.add(UploadProgress {
+                                    index,
+                                    name: shown.clone(),
+                                    sent: count(sent),
+                                    total: count(total),
+                                });
+                            };
+                            match (target.vault, &parent) {
+                                (Some(vault), Some(parent)) => {
+                                    let mut e2e = e2e.lock().await;
+                                    e2e.upload_into(&client, &account_id, vault, parent, &path, same.as_ref(), tell)
+                                        .await?;
+                                }
+                                _ => {
+                                    files::upload_file(
+                                        &client,
+                                        &account_id,
+                                        parent.as_deref(),
+                                        &path,
+                                        same.as_ref(),
+                                        tell,
+                                    )
+                                    .await?
+                                }
+                            }
+                            index = index.saturating_add(1);
+                        }
                     }
                 }
                 client::Result::Ok(())

@@ -57,6 +57,21 @@ Future<void> waitFor(WidgetTester tester, Finder finder, {Duration timeout = con
   throw TestFailure('not found in time: $finder');
 }
 
+/// Types into a field and checks it took the text: right after the app's first start the window may not take the
+/// keyboard yet, and the first text went nowhere – then it is typed again.
+Future<void> fill(WidgetTester tester, String key, String text) async {
+  final field = find.byKey(ValueKey(key));
+  final editable = find.descendant(of: field, matching: find.byType(EditableText));
+  for (var attempt = 0; attempt < 5; attempt++) {
+    await tester.tap(field);
+    await tester.enterText(field, text);
+    await tester.pump();
+    if (tester.widget<EditableText>(editable).controller.text == text) return;
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+  }
+  throw TestFailure('the field $key did not take the text');
+}
+
 /// Waits until `finder` finds nothing – a list reloads after a deletion.
 Future<void> waitGone(WidgetTester tester, Finder finder, {Duration timeout = const Duration(seconds: 20)}) async {
   final end = DateTime.now().add(timeout);
@@ -104,11 +119,11 @@ void main() {
       await tester.pumpWidget(const KernoidApp());
       await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
 
-      await tester.enterText(find.byKey(const ValueKey('server')), server);
-      await tester.enterText(find.byKey(const ValueKey('address')), address);
+      await fill(tester, 'server', server);
+      await fill(tester, 'address', address);
       // Once only: failed logins count, and kernoid holds back an address after a few.
       if (name == 'wide') {
-        await tester.enterText(find.byKey(const ValueKey('password')), 'wrong');
+        await fill(tester, 'password', 'wrong');
         await tester.tap(find.byKey(const ValueKey('sign-in')));
         await waitFor(
           tester,
@@ -117,8 +132,7 @@ void main() {
         await shoot(tester, '$name-login-error');
       }
 
-      await tester.tap(find.byKey(const ValueKey('password')));
-      await tester.enterText(find.byKey(const ValueKey('password')), password);
+      await fill(tester, 'password', password);
       await tester.pump();
       await tester.tap(find.byKey(const ValueKey('sign-in')));
       await waitFor(tester, listRows);
@@ -882,6 +896,57 @@ void main() {
     await waitGone(tester, row(vault));
   });
 
+  testWidgets('files: a folder uploaded with all in it, and again into the same', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-files')));
+    await waitFor(tester, find.byKey(const ValueKey('file-Notizen.txt')));
+    expect(find.byKey(const ValueKey('upload-folder')), findsOneWidget);
+    Finder row(String name) => find.byKey(ValueKey('file-$name'));
+
+    // Through the bridge – the system's folder dialog and dropping are out of the test's reach; the page calls the same.
+    final folder = 'Mappe ${DateTime.now().millisecondsSinceEpoch % 100000}';
+    final account = (await tester.runAsync(() => Kernoid.login(server: server, address: address, password: password)))!;
+    final store = account.fileStores().firstWhere((s) => s.isPersonal);
+    Future<List<String>> upload(Map<String, String> content) async => (await tester.runAsync(() async {
+      final temp = await Directory.systemTemp.createTemp('kernoid-folder');
+      for (final MapEntry(:key, :value) in content.entries) {
+        final file = File('${temp.path}/$folder/$key');
+        await file.parent.create(recursive: true);
+        await file.writeAsString(value);
+      }
+      final sent = <String>{};
+      await for (final p in account.uploadFiles(accountId: store.accountId, paths: ['${temp.path}/$folder'])) {
+        sent.add(p.name);
+      }
+      await temp.delete(recursive: true);
+      return sent.toList()..sort();
+    }))!;
+    expect(await upload({'a.txt': 'eins', 'Unter/b.txt': 'zwei', '.DS_Store': 'x'}), [
+      '$folder/Unter/b.txt',
+      '$folder/a.txt',
+    ]);
+    // Again: the folder there is filled, not made a second time.
+    expect(await upload({'c.txt': 'drei'}), ['$folder/c.txt']);
+
+    await settledTap(tester, find.byTooltip(AppLocalizations.of(tester.element(row('Notizen.txt'))).refresh));
+    await waitFor(tester, row(folder));
+    expect(row(folder), findsOneWidget);
+    await settledTap(tester, row(folder));
+    for (final name in ['a.txt', 'c.txt', 'Unter']) {
+      await waitFor(tester, row(name));
+    }
+    expect(row('.DS_Store'), findsNothing);
+    await settledTap(tester, row('Unter'));
+    await waitFor(tester, row('b.txt'));
+    await shoot(tester, 'folder-uploaded');
+  });
+
   testWidgets('files on a phone: the stores in a menu, a long press', (tester) async {
     if (server.isEmpty) {
       markTestSkipped('no KERNOID_TEST_SERVER');
@@ -895,7 +960,8 @@ void main() {
     await shoot(tester, 'files-phone');
     await tester.longPress(find.byKey(const ValueKey('file-Notizen.txt')));
     await waitFor(tester, find.byKey(const ValueKey('menu-versions')));
-    await tester.tapAt(const Offset(10, 400));
+    // Closed by the keyboard: a tap beside the menu could reach a row and open it.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
     await tester.pump();
     await settledTap(tester, find.byKey(const ValueKey('store-menu')));
@@ -1239,6 +1305,8 @@ Finder menuItem(String label) => find.byWidgetPredicate((w) => w is CheckedPopup
 /// Taps once the target stopped moving – pages sliding in or out, a button lifted by a snack bar: a tap during a
 /// movement lands on something else.
 Future<void> settledTap(WidgetTester tester, Finder finder) async {
+  // What is to be tapped may come a frame or a request later.
+  await waitFor(tester, finder);
   Offset? last;
   for (var i = 0; i < 40; i++) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -1254,10 +1322,9 @@ Future<void> signIn(WidgetTester tester, String address, String password) async 
   await tester.pumpWidget(const KernoidApp());
   // Not pumpAndSettle: while a kept login is tried, the page shows a progress indicator.
   await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
-  await tester.enterText(find.byKey(const ValueKey('server')), server);
-  await tester.enterText(find.byKey(const ValueKey('address')), address);
-  await tester.tap(find.byKey(const ValueKey('password')));
-  await tester.enterText(find.byKey(const ValueKey('password')), password);
+  await fill(tester, 'server', server);
+  await fill(tester, 'address', address);
+  await fill(tester, 'password', password);
   await tester.tap(find.byKey(const ValueKey('sign-in')));
   await waitFor(tester, find.byKey(const ValueKey('write')));
 }

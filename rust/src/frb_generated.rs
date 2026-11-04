@@ -4883,9 +4883,15 @@ impl SseDecode for crate::api::kernoid::UploadProgress {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_index = <u32>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
         let mut var_sent = <i64>::sse_decode(deserializer);
         let mut var_total = <i64>::sse_decode(deserializer);
-        return crate::api::kernoid::UploadProgress { index: var_index, sent: var_sent, total: var_total };
+        return crate::api::kernoid::UploadProgress {
+            index: var_index,
+            name: var_name,
+            sent: var_sent,
+            total: var_total,
+        };
     }
 }
 
@@ -5631,6 +5637,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::kernoid::UploadProgress {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.index.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
             self.sent.into_into_dart().into_dart(),
             self.total.into_into_dart().into_dart(),
         ]
@@ -6410,6 +6417,7 @@ impl SseEncode for crate::api::kernoid::UploadProgress {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.index, serializer);
+        <String>::sse_encode(self.name, serializer);
         <i64>::sse_encode(self.sent, serializer);
         <i64>::sse_encode(self.total, serializer);
     }

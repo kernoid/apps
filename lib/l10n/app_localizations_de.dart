@@ -918,7 +918,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dropToUpload => 'Hier ablegen zum Hochladen';
 
   @override
-  String get foldersNotUploaded => 'Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen.';
+  String get uploadFolder => 'Ordner hochladen';
 
   @override
   String get newVault => 'Neuer Tresor';

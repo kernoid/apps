@@ -282,7 +282,7 @@
   "textCut": "Nur das erste Megabyte wird gezeigt – speichere die Datei, um alles zu sehen.",
   "cannotShow": "Diese Datei kann hier nicht gezeigt werden.",
   "dropToUpload": "Hier ablegen zum Hochladen",
-  "foldersNotUploaded": "Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen.",
+  "uploadFolder": "Ordner hochladen",
   "newVault": "Neuer Tresor",
   "newVaultName": "Name des Tresors",
   "newVaultHint": "Neuer Tresor – nur die, mit denen er geteilt ist, können lesen, was darin liegt",

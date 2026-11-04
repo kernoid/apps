@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 import 'dart:async';
-import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
@@ -233,41 +232,37 @@ class _FilesPageState extends State<FilesPage> {
   Future<void> _upload() async {
     final picked = await openFiles();
     if (picked.isEmpty || !mounted) return;
-    await _uploadAll([for (final f in picked) (name: f.name, path: f.path)]);
+    await _uploadAll([for (final f in picked) f.path]);
   }
 
-  /// Files dropped onto the list, uploaded where it is; directories are left out (**OPEN**) and said so.
+  /// A directory of the device, uploaded with all it holds (desktop only: the phones' pickers give no directories).
+  Future<void> _uploadFolder() async {
+    final path = await getDirectoryPath();
+    if (path == null || !mounted) return;
+    await _uploadAll([path]);
+  }
+
+  /// Files and directories dropped onto the list, uploaded where it is.
   Future<void> _drop(DropDoneDetails details) async {
     setState(() => _dropping = false);
     final here = _here;
     if (!here.add || _inTrash || _query.isNotEmpty || _busy) return;
-    final files = [
-      for (final f in details.files)
-        if (FileSystemEntity.typeSync(f.path) == FileSystemEntityType.file) (name: f.name, path: f.path),
-    ];
-    if (files.length < details.files.length && mounted) {
-      final l = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.foldersNotUploaded)));
-    }
-    if (files.isNotEmpty) await _uploadAll(files);
+    if (details.files.isNotEmpty) await _uploadAll([for (final f in details.files) f.path]);
   }
 
-  Future<void> _uploadAll(List<({String name, String path})> files) async {
+  /// Uploads files and directories (with all in them); the list of uploads grows as the bridge reaches each file.
+  Future<void> _uploadAll(List<String> paths) async {
     final store = _store!;
     final parent = _path.lastOrNull?.id;
-    setState(() => _uploads = [for (final f in files) (name: f.name, sent: 0, total: 0)]);
+    setState(() => _uploads = []);
     final done = Completer<void>();
     widget.account
-        .uploadFiles(
-          accountId: store.accountId,
-          parentId: parent,
-          vaultId: _vaultHere,
-          paths: [for (final f in files) f.path],
-        )
+        .uploadFiles(accountId: store.accountId, parentId: parent, vaultId: _vaultHere, paths: paths)
         .listen(
           (p) {
-            if (!mounted || p.index >= _uploads.length) return;
-            setState(() => _uploads[p.index] = (name: _uploads[p.index].name, sent: p.sent, total: p.total));
+            if (!mounted || p.index > _uploads.length) return;
+            final entry = (name: p.name, sent: p.sent, total: p.total);
+            setState(() => p.index == _uploads.length ? _uploads.add(entry) : _uploads[p.index] = entry);
           },
           onError: (Object error) {
             if (!done.isCompleted) done.completeError(error);
@@ -488,6 +483,14 @@ class _FilesPageState extends State<FilesPage> {
           tooltip: l.upload,
           onPressed: _busy ? null : _upload,
         ),
+        // Narrow windows keep the bar short; folders can still be dropped there.
+        if (_dragging && wide)
+          KIconButton(
+            key: const ValueKey('upload-folder'),
+            icon: LucideIcons.folderUp,
+            tooltip: l.uploadFolder,
+            onPressed: _busy ? null : _uploadFolder,
+          ),
       ],
       KIconButton(icon: LucideIcons.refreshCw, tooltip: l.refresh, onPressed: _load),
     ];
@@ -649,7 +652,11 @@ class _FilesPageState extends State<FilesPage> {
   }) {
     final details =
         subtitle ??
-        [if (!n.isDirectory) bytes(n.size), if (n.modified != null) shortDate(context, n.modified!)].join(' · ');
+        [
+          // In a vault the server only knows the size of the encrypted content, which is not the file's.
+          if (!n.isDirectory && n.vault == null) bytes(n.size),
+          if (n.modified != null) shortDate(context, n.modified!),
+        ].join(' · ');
     final row = GestureDetector(
       onSecondaryTapUp: (d) => _menu(n, d.globalPosition, path),
       onLongPressEnd: (d) => _menu(n, d.globalPosition, path),

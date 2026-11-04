@@ -913,7 +913,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dropToUpload => 'Drop to upload here';
 
   @override
-  String get foldersNotUploaded => 'Folders cannot be uploaded yet – only the files were.';
+  String get uploadFolder => 'Upload a folder';
 
   @override
   String get newVault => 'New vault';

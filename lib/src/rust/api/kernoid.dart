@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `vault_node`, `write`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `children`, `count`, `directory`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `vault_node`, `walk`, `write`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`, `Step`, `Target`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
@@ -313,6 +313,9 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
   /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
   /// Into a vault (`vault_id`), each file is encrypted here first.
+  /// Uploads files and whole directories into `parent_id` (in `vault_id`, encrypted, when it lies in a vault). A
+  /// directory is made anew or, if one of the same name is there, filled; its files follow in name order. Progress
+  /// is told per file, numbered in the order they are sent, with the path below the target (`Photos/a.jpg`).
   Stream<UploadProgress> uploadFiles({
     required String accountId,
     String? parentId,
@@ -1508,13 +1511,16 @@ class SendPlan {
 /// How far an upload is: the file (its index among those chosen) and its bytes.
 class UploadProgress {
   final int index;
+
+  /// The file's path below the target, `/` between names.
+  final String name;
   final PlatformInt64 sent;
   final PlatformInt64 total;
 
-  const UploadProgress({required this.index, required this.sent, required this.total});
+  const UploadProgress({required this.index, required this.name, required this.sent, required this.total});
 
   @override
-  int get hashCode => index.hashCode ^ sent.hashCode ^ total.hashCode;
+  int get hashCode => index.hashCode ^ name.hashCode ^ sent.hashCode ^ total.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1522,6 +1528,7 @@ class UploadProgress {
       other is UploadProgress &&
           runtimeType == other.runtimeType &&
           index == other.index &&
+          name == other.name &&
           sent == other.sent &&
           total == other.total;
 }

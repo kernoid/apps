@@ -432,7 +432,7 @@
   "textCut": "Only the first megabyte is shown – save the file to see all of it.",
   "cannotShow": "This file cannot be shown here.",
   "dropToUpload": "Drop to upload here",
-  "foldersNotUploaded": "Folders cannot be uploaded yet – only the files were.",
+  "uploadFolder": "Upload a folder",
   "newVault": "New vault",
   "newVaultName": "Name of the vault",
   "newVaultHint": "New vault – only those it is shared with can read what is in it",

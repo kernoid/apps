@@ -17,6 +17,14 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   encrypted and decrypted on the device, a vault's key given to the people it is shared with, the key unlocked from
   the list when it is needed. In a vault there are no links, versions or copies, and nothing moves out of it but into
   the trash, as in the web app. Needs kernoid's Rust SDK 0.2.3.
+- Whole folders are uploaded – dropped onto the list or, on desktops, chosen with a button –: a folder of the same
+  name there is filled, not made twice, and the systems' own files (`.DS_Store`, `Thumbs.db`, `desktop.ini`) are left
+  out.
+
+### Changed
+
+- In a vault the list shows no size: the server knows only that of the encrypted content.
+- The integration test waits for what it taps and checks what it types – it failed now and then at the first login.
 
 ## [0.2.2] – 2026-10-31
 

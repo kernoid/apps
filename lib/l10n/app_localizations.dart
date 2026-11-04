@@ -1784,11 +1784,11 @@ abstract class AppLocalizations {
   /// **'Drop to upload here'**
   String get dropToUpload;
 
-  /// No description provided for @foldersNotUploaded.
+  /// No description provided for @uploadFolder.
   ///
   /// In en, this message translates to:
-  /// **'Folders cannot be uploaded yet – only the files were.'**
-  String get foldersNotUploaded;
+  /// **'Upload a folder'**
+  String get uploadFolder;
 
   /// No description provided for @newVault.
   ///

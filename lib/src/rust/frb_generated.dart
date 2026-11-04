@@ -3241,11 +3241,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   UploadProgress dco_decode_upload_progress(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return UploadProgress(
       index: dco_decode_u_32(arr[0]),
-      sent: dco_decode_i_64(arr[1]),
-      total: dco_decode_i_64(arr[2]),
+      name: dco_decode_String(arr[1]),
+      sent: dco_decode_i_64(arr[2]),
+      total: dco_decode_i_64(arr[3]),
     );
   }
 
@@ -4292,9 +4293,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   UploadProgress sse_decode_upload_progress(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_index = sse_decode_u_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
     var var_sent = sse_decode_i_64(deserializer);
     var var_total = sse_decode_i_64(deserializer);
-    return UploadProgress(index: var_index, sent: var_sent, total: var_total);
+    return UploadProgress(index: var_index, name: var_name, sent: var_sent, total: var_total);
   }
 
   @protected
@@ -5084,6 +5086,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_upload_progress(UploadProgress self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.index, serializer);
+    sse_encode_String(self.name, serializer);
     sse_encode_i_64(self.sent, serializer);
     sse_encode_i_64(self.total, serializer);
   }
@@ -5533,6 +5536,9 @@ class KernoidImpl extends RustOpaque implements Kernoid {
   /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
   /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
   /// Into a vault (`vault_id`), each file is encrypted here first.
+  /// Uploads files and whole directories into `parent_id` (in `vault_id`, encrypted, when it lies in a vault). A
+  /// directory is made anew or, if one of the same name is there, filled; its files follow in name order. Progress
+  /// is told per file, numbered in the order they are sent, with the path below the target (`Photos/a.jpg`).
   Stream<UploadProgress> uploadFiles({
     required String accountId,
     String? parentId,
