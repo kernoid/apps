@@ -96,12 +96,7 @@ impl Login {
 
 impl Drop for Kernoid {
     fn drop(&mut self) {
-        if let Some(login) = &self.login
-            && let Ok(mut renewal) = login.renewal.lock()
-            && let Some(task) = renewal.take()
-        {
-            task.abort();
-        }
+        self.stop_renewing();
     }
 }
 
@@ -855,6 +850,18 @@ impl Kernoid {
             .map(|t| t.clone())
             .map_err(|_| KernoidError { unauthorized: false, message: "the login is broken".into() })?;
         run(async move { client::oidc::revoke(&tokens, &options()).await }).await
+    }
+
+    /// Stops renewing the access token in the background – for the core of the file shells, which renews by opening
+    /// again with the newest kept login, so that no process renews with a refresh token another one has used
+    /// (`crate::provider`).
+    #[frb(ignore)]
+    pub(crate) fn stop_renewing(&self) {
+        // No `let` chains: the attribute macro reads this function in an older edition.
+        let renewal = self.login.as_ref().and_then(|login| login.renewal.lock().ok().and_then(|mut r| r.take()));
+        if let Some(task) = renewal {
+            task.abort();
+        }
     }
 
     /// The SDK's client, for the core of the file shells (`crate::provider`).

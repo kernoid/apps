@@ -67,6 +67,13 @@ fn the_core_answers_what_a_file_manager_asks() {
     ask(json!({ "op": "delete", "session": session, "store": store, "id": folder["id"] }));
     let top = ask(json!({ "op": "list", "session": session, "store": store, "parent": null }));
     assert!(top["items"].as_array().unwrap().iter().all(|i| i["id"] != folder["id"]));
+    // Deleted from the Trash: gone for good.
+    ask(json!({ "op": "delete", "session": session, "store": store, "id": folder["id"], "forever": true }));
+    let gone: Value = serde_json::from_str(&call(
+        &json!({ "op": "item", "session": session, "store": store, "id": folder["id"] }).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(gone["error"]["message"], "no such item");
     ask(json!({ "op": "close", "session": session }));
     std::fs::remove_dir_all(&dir).unwrap();
 }
