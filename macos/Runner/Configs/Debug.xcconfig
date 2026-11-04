@@ -3,3 +3,4 @@
 
 // Apple silicon only: no Intel build (docs/plan.md, 2).
 ARCHS = arm64
+#include "Signing.xcconfig"

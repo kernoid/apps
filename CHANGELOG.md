@@ -25,6 +25,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   through the Cloud Files API – files show at once and are downloaded when opened; deleting, renaming, moving, new and
   changed files reach kernoid. Set up in the account with a login of its own, kept protected with DPAPI; runs while
   the app is open.
+- The stores in Finder and the Files app (macOS, iOS): a File Provider extension, one place per store, files shown
+  before they are downloaded and fetched when opened, made, changed, moved and deleted there – deleted into kernoid's
+  Trash, from there for good. Turned on in the account ("Files in Finder"), it signs in once more in the browser, as
+  the extension keeps a login of its own. Vaults are shown locked. The builds are unsigned and the extension needs a
+  signing team to run, so it is **not usable yet**.
 
 ### Fixed
 

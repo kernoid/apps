@@ -1045,4 +1045,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String explorerFailed(String error) {
     return 'Not shown in Explorer: $error';
   }
+
+  @override
+  String get fileProviderTitle => 'Files in Finder';
+
+  @override
+  String get fileProviderTitleIos => 'Files in the Files app';
+
+  @override
+  String get fileProviderHint =>
+      'Your stores as places of the system\'s file manager: files appear before they are downloaded and open when you need them. It has a login of its own – you sign in once more in the browser. Vaults stay locked there.';
+
+  @override
+  String get fileProviderOn => 'Turn on';
+
+  @override
+  String get fileProviderUpdate => 'Update the stores';
+
+  @override
+  String get fileProviderOff => 'Turn off';
+
+  @override
+  String fileProviderShown(String stores) {
+    return 'Shown: $stores';
+  }
 }

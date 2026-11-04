@@ -2017,6 +2017,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not shown in Explorer: {error}'**
   String explorerFailed(String error);
+
+  /// No description provided for @fileProviderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Files in Finder'**
+  String get fileProviderTitle;
+
+  /// No description provided for @fileProviderTitleIos.
+  ///
+  /// In en, this message translates to:
+  /// **'Files in the Files app'**
+  String get fileProviderTitleIos;
+
+  /// No description provided for @fileProviderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stores as places of the system\'s file manager: files appear before they are downloaded and open when you need them. It has a login of its own – you sign in once more in the browser. Vaults stay locked there.'**
+  String get fileProviderHint;
+
+  /// No description provided for @fileProviderOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get fileProviderOn;
+
+  /// No description provided for @fileProviderUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the stores'**
+  String get fileProviderUpdate;
+
+  /// No description provided for @fileProviderOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get fileProviderOff;
+
+  /// No description provided for @fileProviderShown.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown: {stores}'**
+  String fileProviderShown(String stores);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

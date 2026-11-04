@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: MIT
+// Signing (docs/plan.md, 5). The app and its File Provider extension share an app group and a keychain group; Xcode
+// accepts those entitlements only in a build signed by a development team. Until falkOSS's team, the builds – CI's
+// too – are unsigned and take the entitlements without the groups (`*.entitlements`); a build with a team sets
+// KERNOID_SIGNED = YES and DEVELOPMENT_TEAM, and takes `*-Signed.entitlements`.
+KERNOID_SIGNED = NO
+KERNOID_ENTITLEMENTS_SUFFIX_NO =
+KERNOID_ENTITLEMENTS_SUFFIX_YES = -Signed
+KERNOID_ENTITLEMENTS_SUFFIX = $(KERNOID_ENTITLEMENTS_SUFFIX_$(KERNOID_SIGNED))

@@ -12,14 +12,16 @@
 //!
 //! A shell has a login of its own (`open` with what the app kept for it): kernoid rotates refresh tokens, and two
 //! processes renewing one login would end it. Its renewals come back as `kept` in the next answer – in `ok` or in
-//! `error` – and the shell keeps the newest. Vaults stay locked in the shells (**OPEN**: the account's key from a `device:` copy in the platform's
+//! `error` – and the shell keeps the newest. A shell whose instances may run in several processes (Apple's File Provider: one per domain) opens
+//! with `renew: false`: nothing is renewed in the background, a call answers `unauthorized` when the access token has
+//! expired, and the shell opens again – under a lock of its own – with the newest kept login. Vaults stay locked in the shells (**OPEN**: the account's key from a `device:` copy in the platform's
 //! key store, plan section 6).
 //!
-//! Operations: `open {kept}` (or `{server, address, password}` with an app password) → `{session, kept}`; `close {session}`; `stores {session}`; `list {session, store,
+//! Operations: `open {kept, renew}` (or `{server, address, password}` with an app password) → `{session, kept}`; `close {session}`; `stores {session}`; `list {session, store,
 //! parent}`; `changes {session, store, since}` → `{items, deleted, anchor, more}` (no `since`: everything); `item
 //! {session, store, id}`; `fetch {session, store, id, to}` (the content into a file); `create {session, store, parent,
 //! name, directory, from}`; `modify {session, store, id, name, parent, from}` (each optional; `parent: null` is the
-//! top); `delete {session, store, id}` (into the store's Trash).
+//! top); `delete {session, store, id, forever}` (into the store's Trash; `forever: true` destroys it).
 
 use std::collections::HashMap;
 use std::ffi::{CStr, CString, c_char};
@@ -137,6 +139,9 @@ async fn answer(request: &Value) -> Result<Value, KernoidError> {
                 Kernoid::login(server.into(), address.into(), text(request, "password")?.into()).await?
             }
         };
+        if request.get("renew").and_then(Value::as_bool) == Some(false) {
+            account.stop_renewing();
+        }
         let kept = account.kept_login();
         let mut sessions = SESSIONS.lock().map_err(|_| error("the sessions are broken"))?;
         let id = sessions.keys().max().map_or(1, |n| n + 1);
@@ -166,7 +171,8 @@ async fn answer(request: &Value) -> Result<Value, KernoidError> {
         "modify" => modify(&client, request).await?,
         "delete" => {
             let (store, id) = (text(request, "store")?, text(request, "id")?);
-            match files::trash(&client, store).await?.map(|trash| trash.id) {
+            let forever = request.get("forever").and_then(Value::as_bool).unwrap_or(false);
+            match files::trash(&client, store).await?.map(|trash| trash.id).filter(|_| !forever) {
                 Some(trash) => files::move_to(&client, store, id, Some(&trash)).await?,
                 None => files::destroy(&client, store, id).await?,
             }

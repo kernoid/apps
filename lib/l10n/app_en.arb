@@ -528,5 +528,19 @@
         "type": "String"
       }
     }
+  },
+  "fileProviderTitle": "Files in Finder",
+  "fileProviderTitleIos": "Files in the Files app",
+  "fileProviderHint": "Your stores as places of the system's file manager: files appear before they are downloaded and open when you need them. It has a login of its own – you sign in once more in the browser. Vaults stay locked there.",
+  "fileProviderOn": "Turn on",
+  "fileProviderUpdate": "Update the stores",
+  "fileProviderOff": "Turn off",
+  "fileProviderShown": "Shown: {stores}",
+  "@fileProviderShown": {
+    "placeholders": {
+      "stores": {
+        "type": "String"
+      }
+    }
   }
 }

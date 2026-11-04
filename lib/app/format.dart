@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -60,5 +61,9 @@ IconData mailboxIcon(Mailbox m) => switch (m.role) {
   _ => LucideIcons.folder,
 };
 
-/// The message of an error from Rust, or of anything else.
-String errorText(Object error) => error is KernoidError ? error.message : error.toString();
+/// The message of an error from Rust, from the platform's side (a method channel), or of anything else.
+String errorText(Object error) => switch (error) {
+  KernoidError(:final message) => message,
+  PlatformException(:final message, :final code) => message ?? code,
+  _ => error.toString(),
+};
