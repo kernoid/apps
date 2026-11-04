@@ -991,4 +991,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String syncLocked(int count) {
     return '$count Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen';
   }
+
+  @override
+  String get syncAtLogin => 'Mit dem Computer starten, damit die Ordner abgeglichen werden, ohne die App zu öffnen';
+
+  @override
+  String get trayOpen => 'kernoid öffnen';
+
+  @override
+  String get traySync => 'Ordner jetzt abgleichen';
+
+  @override
+  String get trayQuit => 'kernoid beenden';
 }

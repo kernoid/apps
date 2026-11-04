@@ -496,5 +496,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "syncAtLogin": "Start with the computer, so that the folders are kept in step without opening the app",
+  "trayOpen": "Open kernoid",
+  "traySync": "Sync folders now",
+  "trayQuit": "Quit kernoid"
 }

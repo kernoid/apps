@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import ServiceManagement
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
@@ -10,6 +11,7 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     Bookmarks.register(with: flutterViewController.engine.binaryMessenger)
+    LoginItem.register(with: flutterViewController.engine.binaryMessenger)
 
     super.awakeFromNib()
   }
@@ -54,5 +56,25 @@ enum Bookmarks {
 
   private static func failure(_ what: String) -> NSError {
     NSError(domain: "dev.kernoid.kernoid", code: 1, userInfo: [NSLocalizedDescriptionKey: "no \(what)"])
+  }
+}
+
+/// The app as a login item (lib/app/login_item.dart): `enabled`, `enable`, `disable` through `SMAppService`.
+enum LoginItem {
+  static func register(with messenger: FlutterBinaryMessenger) {
+    let channel = FlutterMethodChannel(name: "dev.kernoid.kernoid/login-item", binaryMessenger: messenger)
+    channel.setMethodCallHandler { call, result in
+      let service = SMAppService.mainApp
+      do {
+        switch call.method {
+        case "enabled": result(service.status == .enabled)
+        case "enable": try service.register(); result(nil)
+        case "disable": try service.unregister(); result(nil)
+        default: result(FlutterMethodNotImplemented)
+        }
+      } catch {
+        result(FlutterError(code: "login-item", message: error.localizedDescription, details: nil))
+      }
+    }
   }
 }

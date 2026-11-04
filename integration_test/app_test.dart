@@ -22,6 +22,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kernoid/app/kept_login.dart';
 import 'package:kernoid/app/sync_folders.dart';
+import 'package:kernoid/app/tray.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
 import 'package:kernoid/pages/mail.dart';
@@ -1003,6 +1004,13 @@ void main() {
     addTearDown(again.dispose);
     await tester.runAsync(again.start);
     expect(again.folderOf(store.accountId)?.path, folder.path);
+
+    // The icon in the menu bar comes and goes without disturbing the window.
+    final tray = Tray(labels: (open: 'Open', sync: 'Sync', quit: 'Quit'), onSync: () {});
+    await tester.runAsync(() async {
+      await tray.start();
+      await tray.stop();
+    });
 
     // Stopped: the folder stays as it is.
     await tester.runAsync(() async {

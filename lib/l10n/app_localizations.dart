@@ -1909,6 +1909,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} vaults left as they are – unlock your key to sync them'**
   String syncLocked(int count);
+
+  /// No description provided for @syncAtLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the computer, so that the folders are kept in step without opening the app'**
+  String get syncAtLogin;
+
+  /// No description provided for @trayOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open kernoid'**
+  String get trayOpen;
+
+  /// No description provided for @traySync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync folders now'**
+  String get traySync;
+
+  /// No description provided for @trayQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit kernoid'**
+  String get trayQuit;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

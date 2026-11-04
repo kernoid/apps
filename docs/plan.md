@@ -169,7 +169,8 @@ What blocks the shells (2026-11-04), before any of them is begun:
   in the app's process through the bridge, a round every few minutes and on demand, a folder chosen per store in the
   account (`lib/app/sync_folders.dart`, begun 2026-11-04). On macOS the sandbox gives `files.user-selected.read-write`
   and a security-scoped bookmark keeps the folder across starts; **OPEN**: whether a bookmark of an ad-hoc signed build
-  survives an update, rounds on push instead of a timer, the sync while the app is closed (a tray, start at login).
+  survives an update. Rounds follow kernoid's pushes and changes in the folder; a tray icon and start at login keep it
+  going without the window (built 2026-11-04).
 
 ## 6. End-to-end encryption
 
@@ -219,7 +220,7 @@ the order in which the vault and calendar parts follow mail.
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |
 | Viewing files | pdfrx 2.9 (PDFium, prebuilt and fetched at build time with its hash); text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
 | Dropping files | desktop_drop 0.8.4 – 0.9 needs a cross_file that file_selector does not take yet | Apache-2.0; on Linux dbus (MPL-2.0, file-level copyleft, Dart source unchanged) | moving inside the app with Flutter's own drag and drop |
-| Tray, start at login | on desktops, for the sync in the background | – | **OPEN**: packages |
+| Tray, start at login | tray_manager 0.5.3 and window_manager 0.5.2 – 0.6 and later build a native library (nativeapi) on every platform; start at login without a package (SMAppService, the registry, XDG Autostart) | MIT; on Linux the system's libayatana-appindicator (LGPL, linked as WebKitGTK is) | decided 2026-11-04 |
 
 All versions are exact and at least two weeks old when taken, as in kernoid.
 

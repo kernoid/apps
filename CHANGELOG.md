@@ -12,8 +12,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 - Folders of this computer kept in step with the stores (desktops): chosen in the account, one per store, synced by
   kernoid's `kernoid-sync` every few minutes while the app is open and on demand – moves stay moves, transfers that
   broke off go on, both versions are kept when a file changed on both sides, vaults are synced while the key is
-  unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. Needs
-  kernoid's Rust SDK 0.2.4.
+  unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. A round
+  follows soon after kernoid pushes a change of files or the folder changes here. While folders are kept in step, the
+  app has an icon in the menu bar or notification area (tray_manager 0.5.3, window_manager 0.5.2) and closing the
+  window only hides it; it can start with the computer (a login item on macOS, the registry's `Run` key on Windows,
+  XDG Autostart on Linux). Needs kernoid's Rust SDK 0.2.4.
 
 ## [0.2.3] – 2026-11-04
 

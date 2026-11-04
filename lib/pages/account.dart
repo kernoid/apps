@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/appearance.dart';
+import '../app/login_item.dart';
 import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -918,6 +919,7 @@ class _SyncSection extends StatelessWidget {
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (LoginItem.available && sync.folders.isNotEmpty) const _AtLogin(),
             for (final store in stores)
               Padding(
                 key: ValueKey('sync-${store.accountId}'),
@@ -971,6 +973,46 @@ class _SyncSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Whether the app starts with the computer (its own state, read from the system).
+class _AtLogin extends StatefulWidget {
+  const _AtLogin();
+
+  @override
+  State<_AtLogin> createState() => _AtLoginState();
+}
+
+class _AtLoginState extends State<_AtLogin> {
+  bool? _on;
+
+  @override
+  void initState() {
+    super.initState();
+    LoginItem.enabled().then((on) => mounted ? setState(() => _on = on) : null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Text(l.syncAtLogin, style: TextStyle(color: context.k.muted, fontSize: 13)),
+        ),
+        Switch(
+          key: const ValueKey('sync-at-login'),
+          value: _on ?? false,
+          onChanged: _on == null
+              ? null
+              : (value) async {
+                  final now = await LoginItem.set(value);
+                  if (mounted) setState(() => _on = now);
+                },
+        ),
+      ],
     );
   }
 }

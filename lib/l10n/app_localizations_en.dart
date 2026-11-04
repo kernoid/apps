@@ -985,4 +985,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncLocked(int count) {
     return '$count vaults left as they are – unlock your key to sync them';
   }
+
+  @override
+  String get syncAtLogin => 'Start with the computer, so that the folders are kept in step without opening the app';
+
+  @override
+  String get trayOpen => 'Open kernoid';
+
+  @override
+  String get traySync => 'Sync folders now';
+
+  @override
+  String get trayQuit => 'Quit kernoid';
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/sync_folders.dart';
+import '../app/tray.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import '../ui/tokens.dart';
@@ -35,14 +36,34 @@ class _HomePageState extends State<HomePage> {
   /// Folders of this computer kept in step while the app is open, whatever page is shown.
   late final _sync = SyncFolders(widget.account);
 
+  /// The icon in the menu bar while folders are kept in step – closing the window then only hides it.
+  Tray? _tray;
+
   @override
   void initState() {
     super.initState();
+    _sync.addListener(_trayWhenNeeded);
     _sync.start();
+  }
+
+  void _trayWhenNeeded() {
+    if (!Tray.available || !mounted) return;
+    final want = _sync.folders.isNotEmpty;
+    if (want && _tray == null) {
+      final l = AppLocalizations.of(context);
+      final tray = Tray(labels: (open: l.trayOpen, sync: l.traySync, quit: l.trayQuit), onSync: _sync.syncAll);
+      _tray = tray;
+      tray.start();
+    } else if (!want && _tray != null) {
+      _tray?.stop();
+      _tray = null;
+    }
   }
 
   @override
   void dispose() {
+    _sync.removeListener(_trayWhenNeeded);
+    _tray?.stop();
     _sync.dispose();
     super.dispose();
   }
