@@ -5533,11 +5533,9 @@ class KernoidImpl extends RustOpaque implements Kernoid {
   Future<E2eStatus> unlockKey({required String code}) =>
       RustLib.instance.api.crateApiKernoidKernoidUnlockKey(that: this, code: code);
 
-  /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
-  /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
-  /// Into a vault (`vault_id`), each file is encrypted here first.
   /// Uploads files and whole directories into `parent_id` (in `vault_id`, encrypted, when it lies in a vault). A
-  /// directory is made anew or, if one of the same name is there, filled; its files follow in name order. Progress
+  /// directory is made anew or, if one of the same name is there, filled; its files follow in name order. A file of
+  /// the same name gets the new content, and what it had stays as a version. Progress
   /// is told per file, numbered in the order they are sent, with the path below the target (`Photos/a.jpg`).
   Stream<UploadProgress> uploadFiles({
     required String accountId,
