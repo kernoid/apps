@@ -276,5 +276,11 @@
   "asTenantForever": "Wie die Organisation es festlegt (bis zum Löschen)",
   "ownDays": "Eigene Angabe: Tage",
   "securityHintApp": "Passwort, Zwei-Faktor-Anmeldung, Passkeys, App-Passwörter und Sitzungen änderst du in der Web-App, wo du dich mit deinem Passwort anmeldest.",
-  "asTenant": "Wie die Organisation"
+  "asTenant": "Wie die Organisation",
+  "openElsewhere": "In anderer App öffnen",
+  "noAppFor": "Keine App auf diesem Gerät öffnet {name}.",
+  "textCut": "Nur das erste Megabyte wird gezeigt – speichere die Datei, um alles zu sehen.",
+  "cannotShow": "Diese Datei kann hier nicht gezeigt werden.",
+  "dropToUpload": "Hier ablegen zum Hochladen",
+  "foldersNotUploaded": "Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen."
 }

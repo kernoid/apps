@@ -25,6 +25,9 @@ dependencies:
   path_provider: 2.1.6
   flutter_widget_from_html_core: 0.17.4
   url_launcher: 6.3.3
+  pdfrx: 2.9.0
+  share_plus: 13.3.1
+  desktop_drop: 0.8.4
 
 dev_dependencies:
   flutter_lints: 6.0.0
@@ -33,10 +36,17 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
-# Platform parts of file_selector set back to their newest versions at least two weeks old (CLAUDE.md, Rules).
+# Platform parts of file_selector, and parts pdfrx brings, set back to their newest versions at least two weeks old
+# (CLAUDE.md, Rules).
 dependency_overrides:
+  archive: 4.5.2
+  cupertino_ui: 1.1.4
   file_selector_ios: 0.5.3+6
   file_selector_macos: 0.9.5+1
+  material_ui: 1.8.0
+  pdfium_dart: 0.4.0
+  pdfium_flutter: 0.4.0
+  posix: 6.5.2
 
 flutter:
   uses-material-design: true

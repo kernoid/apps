@@ -419,5 +419,18 @@
   "asTenantForever": "As the organisation sets it (until deleted)",
   "ownDays": "My own: days",
   "securityHintApp": "Your password, two-factor sign-in, passkeys, app passwords and sessions are changed in the web app, where you sign in with your password.",
-  "asTenant": "As the organisation"
+  "asTenant": "As the organisation",
+  "openElsewhere": "Open in another app",
+  "noAppFor": "No app on this device opens {name}.",
+  "@noAppFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "textCut": "Only the first megabyte is shown – save the file to see all of it.",
+  "cannotShow": "This file cannot be shown here.",
+  "dropToUpload": "Drop to upload here",
+  "foldersNotUploaded": "Folders cannot be uploaded yet – only the files were."
 }

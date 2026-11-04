@@ -203,6 +203,8 @@ the order in which the vault and calendar parts follow mail.
 | Async runtime, HTTP | tokio, an async HTTP client with rustls (AWS-LC) | MIT/Apache-2.0, ISC | decided: async – the engine waits on many transfers and push at once; **OPEN**: which HTTP client |
 | Local state | SQLite | public domain | one file on every system |
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |
+| Viewing files | pdfrx 2.9 (PDFium, prebuilt and fetched at build time with its hash); text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
+| Dropping files | desktop_drop 0.8.4 – 0.9 needs a cross_file that file_selector does not take yet | Apache-2.0; on Linux dbus (MPL-2.0, file-level copyleft, Dart source unchanged) | moving inside the app with Flutter's own drag and drop |
 | Tray, start at login | on desktops, for the sync in the background | – | **OPEN**: packages |
 
 All versions are exact and at least two weeks old when taken, as in kernoid.

@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 import 'dart:async';
+import 'dart:io';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -15,12 +18,14 @@ import '../ui/widgets.dart';
 import '../widgets/states.dart';
 import 'file_dialogs.dart';
 import 'home.dart';
+import 'viewer.dart';
 
 /// Files inside the app, as the web app has them: the stores the account reaches – its own, the tenant's drives,
-/// what others share –, their directories, searching names and contents, uploading, and for each node what the user
-/// may do with it: share, link, versions, copy or move, rename, delete into the trash. In the system's file manager
-/// they come through the native shells (docs/plan.md, 5). **OPEN**: vaults (end-to-end encrypted folders), a viewer,
-/// dropping files onto the window.
+/// what others share –, their directories, searching names and contents, uploading (also by dropping files onto the
+/// list), and for each node what the user may do with it: view, share, link, versions, copy or move (on desktops also
+/// by dragging it onto a directory or a step of the trail), rename, delete into the trash. In the system's file
+/// manager they come through the native shells (docs/plan.md, 5). **OPEN**: vaults (end-to-end encrypted folders),
+/// uploading whole directories.
 class FilesPage extends StatefulWidget {
   const FilesPage({super.key, required this.account});
 
@@ -54,6 +59,15 @@ class _FilesPageState extends State<FilesPage> {
 
   /// The files being uploaded: their names and how far each is.
   List<({String name, int sent, int total})> _uploads = [];
+
+  /// Whether files of the system are being dragged over the list.
+  bool _dropping = false;
+
+  /// Nodes are dragged with a mouse; on phones a touch scrolls, and moving goes through the menu.
+  static bool get _dragging => switch (defaultTargetPlatform) {
+    TargetPlatform.iOS || TargetPlatform.android => false,
+    _ => true,
+  };
 
   @override
   void initState() {
@@ -175,12 +189,32 @@ class _FilesPageState extends State<FilesPage> {
   Future<void> _upload() async {
     final picked = await openFiles();
     if (picked.isEmpty || !mounted) return;
+    await _uploadAll([for (final f in picked) (name: f.name, path: f.path)]);
+  }
+
+  /// Files dropped onto the list, uploaded where it is; directories are left out (**OPEN**) and said so.
+  Future<void> _drop(DropDoneDetails details) async {
+    setState(() => _dropping = false);
+    final here = _here;
+    if (!here.add || _inTrash || _query.isNotEmpty || _busy) return;
+    final files = [
+      for (final f in details.files)
+        if (FileSystemEntity.typeSync(f.path) == FileSystemEntityType.file) (name: f.name, path: f.path),
+    ];
+    if (files.length < details.files.length && mounted) {
+      final l = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.foldersNotUploaded)));
+    }
+    if (files.isNotEmpty) await _uploadAll(files);
+  }
+
+  Future<void> _uploadAll(List<({String name, String path})> files) async {
     final store = _store!;
     final parent = _path.lastOrNull?.id;
-    setState(() => _uploads = [for (final f in picked) (name: f.name, sent: 0, total: 0)]);
+    setState(() => _uploads = [for (final f in files) (name: f.name, sent: 0, total: 0)]);
     final done = Completer<void>();
     widget.account
-        .uploadFiles(accountId: store.accountId, parentId: parent, paths: [for (final f in picked) f.path])
+        .uploadFiles(accountId: store.accountId, parentId: parent, paths: [for (final f in files) f.path])
         .listen(
           (p) {
             if (!mounted || p.index >= _uploads.length) return;
@@ -246,6 +280,40 @@ class _FilesPageState extends State<FilesPage> {
     );
   }
 
+  /// Moves a node dragged onto a directory – or onto a step of the trail, `null` being the top of the store.
+  Future<void> _moveInto(FileNode node, FileNode? directory) async {
+    final target = directory?.id;
+    if (node.id == target || node.parentId == target) return;
+    final store = _store!;
+    await _run(
+      () => widget.account.copyFile(
+        fromAccountId: store.accountId,
+        toAccountId: store.accountId,
+        id: node.id,
+        parentId: target,
+        moveIt: true,
+      ),
+    );
+  }
+
+  /// Shows a file in the viewer, or hands it to another app.
+  void _view(FileNode node) {
+    final store = _store!;
+    viewFile(
+      context,
+      name: node.name,
+      mediaType: node.mediaType,
+      fetch: (directory) => widget.account.download(
+        accountId: store.accountId,
+        blobId: node.blobId!,
+        name: node.name,
+        mediaType: node.mediaType ?? 'application/octet-stream',
+        directory: directory,
+      ),
+      onSave: () => _save(node),
+    );
+  }
+
   void _save(FileNode node) => saveBlob(
     context,
     widget.account,
@@ -265,6 +333,7 @@ class _FilesPageState extends State<FilesPage> {
       context,
       position: position,
       items: [
+        if (!node.isDirectory) ('open', LucideIcons.eye, l.open, false),
         if (!node.isDirectory) ('save', LucideIcons.download, l.save, false),
         if (node.isDirectory && rights.share && node.role == null) ('share', LucideIcons.share2, l.share, false),
         if (_links && rights.share && node.role == null) ('link', LucideIcons.link, l.link, false),
@@ -277,6 +346,8 @@ class _FilesPageState extends State<FilesPage> {
     );
     if (!mounted) return;
     switch (choice) {
+      case 'open':
+        _view(node);
       case 'save':
         _save(node);
       case 'share':
@@ -327,6 +398,7 @@ class _FilesPageState extends State<FilesPage> {
             path: _path,
             trash: _trash,
             onOpen: (path) => _open(store, path),
+            onDropNode: _dragging && _query.isEmpty ? _moveInto : null,
             actions: wide ? actions : const [],
           ),
         KSearchField(
@@ -336,7 +408,20 @@ class _FilesPageState extends State<FilesPage> {
           hint: l.searchFiles,
         ),
         if (_uploads.isNotEmpty) _Uploads(uploads: _uploads),
-        Expanded(child: _list(l, k)),
+        Expanded(
+          child: DropTarget(
+            enable: here.add && !_inTrash && _query.isEmpty,
+            onDragEntered: (_) => setState(() => _dropping = true),
+            onDragExited: (_) => setState(() => _dropping = false),
+            onDragDone: _drop,
+            child: Stack(
+              children: [
+                Positioned.fill(child: _list(l, k)),
+                if (_dropping) Positioned.fill(child: _DropHint(text: l.dropToUpload)),
+              ],
+            ),
+          ),
+        ),
       ],
     );
     if (!wide) {
@@ -421,7 +506,7 @@ class _FilesPageState extends State<FilesPage> {
               f.node,
               path: f.path,
               subtitle: [storeName(l, _store!), ...f.path.map((d) => d.role == 'trash' ? l.trash : d.name)].join(' / '),
-              onOpen: () => f.node.isDirectory ? _open(_store!, [...f.path, f.node]) : _save(f.node),
+              onOpen: () => f.node.isDirectory ? _open(_store!, [...f.path, f.node]) : _view(f.node),
             ),
         ],
       );
@@ -435,7 +520,7 @@ class _FilesPageState extends State<FilesPage> {
       onRefresh: _load,
       child: ListView(
         children: [
-          for (final n in nodes) _row(l, k, n, onOpen: () => n.isDirectory ? _open(_store!, [..._path, n]) : _save(n)),
+          for (final n in nodes) _row(l, k, n, onOpen: () => n.isDirectory ? _open(_store!, [..._path, n]) : _view(n)),
         ],
       ),
     );
@@ -452,7 +537,7 @@ class _FilesPageState extends State<FilesPage> {
     final details =
         subtitle ??
         [if (!n.isDirectory) bytes(n.size), if (n.modified != null) shortDate(context, n.modified!)].join(' · ');
-    return GestureDetector(
+    final row = GestureDetector(
       onSecondaryTapUp: (d) => _menu(n, d.globalPosition, path),
       onLongPressEnd: (d) => _menu(n, d.globalPosition, path),
       child: KListRow(
@@ -496,6 +581,32 @@ class _FilesPageState extends State<FilesPage> {
         ),
         onTap: onOpen,
       ),
+    );
+    // Dragging and dropping nodes only in the directory shown, not in found ones.
+    if (!_dragging || path != null || n.role != null) return row;
+    final rights = _rightsOf(n);
+    Widget target = row;
+    if (n.isDirectory) {
+      target = DragTarget<FileNode>(
+        onWillAcceptWithDetails: (d) => d.data.id != n.id && n.mayAddChildren,
+        onAcceptWithDetails: (d) => _moveInto(d.data, n),
+        builder: (context, candidates, _) => candidates.isEmpty
+            ? row
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  color: k.accentSoft,
+                  border: Border.all(color: k.accent),
+                ),
+                child: row,
+              ),
+      );
+    }
+    if (!rights.rename || _busy) return target;
+    return Draggable<FileNode>(
+      data: n,
+      feedback: _DragFeedback(name: n.name, directory: n.isDirectory),
+      childWhenDragging: Opacity(opacity: 0.4, child: row),
+      child: target,
     );
   }
 }
@@ -549,6 +660,7 @@ class _Trail extends StatelessWidget {
     required this.path,
     required this.trash,
     required this.onOpen,
+    required this.onDropNode,
     required this.actions,
   });
 
@@ -556,20 +668,37 @@ class _Trail extends StatelessWidget {
   final List<FileNode> path;
   final FileNode? trash;
   final ValueChanged<List<FileNode>> onOpen;
+
+  /// A node dropped onto a step of the trail: moved into that directory (`null`: the top of the store).
+  final void Function(FileNode node, FileNode? directory)? onDropNode;
   final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final k = context.k;
-    Widget crumb(String label, List<FileNode> to, bool last) => TextButton(
-      onPressed: last ? null : () => onOpen(to),
-      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6), minimumSize: const Size(0, 32)),
-      child: Text(
-        label,
-        style: last ? KText.heading(k).copyWith(fontSize: 15) : KText.label(k).copyWith(color: k.muted),
-      ),
-    );
+    Widget crumb(String label, List<FileNode> to, bool last) {
+      final button = TextButton(
+        onPressed: last ? null : () => onOpen(to),
+        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6), minimumSize: const Size(0, 32)),
+        child: Text(
+          label,
+          style: last ? KText.heading(k).copyWith(fontSize: 15) : KText.label(k).copyWith(color: k.muted),
+        ),
+      );
+      final drop = onDropNode;
+      if (drop == null || last) return button;
+      return DragTarget<FileNode>(
+        onAcceptWithDetails: (d) => drop(d.data, to.lastOrNull),
+        builder: (context, candidates, _) => candidates.isEmpty
+            ? button
+            : DecoratedBox(
+                decoration: BoxDecoration(color: k.accentSoft, borderRadius: BorderRadius.circular(KSize.radiusSmall)),
+                child: button,
+              ),
+      );
+    }
+
     return Container(
       height: KSize.bar,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -596,6 +725,73 @@ class _Trail extends StatelessWidget {
           ),
           ...actions.expand((a) => [const SizedBox(width: 4), a]),
         ],
+      ),
+    );
+  }
+}
+
+/// What follows the pointer while a node is dragged.
+class _DragFeedback extends StatelessWidget {
+  const _DragFeedback({required this.name, required this.directory});
+
+  final String name;
+  final bool directory;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: k.raised,
+          borderRadius: BorderRadius.circular(KSize.radiusSmall),
+          border: Border.all(color: k.line),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(directory ? LucideIcons.folder : LucideIcons.file, size: 16, color: k.accent),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 240),
+              child: Text(name, overflow: TextOverflow.ellipsis, style: KText.label(k)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Over the list while files of the system are dragged onto it.
+class _DropHint extends StatelessWidget {
+  const _DropHint({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return IgnorePointer(
+      child: Container(
+        key: const ValueKey('drop-hint'),
+        margin: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Color.alphaBlend(k.accentSoft, k.surface).withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(KSize.radius),
+          border: Border.all(color: k.accent, width: 2),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.upload, size: 32, color: k.accent),
+            const SizedBox(height: 8),
+            Text(text, style: KText.label(k).copyWith(color: k.accent)),
+          ],
+        ),
       ),
     );
   }

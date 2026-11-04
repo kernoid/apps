@@ -7,6 +7,13 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Added
+
+- A viewer for files: text (the first megabyte), pictures to zoom and PDFs (pdfrx) open in the app; audio, video and
+  everything else go to another app of the system – the one for its type on desktops, the share sheet on phones.
+- Files dropped onto the list are uploaded where it is (desktop_drop); on desktops a file or folder is moved by
+  dragging it onto a folder or onto a step of the path above the list.
+
 ## [0.2.2] – 2026-10-31
 
 With kernoid 0.2.2 and its Rust SDK (`kernoid-client`, `kernoid-e2e` 0.2.2 from crates.io): kernoid's own look, and

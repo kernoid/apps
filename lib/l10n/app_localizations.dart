@@ -1753,6 +1753,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'As the organisation'**
   String get asTenant;
+
+  /// No description provided for @openElsewhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in another app'**
+  String get openElsewhere;
+
+  /// No description provided for @noAppFor.
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this device opens {name}.'**
+  String noAppFor(String name);
+
+  /// No description provided for @textCut.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first megabyte is shown – save the file to see all of it.'**
+  String get textCut;
+
+  /// No description provided for @cannotShow.
+  ///
+  /// In en, this message translates to:
+  /// **'This file cannot be shown here.'**
+  String get cannotShow;
+
+  /// No description provided for @dropToUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop to upload here'**
+  String get dropToUpload;
+
+  /// No description provided for @foldersNotUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders cannot be uploaded yet – only the files were.'**
+  String get foldersNotUploaded;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

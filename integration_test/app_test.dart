@@ -7,7 +7,8 @@
 //     [--dart-define=KERNOID_TEST_SCREENSHOTS=/a/directory]
 // The account needs mail in its inbox, and files at the top of its store: Notizen.txt, and Roadmap.md in a folder
 // Projekte. The files test also tries a drive "Team" it may change, when there is one, and needs a folder "Von Bob" with
-// Plan.txt that bob@demo.localhost shares for reading. Without a server the test does nothing.
+// Plan.txt that bob@demo.localhost shares for reading; the viewer also tries Bild.png and Handbuch.pdf at the top, when
+// there are. Without a server the test does nothing.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -655,6 +656,95 @@ void main() {
       await settledTap(tester, find.byKey(const ValueKey('store-Team')));
       await waitFor(tester, find.byKey(const ValueKey('new-folder')));
       await shoot(tester, 'files-drive');
+    }
+  });
+
+  testWidgets('files: the viewer, dragging onto a folder and onto the trail', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-files')));
+    await waitFor(tester, find.byKey(const ValueKey('file-Notizen.txt')));
+    Finder row(String name) => find.byKey(ValueKey('file-$name'));
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('files-search'))));
+    Future<void> settle() async {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+      await tester.pump();
+    }
+
+    // A text file opens in the viewer, and a picture and a PDF where the store has them.
+    await settledTap(tester, row('Notizen.txt'));
+    await waitFor(tester, find.byKey(const ValueKey('viewer-text')));
+    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, isNotEmpty);
+    await shoot(tester, 'viewer-text');
+    await settledTap(tester, find.byKey(const ValueKey('back')));
+    await waitGone(tester, find.byKey(const ValueKey('viewer')));
+    for (final (name, key) in [('Bild.png', 'viewer-image'), ('Handbuch.pdf', 'viewer-pdf')]) {
+      if (row(name).evaluate().isEmpty) continue;
+      await settle();
+      await settledTap(tester, row(name));
+      await waitFor(tester, find.byKey(ValueKey(key)));
+      await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+      await tester.pump();
+      await shoot(tester, key);
+      await settledTap(tester, find.byKey(const ValueKey('back')));
+      await waitGone(tester, find.byKey(const ValueKey('viewer')));
+    }
+
+    // Two folders; one dragged into the other, and back to the top by the trail.
+    final stamp = DateTime.now().millisecondsSinceEpoch % 100000;
+    final (outer, inner) = ('Außen $stamp', 'Innen $stamp');
+    for (final name in [outer, inner]) {
+      await settle();
+      await settledTap(tester, find.byKey(const ValueKey('new-folder')));
+      await waitFor(tester, find.byKey(const ValueKey('ask-text')));
+      await tester.enterText(find.byKey(const ValueKey('ask-text')), name);
+      await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
+      await waitFor(tester, row(name));
+    }
+    Future<void> dragTo(Finder from, Finder to) async {
+      final gesture = await tester.startGesture(tester.getCenter(from), kind: PointerDeviceKind.mouse);
+      await tester.pump(const Duration(milliseconds: 50));
+      final start = tester.getCenter(from);
+      final end = tester.getCenter(to);
+      for (var i = 1; i <= 10; i++) {
+        await gesture.moveTo(Offset.lerp(start, end, i / 10)!);
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await shoot(tester, 'files-dragging');
+      await gesture.up();
+      await tester.pump();
+    }
+
+    await dragTo(row(inner), row(outer));
+    await waitGone(tester, row(inner));
+    await settledTap(tester, row(outer));
+    await waitFor(tester, row(inner));
+    await dragTo(row(inner), find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await waitGone(tester, row(inner));
+    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await waitFor(tester, row(inner));
+    await shoot(tester, 'files-dragged');
+
+    // Both go, for good.
+    for (final name in [outer, inner]) {
+      await settle();
+      await settledTap(tester, find.byKey(ValueKey('more-$name')));
+      await settledTap(tester, find.byKey(const ValueKey('menu-delete')));
+      await waitGone(tester, row(name));
+    }
+    await settledTap(tester, row('Trash'));
+    for (final name in [outer, inner]) {
+      await waitFor(tester, row(name));
+      await settle();
+      await settledTap(tester, find.byKey(ValueKey('more-$name')));
+      await settledTap(tester, find.byKey(const ValueKey('menu-delete')));
+      await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+      await waitGone(tester, row(name));
     }
   });
 

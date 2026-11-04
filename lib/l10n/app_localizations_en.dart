@@ -894,4 +894,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get asTenant => 'As the organisation';
+
+  @override
+  String get openElsewhere => 'Open in another app';
+
+  @override
+  String noAppFor(String name) {
+    return 'No app on this device opens $name.';
+  }
+
+  @override
+  String get textCut => 'Only the first megabyte is shown – save the file to see all of it.';
+
+  @override
+  String get cannotShow => 'This file cannot be shown here.';
+
+  @override
+  String get dropToUpload => 'Drop to upload here';
+
+  @override
+  String get foldersNotUploaded => 'Folders cannot be uploaded yet – only the files were.';
 }

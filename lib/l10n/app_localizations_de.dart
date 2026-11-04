@@ -899,4 +899,24 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get asTenant => 'Wie die Organisation';
+
+  @override
+  String get openElsewhere => 'In anderer App öffnen';
+
+  @override
+  String noAppFor(String name) {
+    return 'Keine App auf diesem Gerät öffnet $name.';
+  }
+
+  @override
+  String get textCut => 'Nur das erste Megabyte wird gezeigt – speichere die Datei, um alles zu sehen.';
+
+  @override
+  String get cannotShow => 'Diese Datei kann hier nicht gezeigt werden.';
+
+  @override
+  String get dropToUpload => 'Hier ablegen zum Hochladen';
+
+  @override
+  String get foldersNotUploaded => 'Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen.';
 }
