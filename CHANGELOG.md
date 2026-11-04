@@ -7,6 +7,12 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.2.3] – 2026-11-04
+
+With kernoid 0.2.3 and its Rust SDK (`kernoid-client`, `kernoid-e2e` 0.2.3 from crates.io): files as far as the web app
+has them – a viewer, dragging and dropping, whole folders, vaults. The builds are still **not signed** – for testing,
+not for data that matters.
+
 ### Added
 
 - A viewer for files: text (the first megabyte), pictures to zoom and PDFs (pdfrx) open in the app; audio, video and
@@ -108,7 +114,8 @@ Marked `OPEN` in [docs/plan.md](docs/plan.md), among them: files in the system's
 syncing a folder, unlocking with a passkey, one instance of a recurring event on its own, a month view, HTML mail,
 forwarding the attachments of an encrypted message, signed builds and the app stores.
 
-[Unreleased]: https://github.com/kernoid/apps/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/kernoid/apps/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/kernoid/apps/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/kernoid/apps/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/kernoid/apps/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kernoid/apps/releases/tag/v0.2.0

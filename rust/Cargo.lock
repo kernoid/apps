@@ -1764,7 +1764,7 @@ dependencies = [
 
 [[package]]
 name = "kernoid_bridge"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "chrono",
  "flutter_rust_bridge",
