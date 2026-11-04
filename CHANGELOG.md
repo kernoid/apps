@@ -7,6 +7,14 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Added
+
+- Folders of this computer kept in step with the stores (desktops): chosen in the account, one per store, synced by
+  kernoid's `kernoid-sync` every few minutes while the app is open and on demand – moves stay moves, transfers that
+  broke off go on, both versions are kept when a file changed on both sides, vaults are synced while the key is
+  unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. Needs
+  kernoid's Rust SDK 0.2.4.
+
 ## [0.2.3] – 2026-11-04
 
 With kernoid 0.2.3 and its Rust SDK (`kernoid-client`, `kernoid-e2e` 0.2.3 from crates.io): files as far as the web app

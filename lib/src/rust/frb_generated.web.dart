@@ -270,6 +270,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SendPlan dco_decode_send_plan(dynamic raw);
 
   @protected
+  SyncReport dco_decode_sync_report(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
@@ -538,6 +541,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SendPlan sse_decode_send_plan(SseDeserializer deserializer);
+
+  @protected
+  SyncReport sse_decode_sync_report(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -814,6 +820,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_send_plan(SendPlan self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_report(SyncReport self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

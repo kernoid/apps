@@ -21,6 +21,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kernoid/app/kept_login.dart';
+import 'package:kernoid/app/sync_folders.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
 import 'package:kernoid/pages/mail.dart';
@@ -945,6 +946,55 @@ void main() {
     await settledTap(tester, row('Unter'));
     await waitFor(tester, row('b.txt'));
     await shoot(tester, 'folder-uploaded');
+  });
+
+  testWidgets('files: a folder of this computer kept in step', (tester) async {
+    if (server.isEmpty || !SyncFolders.available) {
+      markTestSkipped('no KERNOID_TEST_SERVER, or not a desktop');
+      return;
+    }
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-account')));
+    final account = (await tester.runAsync(() => Kernoid.login(server: server, address: address, password: password)))!;
+    final store = account.fileStores().firstWhere((s) => s.isPersonal);
+    await waitFor(tester, find.byKey(ValueKey('sync-choose-${store.accountId}')));
+    await shoot(tester, 'sync-section');
+
+    // The service as the section runs it – the folder given here, as the system's dialog would.
+    final sync = SyncFolders(account);
+    addTearDown(sync.dispose);
+    final folder = (await tester.runAsync(() => Directory.systemTemp.createTemp('kernoid-sync')))!;
+    await tester.runAsync(() async {
+      await sync.add(store.accountId, folder.path);
+    });
+    expect(sync.statusOf(store.accountId).error, isNull);
+    expect(sync.statusOf(store.accountId).report!.downloaded, greaterThan(0));
+    expect(File('${folder.path}/Notizen.txt').existsSync(), isTrue);
+
+    // Made here, it reaches the store; the folder kept for the next start.
+    final name = 'Vom Rechner ${DateTime.now().millisecondsSinceEpoch % 100000}.txt';
+    await tester.runAsync(() async {
+      await File('${folder.path}/$name').writeAsString('vom Rechner');
+      await sync.syncAll();
+    });
+    expect(sync.statusOf(store.accountId).report!.uploaded, 1);
+    final top = (await tester.runAsync(() => account.files(accountId: store.accountId)))!;
+    expect(top.map((n) => n.name), contains(name));
+    final again = SyncFolders(account);
+    addTearDown(again.dispose);
+    await tester.runAsync(again.start);
+    expect(again.folderOf(store.accountId)?.path, folder.path);
+
+    // Stopped: the folder stays as it is.
+    await tester.runAsync(() async {
+      await again.remove(store.accountId);
+      await sync.remove(store.accountId);
+      await account.destroyFile(accountId: store.accountId, id: top.firstWhere((n) => n.name == name).id);
+    });
+    expect(File('${folder.path}/$name').existsSync(), isTrue);
+    await tester.runAsync(() => folder.delete(recursive: true));
   });
 
   testWidgets('files on a phone: the stores in a menu, a long press', (tester) async {

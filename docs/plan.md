@@ -166,9 +166,10 @@ What blocks the shells (2026-11-04), before any of them is begun:
 - **Swift/Kotlin ↔ Rust:** UniFFI is MPL-2.0 (section 7). **OPEN**: accept it as an exception, or a C boundary by
   hand.
 - **Without either:** a folder kept in step by the app itself, on every desktop (Linux's row above) – `kernoid-sync`
-  in the app's process through the bridge, a round after each push and every few minutes, a folder chosen per store.
-  On macOS the sandbox needs `files.user-selected.read-write` and a security-scoped bookmark to keep the folder
-  across starts.
+  in the app's process through the bridge, a round every few minutes and on demand, a folder chosen per store in the
+  account (`lib/app/sync_folders.dart`, begun 2026-11-04). On macOS the sandbox gives `files.user-selected.read-write`
+  and a security-scoped bookmark keeps the folder across starts; **OPEN**: whether a bookmark of an ad-hoc signed build
+  survives an update, rounds on push instead of a timer, the sync while the app is closed (a tray, start at login).
 
 ## 6. End-to-end encryption
 

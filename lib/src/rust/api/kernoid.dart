@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `children`, `count`, `directory`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `vault_node`, `walk`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`, `Step`, `Target`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>
 abstract class Kernoid implements RustOpaqueInterface {
@@ -306,6 +306,11 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Signs out: a login with OpenID Connect is revoked at the server – the browser's session there stays.
   Future<void> signOut();
+
+  /// One round of keeping a folder of the device in step with a store (kernoid-sync): what changed on both sides is
+  /// carried over, conflicts keep both versions. `state` is the round's database, outside the folder and one per
+  /// folder. Vaults are kept in step while the account's key is unlocked, else left as they are.
+  Future<SyncReport> syncFolder({required String accountId, required String root, required String state});
 
   /// Unlocks the key with the recovery code; it stays in this process's memory only.
   Future<E2eStatus> unlockKey({required String code});
@@ -1504,6 +1509,72 @@ class SendPlan {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SendPlan && runtimeType == other.runtimeType && encrypted == other.encrypted && reason == other.reason;
+}
+
+/// What a round of keeping a folder in step did (kernoid-sync).
+class SyncReport {
+  final int downloaded;
+  final int uploaded;
+  final int deletedHere;
+  final int deletedThere;
+  final int directories;
+  final int moved;
+
+  /// Files changed on both sides: the local version was kept as a copy beside the server's.
+  final List<String> conflicts;
+
+  /// Paths whose action failed, with why – tried again in the next round.
+  final List<String> failed;
+
+  /// Names of the store the folder's file system cannot hold.
+  final List<String> skipped;
+
+  /// Vaults left as they are: the account's key is locked, or no member gave it the vault's key.
+  final int locked;
+
+  const SyncReport({
+    required this.downloaded,
+    required this.uploaded,
+    required this.deletedHere,
+    required this.deletedThere,
+    required this.directories,
+    required this.moved,
+    required this.conflicts,
+    required this.failed,
+    required this.skipped,
+    required this.locked,
+  });
+
+  static Future<SyncReport> default_() => RustLib.instance.api.crateApiKernoidSyncReportDefault();
+
+  @override
+  int get hashCode =>
+      downloaded.hashCode ^
+      uploaded.hashCode ^
+      deletedHere.hashCode ^
+      deletedThere.hashCode ^
+      directories.hashCode ^
+      moved.hashCode ^
+      conflicts.hashCode ^
+      failed.hashCode ^
+      skipped.hashCode ^
+      locked.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncReport &&
+          runtimeType == other.runtimeType &&
+          downloaded == other.downloaded &&
+          uploaded == other.uploaded &&
+          deletedHere == other.deletedHere &&
+          deletedThere == other.deletedThere &&
+          directories == other.directories &&
+          moved == other.moved &&
+          conflicts == other.conflicts &&
+          failed == other.failed &&
+          skipped == other.skipped &&
+          locked == other.locked;
 }
 
 /// How far an upload is: the file (numbered in the order sent, and its path) and its bytes.

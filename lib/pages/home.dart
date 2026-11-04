@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../app/sync_folders.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import '../ui/tokens.dart';
@@ -31,6 +32,21 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _section = 0;
 
+  /// Folders of this computer kept in step while the app is open, whatever page is shown.
+  late final _sync = SyncFolders(widget.account);
+
+  @override
+  void initState() {
+    super.initState();
+    _sync.start();
+  }
+
+  @override
+  void dispose() {
+    _sync.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -46,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       1 => CalendarPage(key: const ValueKey('calendar'), account: widget.account),
       2 => ContactsPage(key: const ValueKey('contacts'), account: widget.account),
       3 => FilesPage(key: const ValueKey('files'), account: widget.account),
-      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut),
+      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync),
     };
     final name = widget.account.username;
     if (MediaQuery.sizeOf(context).width >= wideLayout) {

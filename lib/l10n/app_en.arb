@@ -448,5 +448,53 @@
         "type": "String"
       }
     }
+  },
+  "syncTitle": "Folders on this computer",
+  "syncHint": "A folder of this computer kept in step with a store: what changes on one side reaches the other every few minutes while the app is open. Changed on both sides, both versions are kept.",
+  "syncChoose": "Choose a folder",
+  "syncNow": "Sync now",
+  "syncStop": "Stop syncing",
+  "syncRunning": "Syncing …",
+  "syncNever": "Not synced yet",
+  "syncDone": "Synced {time}: {down} down, {up} up",
+  "@syncDone": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "down": {
+        "type": "int"
+      },
+      "up": {
+        "type": "int"
+      }
+    }
+  },
+  "syncIssues": "{conflicts} changed on both sides (kept as copies), {failed} not done – tried again",
+  "@syncIssues": {
+    "placeholders": {
+      "conflicts": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFailed": "Not synced: {error}",
+  "@syncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncLocked": "{count} vaults left as they are – unlock your key to sync them",
+  "@syncLocked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

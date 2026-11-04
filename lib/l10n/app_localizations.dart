@@ -1843,6 +1843,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'These can open the vault once they have a key of their own and you share it again: {names}'**
   String vaultKeysWaiting(String names);
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders on this computer'**
+  String get syncTitle;
+
+  /// No description provided for @syncHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder of this computer kept in step with a store: what changes on one side reaches the other every few minutes while the app is open. Changed on both sides, both versions are kept.'**
+  String get syncHint;
+
+  /// No description provided for @syncChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder'**
+  String get syncChoose;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop syncing'**
+  String get syncStop;
+
+  /// No description provided for @syncRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing …'**
+  String get syncRunning;
+
+  /// No description provided for @syncNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get syncNever;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {time}: {down} down, {up} up'**
+  String syncDone(String time, int down, int up);
+
+  /// No description provided for @syncIssues.
+  ///
+  /// In en, this message translates to:
+  /// **'{conflicts} changed on both sides (kept as copies), {failed} not done – tried again'**
+  String syncIssues(int conflicts, int failed);
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced: {error}'**
+  String syncFailed(String error);
+
+  /// No description provided for @syncLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} vaults left as they are – unlock your key to sync them'**
+  String syncLocked(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

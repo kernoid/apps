@@ -486,6 +486,25 @@ pub struct Contact {
     pub notes: Vec<String>,
 }
 
+/// What a round of keeping a folder in step did (kernoid-sync).
+#[derive(Debug, Clone, Default)]
+pub struct SyncReport {
+    pub downloaded: u32,
+    pub uploaded: u32,
+    pub deleted_here: u32,
+    pub deleted_there: u32,
+    pub directories: u32,
+    pub moved: u32,
+    /// Files changed on both sides: the local version was kept as a copy beside the server's.
+    pub conflicts: Vec<String>,
+    /// Paths whose action failed, with why – tried again in the next round.
+    pub failed: Vec<String>,
+    /// Names of the store the folder's file system cannot hold.
+    pub skipped: Vec<String>,
+    /// Vaults left as they are: the account's key is locked, or no member gave it the vault's key.
+    pub locked: u32,
+}
+
 /// Where end-to-end encryption stands for this account (RFC 0006).
 #[derive(Debug, Clone)]
 pub struct E2eStatus {
@@ -1592,6 +1611,43 @@ impl Kernoid {
             write(&directory, &name, data).await
         })
         .await
+    }
+
+    /// One round of keeping a folder of the device in step with a store (kernoid-sync): what changed on both sides is
+    /// carried over, conflicts keep both versions. `state` is the round's database, outside the folder and one per
+    /// folder. Vaults are kept in step while the account's key is unlocked, else left as they are.
+    pub async fn sync_folder(
+        &self,
+        account_id: String,
+        root: String,
+        state: String,
+    ) -> Result<SyncReport, KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        let report = RUNTIME
+            .spawn(async move {
+                let mut folder = kernoid_sync::Folder::open(&root, &account_id, std::path::Path::new(&state))?;
+                let mut e2e = e2e.lock().await;
+                folder.sync_with(&client, Some(&mut e2e)).await
+            })
+            .await
+            .map_err(|error| KernoidError { message: error.to_string(), unauthorized: false })?
+            .map_err(|error| match error {
+                kernoid_sync::Error::Client(error) => KernoidError::from(error),
+                error => KernoidError { message: error.to_string(), unauthorized: false },
+            })?;
+        let n = |count: usize| u32::try_from(count).unwrap_or(u32::MAX);
+        Ok(SyncReport {
+            downloaded: n(report.downloaded),
+            uploaded: n(report.uploaded),
+            deleted_here: n(report.deleted_here),
+            deleted_there: n(report.deleted_there),
+            directories: n(report.directories),
+            moved: n(report.moved),
+            conflicts: report.conflicts,
+            failed: report.failed.into_iter().map(|(path, why)| format!("{path}: {why}")).collect(),
+            skipped: report.skipped,
+            locked: n(report.locked.len()),
+        })
     }
 
     /// After sharing a vault: gives its key to those shared with who have a key of their own. Returns those who still

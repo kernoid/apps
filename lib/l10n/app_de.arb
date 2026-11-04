@@ -291,5 +291,16 @@
   "lockedFolder": "Verschlüsselter Ordner",
   "lockedFile": "Verschlüsselte Datei",
   "vaultMoveNo": "Nichts wird in einen Tresor hinein oder aus ihm heraus verschoben – nur in den Papierkorb.",
-  "vaultKeysWaiting": "Diese können den Tresor öffnen, sobald sie einen eigenen Schlüssel haben und du ihn erneut teilst: {names}"
+  "vaultKeysWaiting": "Diese können den Tresor öffnen, sobald sie einen eigenen Schlüssel haben und du ihn erneut teilst: {names}",
+  "syncTitle": "Ordner auf diesem Computer",
+  "syncHint": "Ein Ordner dieses Computers, der mit einem Speicher abgeglichen wird: Was sich auf einer Seite ändert, kommt alle paar Minuten auf der anderen an, solange die App offen ist. Auf beiden Seiten geändert, bleiben beide Fassungen erhalten.",
+  "syncChoose": "Ordner wählen",
+  "syncNow": "Jetzt abgleichen",
+  "syncStop": "Abgleich beenden",
+  "syncRunning": "Wird abgeglichen …",
+  "syncNever": "Noch nicht abgeglichen",
+  "syncDone": "Abgeglichen {time}: {down} geladen, {up} hochgeladen",
+  "syncIssues": "{conflicts} auf beiden Seiten geändert (als Kopie behalten), {failed} nicht erledigt – wird wiederholt",
+  "syncFailed": "Nicht abgeglichen: {error}",
+  "syncLocked": "{count} Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen"
 }

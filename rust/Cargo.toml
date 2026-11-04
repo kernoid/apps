@@ -24,6 +24,8 @@ flutter_rust_bridge = "=2.13.0"
 # version as the apps (docs/plan.md, 1).
 kernoid-client = "=0.2.3"
 kernoid-e2e = "=0.2.3"
+# A folder of the device kept in step with a store (MIT, released with the SDK).
+kernoid-sync = "=0.2.3"
 # Named only for its feature: prefer the post-quantum key exchange X25519MLKEM768, as kernoid does (RFC 0006, 2).
 rustls = { version = "=0.23.46", default-features = false, features = ["aws-lc-rs", "prefer-post-quantum", "std", "tls12"] }
 serde = { version = "=1.0.228", features = ["derive"] }

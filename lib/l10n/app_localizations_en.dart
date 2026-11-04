@@ -943,4 +943,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String vaultKeysWaiting(String names) {
     return 'These can open the vault once they have a key of their own and you share it again: $names';
   }
+
+  @override
+  String get syncTitle => 'Folders on this computer';
+
+  @override
+  String get syncHint =>
+      'A folder of this computer kept in step with a store: what changes on one side reaches the other every few minutes while the app is open. Changed on both sides, both versions are kept.';
+
+  @override
+  String get syncChoose => 'Choose a folder';
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncStop => 'Stop syncing';
+
+  @override
+  String get syncRunning => 'Syncing …';
+
+  @override
+  String get syncNever => 'Not synced yet';
+
+  @override
+  String syncDone(String time, int down, int up) {
+    return 'Synced $time: $down down, $up up';
+  }
+
+  @override
+  String syncIssues(int conflicts, int failed) {
+    return '$conflicts changed on both sides (kept as copies), $failed not done – tried again';
+  }
+
+  @override
+  String syncFailed(String error) {
+    return 'Not synced: $error';
+  }
+
+  @override
+  String syncLocked(int count) {
+    return '$count vaults left as they are – unlock your key to sync them';
+  }
 }

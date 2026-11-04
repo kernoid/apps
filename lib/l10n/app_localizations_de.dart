@@ -949,4 +949,46 @@ class AppLocalizationsDe extends AppLocalizations {
   String vaultKeysWaiting(String names) {
     return 'Diese können den Tresor öffnen, sobald sie einen eigenen Schlüssel haben und du ihn erneut teilst: $names';
   }
+
+  @override
+  String get syncTitle => 'Ordner auf diesem Computer';
+
+  @override
+  String get syncHint =>
+      'Ein Ordner dieses Computers, der mit einem Speicher abgeglichen wird: Was sich auf einer Seite ändert, kommt alle paar Minuten auf der anderen an, solange die App offen ist. Auf beiden Seiten geändert, bleiben beide Fassungen erhalten.';
+
+  @override
+  String get syncChoose => 'Ordner wählen';
+
+  @override
+  String get syncNow => 'Jetzt abgleichen';
+
+  @override
+  String get syncStop => 'Abgleich beenden';
+
+  @override
+  String get syncRunning => 'Wird abgeglichen …';
+
+  @override
+  String get syncNever => 'Noch nicht abgeglichen';
+
+  @override
+  String syncDone(String time, int down, int up) {
+    return 'Abgeglichen $time: $down geladen, $up hochgeladen';
+  }
+
+  @override
+  String syncIssues(int conflicts, int failed) {
+    return '$conflicts auf beiden Seiten geändert (als Kopie behalten), $failed nicht erledigt – wird wiederholt';
+  }
+
+  @override
+  String syncFailed(String error) {
+    return 'Nicht abgeglichen: $error';
+  }
+
+  @override
+  String syncLocked(int count) {
+    return '$count Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen';
+  }
 }

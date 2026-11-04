@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2080156135;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1460106294;
 
 // Section: executor
 
@@ -3559,6 +3559,60 @@ fn wire__crate__api__kernoid__Kernoid_sign_out_impl(
         },
     )
 }
+fn wire__crate__api__kernoid__Kernoid_sync_folder_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "Kernoid_sync_folder",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that =
+                <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Kernoid>>>::sse_decode(
+                    &mut deserializer,
+                );
+            let api_account_id = <String>::sse_decode(&mut deserializer);
+            let api_root = <String>::sse_decode(&mut deserializer);
+            let api_state = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, crate::api::kernoid::KernoidError>(
+                    (move || async move {
+                        let mut api_that_guard = None;
+                        let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false),
+                        ]);
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_that_guard = api_that_guard.unwrap();
+                        let output_ok = crate::api::kernoid::Kernoid::sync_folder(
+                            &*api_that_guard,
+                            api_account_id,
+                            api_root,
+                            api_state,
+                        )
+                        .await?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__kernoid__Kernoid_unlock_key_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3856,6 +3910,33 @@ fn wire__crate__api__kernoid__init_app_impl(
                     let output_ok = Ok::<_, ()>({
                         crate::api::kernoid::init_app();
                     })?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__kernoid__sync_report_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "sync_report_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::kernoid::SyncReport::default())?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -4860,6 +4941,34 @@ impl SseDecode for crate::api::kernoid::SendPlan {
     }
 }
 
+impl SseDecode for crate::api::kernoid::SyncReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_downloaded = <u32>::sse_decode(deserializer);
+        let mut var_uploaded = <u32>::sse_decode(deserializer);
+        let mut var_deletedHere = <u32>::sse_decode(deserializer);
+        let mut var_deletedThere = <u32>::sse_decode(deserializer);
+        let mut var_directories = <u32>::sse_decode(deserializer);
+        let mut var_moved = <u32>::sse_decode(deserializer);
+        let mut var_conflicts = <Vec<String>>::sse_decode(deserializer);
+        let mut var_failed = <Vec<String>>::sse_decode(deserializer);
+        let mut var_skipped = <Vec<String>>::sse_decode(deserializer);
+        let mut var_locked = <u32>::sse_decode(deserializer);
+        return crate::api::kernoid::SyncReport {
+            downloaded: var_downloaded,
+            uploaded: var_uploaded,
+            deleted_here: var_deletedHere,
+            deleted_there: var_deletedThere,
+            directories: var_directories,
+            moved: var_moved,
+            conflicts: var_conflicts,
+            failed: var_failed,
+            skipped: var_skipped,
+            locked: var_locked,
+        };
+    }
+}
+
 impl SseDecode for u32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4994,11 +5103,13 @@ fn pde_ffi_dispatcher_primary_impl(
         70 => wire__crate__api__kernoid__Kernoid_set_vacation_impl(port, ptr, rust_vec_len, data_len),
         72 => wire__crate__api__kernoid__Kernoid_share_directory_impl(port, ptr, rust_vec_len, data_len),
         73 => wire__crate__api__kernoid__Kernoid_sign_out_impl(port, ptr, rust_vec_len, data_len),
-        74 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
-        75 => wire__crate__api__kernoid__Kernoid_upload_files_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__crate__api__kernoid__Kernoid_vacation_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__crate__api__kernoid__Kernoid_watch_login_impl(port, ptr, rust_vec_len, data_len),
-        80 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__crate__api__kernoid__Kernoid_sync_folder_impl(port, ptr, rust_vec_len, data_len),
+        75 => wire__crate__api__kernoid__Kernoid_unlock_key_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__crate__api__kernoid__Kernoid_upload_files_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__crate__api__kernoid__Kernoid_vacation_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__crate__api__kernoid__Kernoid_watch_login_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__crate__api__kernoid__init_app_impl(port, ptr, rust_vec_len, data_len),
+        82 => wire__crate__api__kernoid__sync_report_default_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5019,8 +5130,8 @@ fn pde_ffi_dispatcher_sync_impl(
         48 => wire__crate__api__kernoid__Kernoid_phone_labels_impl(ptr, rust_vec_len, data_len),
         65 => wire__crate__api__kernoid__Kernoid_server_impl(ptr, rust_vec_len, data_len),
         71 => wire__crate__api__kernoid__Kernoid_settings_available_impl(ptr, rust_vec_len, data_len),
-        76 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
-        79 => wire__crate__api__kernoid__OidcLogin_url_impl(ptr, rust_vec_len, data_len),
+        77 => wire__crate__api__kernoid__Kernoid_username_impl(ptr, rust_vec_len, data_len),
+        80 => wire__crate__api__kernoid__OidcLogin_url_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -5629,6 +5740,30 @@ impl flutter_rust_bridge::IntoDart for crate::api::kernoid::SendPlan {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::SendPlan {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::SendPlan> for crate::api::kernoid::SendPlan {
     fn into_into_dart(self) -> crate::api::kernoid::SendPlan {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::kernoid::SyncReport {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.downloaded.into_into_dart().into_dart(),
+            self.uploaded.into_into_dart().into_dart(),
+            self.deleted_here.into_into_dart().into_dart(),
+            self.deleted_there.into_into_dart().into_dart(),
+            self.directories.into_into_dart().into_dart(),
+            self.moved.into_into_dart().into_dart(),
+            self.conflicts.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.skipped.into_into_dart().into_dart(),
+            self.locked.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::kernoid::SyncReport {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::kernoid::SyncReport> for crate::api::kernoid::SyncReport {
+    fn into_into_dart(self) -> crate::api::kernoid::SyncReport {
         self
     }
 }
@@ -6391,6 +6526,22 @@ impl SseEncode for crate::api::kernoid::SendPlan {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.encrypted, serializer);
         <Option<String>>::sse_encode(self.reason, serializer);
+    }
+}
+
+impl SseEncode for crate::api::kernoid::SyncReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.downloaded, serializer);
+        <u32>::sse_encode(self.uploaded, serializer);
+        <u32>::sse_encode(self.deleted_here, serializer);
+        <u32>::sse_encode(self.deleted_there, serializer);
+        <u32>::sse_encode(self.directories, serializer);
+        <u32>::sse_encode(self.moved, serializer);
+        <Vec<String>>::sse_encode(self.conflicts, serializer);
+        <Vec<String>>::sse_encode(self.failed, serializer);
+        <Vec<String>>::sse_encode(self.skipped, serializer);
+        <u32>::sse_encode(self.locked, serializer);
     }
 }
 

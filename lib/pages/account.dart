@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/appearance.dart';
+import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
@@ -21,10 +22,13 @@ import '../widgets/e2e.dart';
 /// with the password – the password itself, second factors, passkeys, app passwords, sessions – is the web app's, a
 /// click away.
 class AccountPage extends StatelessWidget {
-  const AccountPage({super.key, required this.account, required this.onSignOut});
+  const AccountPage({super.key, required this.account, required this.onSignOut, this.sync});
 
   final Kernoid account;
   final VoidCallback onSignOut;
+
+  /// The folders of this computer kept in step (desktops).
+  final SyncFolders? sync;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +86,7 @@ class AccountPage extends StatelessWidget {
                     _LanguageSection(account: account),
                     _MailSettingsSection(account: account),
                   ],
+                  if (sync != null && SyncFolders.available) _SyncSection(account: account, sync: sync!),
                   _VacationSection(account: account),
                   _KeyCard(account: account),
                   KSection(
@@ -863,6 +868,108 @@ class _Line extends StatelessWidget {
           if (label.isNotEmpty) KOverline(label, padding: const EdgeInsets.only(bottom: 2)),
           SelectableText(value, style: mono ? KText.mono(k) : KText.small(k)),
         ],
+      ),
+    );
+  }
+}
+
+/// Folders of this computer kept in step with the account's stores: one per store, chosen here.
+class _SyncSection extends StatelessWidget {
+  const _SyncSection({required this.account, required this.sync});
+
+  final Kernoid account;
+  final SyncFolders sync;
+
+  Future<void> _choose(FileStore store) async {
+    final path = await getDirectoryPath();
+    if (path != null) await sync.add(store.accountId, path);
+  }
+
+  String _status(BuildContext context, AppLocalizations l, SyncStatus status) {
+    if (status.running) return l.syncRunning;
+    final lines = <String>[
+      if (status.error != null) l.syncFailed(status.error!),
+      if (status.last case final last?)
+        l.syncDone(
+          TimeOfDay.fromDateTime(last).format(context),
+          status.report?.downloaded ?? 0,
+          status.report?.uploaded ?? 0,
+        )
+      else if (status.error == null)
+        l.syncNever,
+      if (status.report case final r? when r.conflicts.isNotEmpty || r.failed.isNotEmpty)
+        l.syncIssues(r.conflicts.length, r.failed.length),
+      if (status.report case final r? when r.locked > 0) l.syncLocked(r.locked),
+    ];
+    return lines.join('\n');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    final stores = account.fileStores();
+    return KSection(
+      title: l.syncTitle,
+      icon: LucideIcons.folderSync,
+      description: l.syncHint,
+      child: ListenableBuilder(
+        listenable: sync,
+        builder: (context, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final store in stores)
+              Padding(
+                key: ValueKey('sync-${store.accountId}'),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            store.name,
+                            style: TextStyle(color: k.text, fontWeight: FontWeight.w600),
+                          ),
+                          if (sync.folderOf(store.accountId) case final folder?) ...[
+                            Text(folder.path, style: TextStyle(color: k.muted, fontSize: 13)),
+                            Text(
+                              _status(context, l, sync.statusOf(store.accountId)),
+                              key: ValueKey('sync-status-${store.accountId}'),
+                              style: TextStyle(color: k.muted, fontSize: 13),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (sync.folderOf(store.accountId) == null)
+                      KButton(
+                        key: ValueKey('sync-choose-${store.accountId}'),
+                        label: l.syncChoose,
+                        icon: LucideIcons.folderPlus,
+                        onPressed: () => _choose(store),
+                      )
+                    else ...[
+                      KIconButton(
+                        key: ValueKey('sync-now-${store.accountId}'),
+                        icon: LucideIcons.refreshCw,
+                        tooltip: l.syncNow,
+                        onPressed: sync.statusOf(store.accountId).running ? null : sync.syncAll,
+                      ),
+                      KIconButton(
+                        key: ValueKey('sync-stop-${store.accountId}'),
+                        icon: LucideIcons.folderX,
+                        tooltip: l.syncStop,
+                        onPressed: () => sync.remove(store.accountId),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
