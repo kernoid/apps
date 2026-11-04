@@ -1898,6 +1898,42 @@ abstract class AppLocalizations {
   /// **'{conflicts} changed on both sides (kept as copies), {failed} not done – tried again'**
   String syncIssues(int conflicts, int failed);
 
+  /// No description provided for @documentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Files app'**
+  String get documentsTitle;
+
+  /// No description provided for @documentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stores in Android\'s Files app and wherever an app lets you pick a file. It signs in on its own, once – the browser opens for it.'**
+  String get documentsHint;
+
+  /// No description provided for @documentsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stores are shown in the Files app.'**
+  String get documentsOn;
+
+  /// No description provided for @documentsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Not shown in the Files app.'**
+  String get documentsOff;
+
+  /// No description provided for @documentsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Files'**
+  String get documentsEnable;
+
+  /// No description provided for @documentsDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Files'**
+  String get documentsDisable;
+
   /// No description provided for @syncFailed.
   ///
   /// In en, this message translates to:

@@ -14,6 +14,18 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   broke off go on, both versions are kept when a file changed on both sides, vaults are synced while the key is
   unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. Needs
   kernoid's Rust SDK 0.2.4.
+- Android: the stores in the Files app and every document picker (a DocumentsProvider) – one root per store, files
+  opened, written, made, renamed, moved within a store and deleted into the Trash; vault items listed as locked.
+  Switched on in the account with a sign-in of its own; signing out of the app removes it again. Not yet tried on a
+  device.
+
+### Fixed
+
+- Android: certificates are checked against the system's trust store – rustls-platform-verifier, which reqwest uses,
+  is now handed the JVM when the app starts. Without it no connection could be verified (**OPEN**: not yet tried on a
+  device).
+- The core of the file shells hands a renewed login over with an error answer too; before, the renewal was lost and
+  the shell's login ended at its next start.
 
 ## [0.2.3] – 2026-11-04
 

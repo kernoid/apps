@@ -42,8 +42,35 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles("proguard-rules.pro")
         }
     }
+}
+
+// The Kotlin part of rustls-platform-verifier, through which the Rust side checks certificates against Android's trust
+// store. Published by the rustls project as a Maven repository on GitHub (MIT OR Apache-2.0), taken from there for
+// this one group only. Its version must be the one of the crate `rustls-platform-verifier-android` in rust/Cargo.lock –
+// checked here, as a different one may crash at run time.
+repositories {
+    maven {
+        url = uri("https://github.com/rustls/rustls-platform-verifier/raw/maven-archive/android-release-support/maven/")
+        content { includeGroup("org.rustls") }
+    }
+}
+
+val rustlsPlatformVerifier = "0.2.0"
+
+run {
+    val lock = rootProject.file("../rust/Cargo.lock").readLines()
+    val at = lock.indexOfFirst { it.trim() == "name = \"rustls-platform-verifier-android\"" }
+    val locked = lock.getOrNull(at + 1)?.substringAfter('"')?.substringBefore('"')
+    check(at < 0 || locked == rustlsPlatformVerifier) {
+        "rustls-platform-verifier-android is $locked in rust/Cargo.lock, but $rustlsPlatformVerifier here"
+    }
+}
+
+dependencies {
+    implementation("org.rustls:rustls-platform-verifier:$rustlsPlatformVerifier")
 }
 
 kotlin {

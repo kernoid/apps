@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-import 'dart:typed_data';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/appearance.dart';
+import '../app/documents_provider.dart';
 import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -87,6 +87,7 @@ class AccountPage extends StatelessWidget {
                     _MailSettingsSection(account: account),
                   ],
                   if (sync != null && SyncFolders.available) _SyncSection(account: account, sync: sync!),
+                  if (DocumentsProvider.available) _DocumentsSection(account: account),
                   _VacationSection(account: account),
                   _KeyCard(account: account),
                   KSection(
@@ -970,6 +971,97 @@ class _SyncSection extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// kernoid's stores in Android's Files app and every document picker (`app/documents_provider.dart`): switched on with
+/// a login of its own – the browser opens once more for it.
+class _DocumentsSection extends StatefulWidget {
+  const _DocumentsSection({required this.account});
+
+  final Kernoid account;
+
+  @override
+  State<_DocumentsSection> createState() => _DocumentsSectionState();
+}
+
+class _DocumentsSectionState extends State<_DocumentsSection> {
+  bool? _enabled;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final on = await DocumentsProvider.enabled();
+      if (mounted) setState(() => _enabled = on);
+    } catch (error) {
+      if (mounted) setState(() => _error = errorText(error));
+    }
+  }
+
+  Future<void> _switch(bool on) async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      if (on) {
+        await DocumentsProvider.enable(widget.account);
+      } else {
+        await DocumentsProvider.disable();
+      }
+      if (mounted) setState(() => _enabled = on);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _error = error.code == 'CANCELED' ? l.signInCancelled : error.message ?? error.code);
+    } catch (error) {
+      if (mounted) setState(() => _error = errorText(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    final enabled = _enabled;
+    return KSection(
+      title: l.documentsTitle,
+      icon: LucideIcons.folderOpen,
+      description: l.documentsHint,
+      trailing: _busy ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (enabled != null) ...[
+            Text(
+              enabled ? l.documentsOn : l.documentsOff,
+              key: const ValueKey('documents-status'),
+              style: KText.small(k),
+            ),
+            const SizedBox(height: 8),
+            KButton(
+              key: const ValueKey('documents-switch'),
+              label: enabled ? l.documentsDisable : l.documentsEnable,
+              icon: enabled ? LucideIcons.folderX : LucideIcons.folderPlus,
+              tone: enabled ? KTone.normal : KTone.primary,
+              onPressed: _busy ? null : () => _switch(!enabled),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: KText.small(k).copyWith(color: k.error)),
+          ],
+        ],
       ),
     );
   }

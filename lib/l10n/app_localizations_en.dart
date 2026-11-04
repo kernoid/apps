@@ -977,6 +977,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get documentsTitle => 'Files app';
+
+  @override
+  String get documentsHint =>
+      'Your stores in Android\'s Files app and wherever an app lets you pick a file. It signs in on its own, once – the browser opens for it.';
+
+  @override
+  String get documentsOn => 'Your stores are shown in the Files app.';
+
+  @override
+  String get documentsOff => 'Not shown in the Files app.';
+
+  @override
+  String get documentsEnable => 'Show in Files';
+
+  @override
+  String get documentsDisable => 'Remove from Files';
+
+  @override
   String syncFailed(String error) {
     return 'Not synced: $error';
   }

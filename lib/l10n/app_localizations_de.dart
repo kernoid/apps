@@ -983,6 +983,25 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get documentsTitle => 'Dateien-App';
+
+  @override
+  String get documentsHint =>
+      'Deine Speicher in Androids Dateien-App und überall, wo eine App dich eine Datei wählen lässt. Sie meldet sich einmal eigens an – dafür öffnet sich der Browser.';
+
+  @override
+  String get documentsOn => 'Deine Speicher stehen in der Dateien-App.';
+
+  @override
+  String get documentsOff => 'Nicht in der Dateien-App.';
+
+  @override
+  String get documentsEnable => 'In Dateien zeigen';
+
+  @override
+  String get documentsDisable => 'Aus Dateien entfernen';
+
+  @override
   String syncFailed(String error) {
     return 'Nicht abgeglichen: $error';
   }

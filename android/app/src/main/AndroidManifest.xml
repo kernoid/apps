@@ -36,6 +36,17 @@
                 <data android:scheme="dev.kernoid.kernoid" />
             </intent-filter>
         </activity>
+        <!-- kernoid's stores in the Files app and every document picker (KernoidDocumentsProvider, docs/plan.md, 5). -->
+        <provider
+            android:name=".KernoidDocumentsProvider"
+            android:authorities="dev.kernoid.kernoid.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
