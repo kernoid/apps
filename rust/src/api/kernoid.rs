@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 use kernoid_client::e2e::{E2e, Outgoing, Plan};
 use kernoid_client::{self as client, Client, calendars, contacts, files, mail, reply};
 
-static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
+pub(crate) static RUNTIME: LazyLock<tokio::runtime::Runtime> = LazyLock::new(|| {
     tokio::runtime::Builder::new_multi_thread()
         .worker_threads(2)
         .thread_name("kernoid")
@@ -855,6 +855,12 @@ impl Kernoid {
             .map(|t| t.clone())
             .map_err(|_| KernoidError { unauthorized: false, message: "the login is broken".into() })?;
         run(async move { client::oidc::revoke(&tokens, &options()).await }).await
+    }
+
+    /// The SDK's client, for the core of the file shells (`crate::provider`).
+    #[frb(ignore)]
+    pub(crate) fn sdk_client(&self) -> Client {
+        self.client.clone()
     }
 
     #[frb(sync, getter)]
