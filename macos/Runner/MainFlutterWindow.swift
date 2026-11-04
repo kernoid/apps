@@ -10,6 +10,7 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     Bookmarks.register(with: flutterViewController.engine.binaryMessenger)
+    FileProviderChannel.register(with: flutterViewController.engine.binaryMessenger)
 
     super.awakeFromNib()
   }

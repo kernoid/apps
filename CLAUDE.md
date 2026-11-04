@@ -68,6 +68,14 @@ layout and the checks.
   through a security-scoped bookmark (`files.bookmarks.app-scope`, the channel `dev.kernoid.kernoid/bookmarks` in
   `macos/Runner/MainFlutterWindow.swift`). A widget test cannot drive the system's dialog, so the tests give paths to
   the bridge and to `SyncFolders` instead.
+- The File Provider extension (`native/apple/`, target `KernoidFileProvider` in `macos/` and `ios/`) links `rust/` as a
+  static library of its own: a build phase runs `native/apple/build-rust.sh` (`cargo rustc --release --crate-type
+  staticlib` for `KERNOID_RUST_TARGET` of `FileProvider/FileProvider.xcconfig`, into the project's temporary folder),
+  and the xcconfig links it – without `$(inherited)`, whose pods' `-framework kernoid_bridge` would bind it to
+  cargokit's build for the app. The app and the extension share an app group and a keychain group, which Xcode
+  accepts only with a signing team: builds are unsigned (`KERNOID_SIGNED = NO` in `Signing.xcconfig`) and take the
+  entitlements without the groups; with a team set `KERNOID_SIGNED = YES` and `DEVELOPMENT_TEAM`, and the
+  `*-Signed.entitlements` are taken. The extension cannot run unsigned.
 - An iOS build needs a `libc` new enough for `backtrace` on iOS – do not set it back below the version in
   `rust/Cargo.lock`.
 - Android in CI builds for arm64 only and without debug info; the runner needs disk space freed first.

@@ -302,5 +302,12 @@
   "syncDone": "Abgeglichen {time}: {down} geladen, {up} hochgeladen",
   "syncIssues": "{conflicts} auf beiden Seiten geändert (als Kopie behalten), {failed} nicht erledigt – wird wiederholt",
   "syncFailed": "Nicht abgeglichen: {error}",
-  "syncLocked": "{count} Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen"
+  "syncLocked": "{count} Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen",
+  "fileProviderTitle": "Dateien im Finder",
+  "fileProviderTitleIos": "Dateien in der Dateien-App",
+  "fileProviderHint": "Deine Speicher als Orte im Dateimanager des Systems: Dateien erscheinen, bevor sie geladen sind, und öffnen sich, wenn du sie brauchst. Er hat eine eigene Anmeldung – du meldest dich dafür noch einmal im Browser an. Tresore bleiben dort gesperrt.",
+  "fileProviderOn": "Einschalten",
+  "fileProviderUpdate": "Speicher aktualisieren",
+  "fileProviderOff": "Ausschalten",
+  "fileProviderShown": "Angezeigt: {stores}"
 }

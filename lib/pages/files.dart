@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../app/file_provider.dart';
 import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
@@ -105,6 +106,8 @@ class _FilesPageState extends State<FilesPage> {
   Future<void> _load() async {
     final store = _store;
     if (store == null) return;
+    // What the app changed, or found changed, reaches Finder and the Files app too.
+    unawaited(FileProvider.signal());
     setState(() {
       _error = null;
       if (_query.isEmpty) _found = null;

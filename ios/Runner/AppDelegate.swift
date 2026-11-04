@@ -12,5 +12,9 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // The stores as places in the Files app (native/apple/App/FileProviderChannel.swift).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "FileProviderChannel") {
+      FileProviderChannel.register(with: registrar.messenger())
+    }
   }
 }

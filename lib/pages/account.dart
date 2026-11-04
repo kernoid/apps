@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
@@ -8,6 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/appearance.dart';
+import '../app/file_provider.dart';
 import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -87,6 +89,7 @@ class AccountPage extends StatelessWidget {
                     _MailSettingsSection(account: account),
                   ],
                   if (sync != null && SyncFolders.available) _SyncSection(account: account, sync: sync!),
+                  if (FileProvider.available) _FileProviderSection(account: account),
                   _VacationSection(account: account),
                   _KeyCard(account: account),
                   KSection(
@@ -971,6 +974,100 @@ class _SyncSection extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The stores in Finder and the Files app (macOS, iOS): the File Provider extension, with a login of its own – signing
+/// in once more in the browser when it is turned on (`app/file_provider.dart`).
+class _FileProviderSection extends StatefulWidget {
+  const _FileProviderSection({required this.account});
+
+  final Kernoid account;
+
+  @override
+  State<_FileProviderSection> createState() => _FileProviderSectionState();
+}
+
+class _FileProviderSectionState extends _SettingsState<_FileProviderSection> {
+  List<String> _shown = const [];
+
+  @override
+  Future<void> load() async => _shown = await FileProvider.shown();
+
+  Future<void> _turnOn() => save(() async {
+    final kept = await FileProvider.login(widget.account);
+    await FileProvider.enable(widget.account, kept);
+    _shown = await FileProvider.shown();
+  });
+
+  Future<void> _update() => save(() async {
+    await FileProvider.enable(widget.account, null);
+    _shown = await FileProvider.shown();
+  });
+
+  Future<void> _turnOff() => save(() async {
+    await FileProvider.disable();
+    _shown = await FileProvider.shown();
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    final names = [
+      for (final store in widget.account.fileStores())
+        if (_shown.contains(store.accountId)) store.name,
+    ];
+    return KSection(
+      title: Platform.isIOS ? l.fileProviderTitleIos : l.fileProviderTitle,
+      icon: LucideIcons.hardDrive,
+      description: l.fileProviderHint,
+      child: !loaded
+          ? const LinearProgressIndicator()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_shown.isNotEmpty) ...[
+                  Text(
+                    l.fileProviderShown(names.join(', ')),
+                    key: const ValueKey('file-provider-shown'),
+                    style: TextStyle(color: k.muted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (_shown.isEmpty)
+                      KButton(
+                        key: const ValueKey('file-provider-on'),
+                        label: l.fileProviderOn,
+                        icon: LucideIcons.logIn,
+                        tone: KTone.primary,
+                        onPressed: busy ? null : _turnOn,
+                      )
+                    else ...[
+                      KButton(
+                        key: const ValueKey('file-provider-update'),
+                        label: l.fileProviderUpdate,
+                        icon: LucideIcons.refreshCw,
+                        onPressed: busy ? null : _update,
+                      ),
+                      KButton(
+                        key: const ValueKey('file-provider-off'),
+                        label: l.fileProviderOff,
+                        icon: LucideIcons.power,
+                        tone: KTone.quiet,
+                        onPressed: busy ? null : _turnOff,
+                      ),
+                    ],
+                  ],
+                ),
+                noteLine('file-provider-note'),
+              ],
+            ),
     );
   }
 }

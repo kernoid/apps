@@ -14,6 +14,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   broke off go on, both versions are kept when a file changed on both sides, vaults are synced while the key is
   unlocked. On macOS the app may now write to folders the user chose and keeps a bookmark to reach them again. Needs
   kernoid's Rust SDK 0.2.4.
+- The stores in Finder and the Files app (macOS, iOS): a File Provider extension, one place per store, files shown
+  before they are downloaded and fetched when opened, made, changed, moved and deleted there – deleted into kernoid's
+  Trash, from there for good. Turned on in the account ("Files in Finder"), it signs in once more in the browser, as
+  the extension keeps a login of its own. Vaults are shown locked. The builds are unsigned and the extension needs a
+  signing team to run, so it is **not usable yet**.
 
 ## [0.2.3] – 2026-11-04
 

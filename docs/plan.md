@@ -30,7 +30,7 @@ kernoid is split along one line – **open protocols** – with one shared clien
   held not to allow (**OPEN**: review by someone who knows licence law, as for spezado). The terminal app stays
   AGPL; it does not go into stores.
 - Their dependencies are **permissive** as well: `cargo deny` for Rust, a licence check of `pubspec.lock` for Dart
-  (**OPEN**: tool). Exceptions are recorded with their reason (section 7: UniFFI, MPL-2.0).
+  (**OPEN**: tool). Exceptions are recorded with their reason (section 7: dbus on Linux, MPL-2.0).
 
 ## 2. Platforms and order
 
@@ -78,8 +78,8 @@ apps/
 ├── lib/                 the Flutter app: UI, state, i18n (en, de) – one code base for all five platforms
 ├── rust/                Cargo workspace (MIT), its own lock file
 │   ├── bridge/            the API Dart sees, generated with flutter_rust_bridge, on kernoid-client and kernoid-sync
-│   ├── apple/             the Rust side of the File Provider extensions (UniFFI, section 7)
-│   ├── android/           the Rust side of the DocumentsProvider (UniFFI)
+│   ├── apple/             the Rust side of the File Provider extensions (C boundary, section 7)
+│   ├── android/           the Rust side of the DocumentsProvider (JNI)
 │   └── windows-sync/      the Cloud Files provider (cfapi, `windows` crate)
 ├── native/apple/        Swift package shared by both File Provider extensions
 ├── macos/, ios/         Flutter runners; FileProvider/ extension targets
@@ -158,14 +158,34 @@ that decides – what changed, what to download, what conflicts – is in `kerno
   `mayWrite`, …) decide what the shell offers.
 - **Local state:** SQLite with the server's id, `blobId` and state per node and the journal state per store.
 
-What blocks the shells (2026-11-04), before any of them is begun:
+What blocked the shells (2026-11-04), and where they stand:
 
-- **Apple:** a File Provider extension runs only in an app signed by a development team, with an app group the app
-  and the extension share (for the state database and the keychain group of section 6). The builds today are
-  unsigned; falkOSS's team comes with its founding. **OPEN**: develop against a maintainer's personal team until then.
-- **Swift/Kotlin ↔ Rust:** UniFFI is MPL-2.0 (section 7). **OPEN**: accept it as an exception, or a C boundary by
-  hand.
-- **Without either:** a folder kept in step by the app itself, on every desktop (Linux's row above) – `kernoid-sync`
+- **Swift/Kotlin ↔ Rust:** UniFFI is MPL-2.0 (section 7); a C boundary by hand was chosen instead (2026-11-04). The core
+  of the shells is `rust/src/provider.rs`: JSON messages through two C functions (`kernoid_provider_call`,
+  `kernoid_provider_free`) for Swift, JNI for Kotlin, a plain call for Rust – stores, items, changes since an anchor,
+  content into a file, items made, changed, moved and deleted.
+- **Apple:** a File Provider extension runs only in an app signed by a development team, with an app group and a
+  keychain group the app and the extension share. The builds are unsigned; falkOSS's team comes with its founding.
+  **Built (2026-11-04), not yet run:** `native/apple/` – an `NSFileProviderReplicatedExtension` (`FileProvider/`), the
+  same Swift for macOS and iOS, as the target `KernoidFileProvider` in both runners, linking `rust/` as a static
+  library (`build-rust.sh`, a build phase). One domain per store (its identifier the store's id); the top of a store
+  is the root container, its Trash the trash container. The working set is the whole store: changes come from
+  `FileNode/changes` with kernoid's state as the anchor (too old: the system enumerates again). Deleting outside the
+  Trash moves into kernoid's Trash, as `kernoid-sync` does; deleting in the Trash destroys. The app turns it on in the
+  account ("Files in Finder", `lib/app/file_provider.dart`, the channel `dev.kernoid.kernoid/fileprovider`): it signs
+  in once more in the browser and hands that login to the extension through the shared keychain – never its own,
+  since kernoid rotates refresh tokens. The system may run the extension of each domain in a process of its own, so
+  the extension's calls hold a lock in the app group's container, the core renews nothing in the background
+  (`renew: false`), and a process opens again with the newest kept login when it changed or the access token expired.
+  The groups need a team: `Signing.xcconfig` (`KERNOID_SIGNED`) picks the entitlements with or without them, and
+  unsigned builds – CI's – take those without.
+  **OPEN**: running and testing it with a team (a maintainer's personal one until falkOSS's); vaults (shown locked –
+  their key from a `device:` copy in the keychain group, section 6); the calls one after another under the lock, so a
+  long download holds up the other domains; changes from the server reach the system only when it asks or the app
+  signals (after its own file list loads) – push to the extension; progress and cancelling of transfers; the
+  extension's memory limit on iOS; a domain per store of one account only (several accounts); the name of the
+  trash container (English only); whether the system really runs the domains in processes of their own.
+- **Besides the shells:** a folder kept in step by the app itself, on every desktop (Linux's row above) – `kernoid-sync`
   in the app's process through the bridge, a round every few minutes and on demand, a folder chosen per store in the
   account (`lib/app/sync_folders.dart`, begun 2026-11-04). On macOS the sandbox gives `files.user-selected.read-write`
   and a security-scoped bookmark keeps the folder across starts; **OPEN**: whether a bookmark of an ad-hoc signed build
@@ -183,7 +203,7 @@ to the next device, remember to encrypt – the apps do **by themselves**, becau
 settings of RFC 0006 exist for other software.
 
 **One implementation:** `kernoid-e2e` (MIT, rpgp), the same library the web app uses as WebAssembly and the terminal
-app as a library – here through `rust/bridge` for Dart and UniFFI for the native shells. Secret keys stay in Rust
+app as a library – here through `rust/bridge` for Dart and the C boundary of `rust/src/provider.rs` for the native shells. Secret keys stay in Rust
 memory; Dart sees fingerprints, never key material.
 
 | What | In the apps |
@@ -213,7 +233,7 @@ the order in which the vault and calendar parts follow mail.
 |---|---|---|---|
 | UI | Flutter 3.47, Dart 3.13 | BSD-3-Clause | one code base for five platforms, accessibility on all of them |
 | Dart ↔ Rust | flutter_rust_bridge 2.13 | MIT | async and streams in both directions |
-| Swift/Kotlin ↔ Rust | UniFFI 0.32 | **MPL-2.0** | file-level copyleft, used by Mozilla in its store apps. **OPEN**: accept as an exception, or a C boundary by hand |
+| Swift/Kotlin ↔ Rust | a C boundary by hand: JSON through two C functions (`rust/src/provider.rs`), JNI for Kotlin | MIT | chosen 2026-11-04 instead of UniFFI 0.32 (MPL-2.0, file-level copyleft) |
 | Async runtime, HTTP | tokio, an async HTTP client with rustls (AWS-LC) | MIT/Apache-2.0, ISC | decided: async – the engine waits on many transfers and push at once; **OPEN**: which HTTP client |
 | Local state | SQLite | public domain | one file on every system |
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |

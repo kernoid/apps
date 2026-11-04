@@ -991,4 +991,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String syncLocked(int count) {
     return '$count Tresore bleiben unverändert – entsperre deinen Schlüssel, um sie abzugleichen';
   }
+
+  @override
+  String get fileProviderTitle => 'Dateien im Finder';
+
+  @override
+  String get fileProviderTitleIos => 'Dateien in der Dateien-App';
+
+  @override
+  String get fileProviderHint =>
+      'Deine Speicher als Orte im Dateimanager des Systems: Dateien erscheinen, bevor sie geladen sind, und öffnen sich, wenn du sie brauchst. Er hat eine eigene Anmeldung – du meldest dich dafür noch einmal im Browser an. Tresore bleiben dort gesperrt.';
+
+  @override
+  String get fileProviderOn => 'Einschalten';
+
+  @override
+  String get fileProviderUpdate => 'Speicher aktualisieren';
+
+  @override
+  String get fileProviderOff => 'Ausschalten';
+
+  @override
+  String fileProviderShown(String stores) {
+    return 'Angezeigt: $stores';
+  }
 }

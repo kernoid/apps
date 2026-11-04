@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: MIT
+// The File Provider extension on macOS (native/apple/): Flutter's version numbers, Apple silicon only, and the Rust
+// target its static library is built for (native/apple/build-rust.sh).
+#include? "../Flutter/ephemeral/Flutter-Generated.xcconfig"
+#include "../Runner/Configs/Signing.xcconfig"
+
+CODE_SIGN_ENTITLEMENTS = FileProvider/FileProvider$(KERNOID_ENTITLEMENTS_SUFFIX).entitlements
+ARCHS = arm64
+KERNOID_RUST_TARGET = aarch64-apple-darwin
+
+// The core of the file shells, statically (native/apple/build-rust.sh), and what it needs of the system. Not
+// $(inherited): the project's settings carry the pods' `-framework kernoid_bridge` – cargokit's build of the same crate
+// for the app –, which would bind the extension to that instead.
+OTHER_LDFLAGS = "$(PROJECT_TEMP_DIR)/kernoid-rust/$(KERNOID_RUST_TARGET)/release/libkernoid_bridge.a" -framework Security -framework CoreFoundation -liconv
