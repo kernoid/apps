@@ -16,6 +16,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -746,6 +747,139 @@ void main() {
       await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
       await waitGone(tester, row(name));
     }
+  });
+
+  testWidgets('files: a vault – made, unlocked, a folder and a file in it, nothing moved out', (tester) async {
+    if (server.isEmpty) {
+      markTestSkipped('no KERNOID_TEST_SERVER');
+      return;
+    }
+    // The account's key: made here when it has none, else its recovery code must be named.
+    final helper = await tester.runAsync(() => Kernoid.login(server: server, address: address, password: password));
+    final status = (await tester.runAsync(helper!.keyStatus))!;
+    if (!status.vaultsAllowed) {
+      markTestSkipped('no vaults on the server');
+      return;
+    }
+    final String code;
+    if (!status.hasKey) {
+      code = (await tester.runAsync(helper.makeKey))!;
+    } else if (recoveryCode.isNotEmpty) {
+      code = recoveryCode;
+      await tester.runAsync(() => helper.unlockKey(code: code));
+    } else {
+      markTestSkipped('the account has a key; KERNOID_TEST_RECOVERY_CODE names its recovery code');
+      return;
+    }
+
+    tester.view.physicalSize = const Size(1280, 800) * tester.view.devicePixelRatio;
+    addTearDown(tester.view.reset);
+    await signIn(tester, address, password);
+    await settledTap(tester, find.byKey(const ValueKey('nav-files')));
+    await waitFor(tester, find.byKey(const ValueKey('file-Notizen.txt')));
+    Finder row(String name) => find.byKey(ValueKey('file-$name'));
+    final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('files-search'))));
+    Future<void> settle() async {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+      await tester.pump();
+    }
+
+    Future<void> ask(String text) async {
+      await waitFor(tester, find.byKey(const ValueKey('ask-text')));
+      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
+    }
+
+    // A new vault asks for the recovery code first: the key is locked in this login.
+    final vault = 'Tresor ${DateTime.now().millisecondsSinceEpoch % 100000}';
+    await settledTap(tester, find.byKey(const ValueKey('new-vault')));
+    await waitFor(tester, find.byKey(const ValueKey('recovery-code')));
+    await tester.enterText(find.byKey(const ValueKey('recovery-code')), code);
+    await settledTap(tester, find.byKey(const ValueKey('unlock')));
+    await ask(vault);
+    await waitFor(tester, row(vault));
+    expect(find.descendant(of: row(vault), matching: find.byIcon(LucideIcons.folderLock)), findsOneWidget);
+
+    // A folder in it, renamed – the names are encrypted here.
+    await settledTap(tester, row(vault));
+    await waitFor(tester, find.byKey(const ValueKey('new-folder')));
+    await settle();
+    await settledTap(tester, find.byKey(const ValueKey('new-folder')));
+    await ask('Akten');
+    await waitFor(tester, row('Akten'));
+    await settle();
+    await settledTap(tester, find.byKey(const ValueKey('more-Akten')));
+    await settledTap(tester, find.byKey(const ValueKey('menu-rename')));
+    await ask('Verträge');
+    await waitFor(tester, row('Verträge'));
+    expect(find.byKey(const ValueKey('more-Verträge')), findsOneWidget);
+
+    // A file put in by the bridge (the system's file dialog is out of reach), read in the viewer.
+    final vaultNode = (await tester.runAsync(() async {
+      final store = helper.fileStores().firstWhere((s) => s.isPersonal);
+      final top = await helper.files(accountId: store.accountId);
+      return (store, top.firstWhere((n) => n.name == vault));
+    }))!;
+    await tester.runAsync(() async {
+      final dir = await Directory.systemTemp.createTemp('kernoid-vault');
+      final file = File('${dir.path}/Brief.txt');
+      await file.writeAsString('Nur für die Mitglieder des Tresors.');
+      await helper
+          .uploadFiles(
+            accountId: vaultNode.$1.accountId,
+            parentId: vaultNode.$2.id,
+            vaultId: vaultNode.$2.id,
+            paths: [file.path],
+          )
+          .drain<void>();
+      await dir.delete(recursive: true);
+    });
+    await settledTap(tester, find.byTooltip(l.refresh));
+    await waitFor(tester, row('Brief.txt'));
+    await shoot(tester, 'vault');
+    await settledTap(tester, row('Brief.txt'));
+    await waitFor(tester, find.byKey(const ValueKey('viewer-text')));
+    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, contains('Mitglieder'));
+    await shoot(tester, 'vault-viewer');
+    await settledTap(tester, find.byKey(const ValueKey('back')));
+    await waitGone(tester, find.byKey(const ValueKey('viewer')));
+
+    // In a vault there are no links, versions or copies.
+    await settle();
+    await settledTap(tester, find.byKey(const ValueKey('more-Brief.txt')));
+    await waitFor(tester, find.byKey(const ValueKey('menu-open')));
+    for (final action in ['link', 'versions', 'copy']) {
+      expect(find.byKey(ValueKey('menu-$action')), findsNothing);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle();
+
+    // Dragged onto the top of the store: refused, it stays.
+    final top = find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles));
+    final gesture = await tester.startGesture(tester.getCenter(row('Brief.txt')), kind: PointerDeviceKind.mouse);
+    final (start, end) = (tester.getCenter(row('Brief.txt')), tester.getCenter(top));
+    for (var i = 1; i <= 10; i++) {
+      await gesture.moveTo(Offset.lerp(start, end, i / 10)!);
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await gesture.up();
+    await waitFor(tester, find.text(l.vaultMoveNo));
+    expect(row('Brief.txt'), findsOneWidget);
+
+    // The vault goes, for good.
+    await settledTap(tester, top);
+    await waitFor(tester, row(vault));
+    await settle();
+    await settledTap(tester, find.byKey(ValueKey('more-$vault')));
+    await settledTap(tester, find.byKey(const ValueKey('menu-delete')));
+    await waitGone(tester, row(vault));
+    await settledTap(tester, row('Trash'));
+    await waitFor(tester, row(vault));
+    await settle();
+    await settledTap(tester, find.byKey(ValueKey('more-$vault')));
+    await settledTap(tester, find.byKey(const ValueKey('menu-delete')));
+    await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
+    await waitGone(tester, row(vault));
   });
 
   testWidgets('files on a phone: the stores in a menu, a long press', (tester) async {

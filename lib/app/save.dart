@@ -6,6 +6,10 @@ import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
 import 'format.dart';
 
+/// Where saved files go: the Downloads folder, or the app's documents where a system has none (iOS, Android).
+Future<String> saveDirectory() async =>
+    (await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory()).path;
+
 /// Saves a blob in the Downloads folder – or the app's documents where a system has none (iOS, Android) – and says
 /// where. **OPEN**: opening it, and the system's share sheet on phones.
 Future<void> saveBlob(

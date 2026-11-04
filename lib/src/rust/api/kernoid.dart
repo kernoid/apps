@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `write`
+// These functions are ignored because they are not marked as `pub`: `account`, `addresses`, `count`, `draft`, `event_form`, `event`, `file_node`, `html_of`, `identity`, `kept`, `link_mode_name`, `mail_account`, `options`, `own_addresses`, `principal`, `recipients`, `renew`, `run`, `signed_in`, `status`, `unique_path`, `vault_node`, `write`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Kept`, `Login`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `drop`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
@@ -48,6 +48,14 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   Future<void> createDirectory({required String accountId, String? parentId, required String name});
 
+  /// A directory inside a vault, its name encrypted.
+  Future<void> createDirectoryInVault({
+    required String accountId,
+    required String vaultId,
+    required String parentId,
+    required String name,
+  });
+
   /// Makes a link – `mode` is `view`, `add` or `drop` –, with an expiry (a UTCDate) and a password if given, and
   /// answers its address: the only time it can be known.
   Future<String> createFileLink({
@@ -60,6 +68,9 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Makes a folder – in `parent_id`, or at the top – and returns its id.
   Future<String> createMailbox({String? accountId, required String name, String? parentId});
+
+  /// Makes a vault (RFC 0006, 6) in a directory – `None`: the top of the store. Needs the account's key unlocked.
+  Future<String> createVault({required String accountId, String? parentId, required String name});
 
   Future<void> deleteContact({required String accountId, required String contactId});
 
@@ -85,6 +96,17 @@ abstract class Kernoid implements RustOpaqueInterface {
     required String blobId,
     required String name,
     required String mediaType,
+    required String directory,
+  });
+
+  /// Downloads a file of a vault, decrypts it here and writes it into `directory` under `name` (made unique);
+  /// returns the path.
+  Future<String> downloadFromVault({
+    required String accountId,
+    required String vaultId,
+    required String id,
+    required String blobId,
+    required String name,
     required String directory,
   });
 
@@ -134,6 +156,14 @@ abstract class Kernoid implements RustOpaqueInterface {
   /// it expires; [`Kernoid::kept_login`] and [`Kernoid::watch_login`] give what to keep to stay signed in.
   static Future<Kernoid> finishLogin({required OidcLogin login, required String callback}) =>
       RustLib.instance.api.crateApiKernoidKernoidFinishLogin(login: login, callback: callback);
+
+  /// After sharing a vault: gives its key to those shared with who have a key of their own. Returns those who still
+  /// wait – groups, and people without a key.
+  Future<List<Principal>> giveVaultKeys({
+    required String accountId,
+    required String vaultId,
+    required List<String> principalIds,
+  });
 
   /// What to keep in the system's key store to stay signed in – none for a login with an app password.
   String? keptLogin();
@@ -187,6 +217,14 @@ abstract class Kernoid implements RustOpaqueInterface {
   Future<void> removeOwnAvatar();
 
   Future<void> renameFile({required String accountId, required String id, required String name});
+
+  /// Renames a node in a vault: the new name encrypted.
+  Future<void> renameInVault({
+    required String accountId,
+    required String vaultId,
+    required String id,
+    required String name,
+  });
 
   Future<void> renameMailbox({String? accountId, required String id, required String name});
 
@@ -274,7 +312,13 @@ abstract class Kernoid implements RustOpaqueInterface {
 
   /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
   /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
-  Stream<UploadProgress> uploadFiles({required String accountId, String? parentId, required List<String> paths});
+  /// Into a vault (`vault_id`), each file is encrypted here first.
+  Stream<UploadProgress> uploadFiles({
+    required String accountId,
+    String? parentId,
+    String? vaultId,
+    required List<String> paths,
+  });
 
   String get username;
 
@@ -556,6 +600,9 @@ class E2eStatus {
   /// The tenant can recover the key (RFC 0006, 8.2).
   final bool tenantRecovers;
 
+  /// Vaults can be made: the server has them and the tenant does not forbid them (RFC 0006, 6).
+  final bool vaultsAllowed;
+
   const E2eStatus({
     required this.available,
     required this.hasKey,
@@ -564,6 +611,7 @@ class E2eStatus {
     this.kind,
     required this.mailOnArrival,
     required this.tenantRecovers,
+    required this.vaultsAllowed,
   });
 
   @override
@@ -574,7 +622,8 @@ class E2eStatus {
       fingerprint.hashCode ^
       kind.hashCode ^
       mailOnArrival.hashCode ^
-      tenantRecovers.hashCode;
+      tenantRecovers.hashCode ^
+      vaultsAllowed.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -587,7 +636,8 @@ class E2eStatus {
           fingerprint == other.fingerprint &&
           kind == other.kind &&
           mailOnArrival == other.mailOnArrival &&
-          tenantRecovers == other.tenantRecovers;
+          tenantRecovers == other.tenantRecovers &&
+          vaultsAllowed == other.vaultsAllowed;
 }
 
 class Email {
@@ -1010,6 +1060,15 @@ class FileNode {
   /// With whom a directory is shared.
   final List<FileShare> shares;
 
+  /// The vault it lies in – its own id on a vault (RFC 0006, 6).
+  final String? vault;
+
+  /// A vault itself: a directory whose content only its members read.
+  final bool isVault;
+
+  /// In a vault whose key is not at hand here: the name is an id.
+  final bool locked;
+
   const FileNode({
     required this.id,
     this.parentId,
@@ -1028,6 +1087,9 @@ class FileNode {
     required this.mayModifyContent,
     required this.mayShare,
     required this.shares,
+    this.vault,
+    required this.isVault,
+    required this.locked,
   });
 
   @override
@@ -1048,7 +1110,10 @@ class FileNode {
       mayDelete.hashCode ^
       mayModifyContent.hashCode ^
       mayShare.hashCode ^
-      shares.hashCode;
+      shares.hashCode ^
+      vault.hashCode ^
+      isVault.hashCode ^
+      locked.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1071,7 +1136,10 @@ class FileNode {
           mayDelete == other.mayDelete &&
           mayModifyContent == other.mayModifyContent &&
           mayShare == other.mayShare &&
-          shares == other.shares;
+          shares == other.shares &&
+          vault == other.vault &&
+          isVault == other.isVault &&
+          locked == other.locked;
 }
 
 /// A person or group a directory is shared with, and how far: `read`, `edit` or `full` (edit and share).

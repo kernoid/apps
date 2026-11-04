@@ -13,6 +13,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   everything else go to another app of the system – the one for its type on desktops, the share sheet on phones.
 - Files dropped onto the list are uploaded where it is (desktop_drop); on desktops a file or folder is moved by
   dragging it onto a folder or onto a step of the path above the list.
+- Vaults (RFC 0006, 6): folders only their members read, made in the app with the account's key – names and contents
+  encrypted and decrypted on the device, a vault's key given to the people it is shared with, the key unlocked from
+  the list when it is needed. In a vault there are no links, versions or copies, and nothing moves out of it but into
+  the trash, as in the web app. Needs kernoid's Rust SDK 0.2.3.
 
 ## [0.2.2] – 2026-10-31
 

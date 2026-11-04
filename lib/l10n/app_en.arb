@@ -432,5 +432,21 @@
   "textCut": "Only the first megabyte is shown – save the file to see all of it.",
   "cannotShow": "This file cannot be shown here.",
   "dropToUpload": "Drop to upload here",
-  "foldersNotUploaded": "Folders cannot be uploaded yet – only the files were."
+  "foldersNotUploaded": "Folders cannot be uploaded yet – only the files were.",
+  "newVault": "New vault",
+  "newVaultName": "Name of the vault",
+  "newVaultHint": "New vault – only those it is shared with can read what is in it",
+  "vaultLocked": "Unlock your key to read what is in vaults.",
+  "lockedVault": "Locked vault",
+  "lockedFolder": "Encrypted folder",
+  "lockedFile": "Encrypted file",
+  "vaultMoveNo": "Nothing moves into or out of a vault – only into the trash.",
+  "vaultKeysWaiting": "These can open the vault once they have a key of their own and you share it again: {names}",
+  "@vaultKeysWaiting": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  }
 }

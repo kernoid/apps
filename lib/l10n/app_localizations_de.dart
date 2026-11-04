@@ -919,4 +919,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get foldersNotUploaded => 'Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen.';
+
+  @override
+  String get newVault => 'Neuer Tresor';
+
+  @override
+  String get newVaultName => 'Name des Tresors';
+
+  @override
+  String get newVaultHint => 'Neuer Tresor – nur die, mit denen er geteilt ist, können lesen, was darin liegt';
+
+  @override
+  String get vaultLocked => 'Entsperre deinen Schlüssel, um zu lesen, was in Tresoren liegt.';
+
+  @override
+  String get lockedVault => 'Gesperrter Tresor';
+
+  @override
+  String get lockedFolder => 'Verschlüsselter Ordner';
+
+  @override
+  String get lockedFile => 'Verschlüsselte Datei';
+
+  @override
+  String get vaultMoveNo =>
+      'Nichts wird in einen Tresor hinein oder aus ihm heraus verschoben – nur in den Papierkorb.';
+
+  @override
+  String vaultKeysWaiting(String names) {
+    return 'Diese können den Tresor öffnen, sobald sie einen eigenen Schlüssel haben und du ihn erneut teilst: $names';
+  }
 }

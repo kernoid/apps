@@ -235,6 +235,12 @@ pub struct FileNode {
     pub may_share: bool,
     /// With whom a directory is shared.
     pub shares: Vec<FileShare>,
+    /// The vault it lies in – its own id on a vault (RFC 0006, 6).
+    pub vault: Option<String>,
+    /// A vault itself: a directory whose content only its members read.
+    pub is_vault: bool,
+    /// In a vault whose key is not at hand here: the name is an id.
+    pub locked: bool,
 }
 
 /// A person or group a directory is shared with, and how far: `read`, `edit` or `full` (edit and share).
@@ -492,6 +498,8 @@ pub struct E2eStatus {
     pub mail_on_arrival: bool,
     /// The tenant can recover the key (RFC 0006, 8.2).
     pub tenant_recovers: bool,
+    /// Vaults can be made: the server has them and the tenant does not forbid them (RFC 0006, 6).
+    pub vaults_allowed: bool,
 }
 
 /// How a message to these recipients would go out.
@@ -532,6 +540,7 @@ fn file_node(n: files::FileNode) -> FileNode {
                 .collect()
         })
         .unwrap_or_default();
+    let is_vault = n.vault.as_deref() == Some(n.id.as_str());
     FileNode {
         is_directory: n.is_directory(),
         id: n.id,
@@ -550,6 +559,30 @@ fn file_node(n: files::FileNode) -> FileNode {
         may_modify_content: r.may_modify_content,
         may_share: r.may_share,
         shares,
+        is_vault,
+        vault: n.vault,
+        locked: n.locked,
+    }
+}
+
+/// What the SDK needs of a node in a vault to act on it.
+fn vault_node(vault: String, id: String, blob_id: Option<String>) -> files::FileNode {
+    files::FileNode {
+        kind: if blob_id.is_some() { "File" } else { "Directory" }.into(),
+        id,
+        parent_id: None,
+        name: String::new(),
+        role: None,
+        blob_id,
+        size: None,
+        media_type: None,
+        modified: None,
+        my_rights: None,
+        share_with: None,
+        vault: Some(vault),
+        vault_key: None,
+        encrypted_name: None,
+        locked: false,
     }
 }
 
@@ -579,6 +612,7 @@ fn status(e2e: &E2e) -> E2eStatus {
         kind: key.map(|k| k.kind.clone()),
         mail_on_arrival: e2e.settings.mail,
         tenant_recovers: e2e.settings.policy.recovery,
+        vaults_allowed: e2e.vaults_allowed(),
     }
 }
 
@@ -1191,8 +1225,16 @@ impl Kernoid {
 
     /// The nodes of a directory, or of the top of the store for `None`.
     pub async fn files(&self, account_id: String, parent_id: Option<String>) -> Result<Vec<FileNode>, KernoidError> {
-        let client = self.client.clone();
-        let nodes = run(async move { files::children(&client, &account_id, parent_id.as_deref()).await }).await?;
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        let nodes = run(async move {
+            let mut nodes = files::children(&client, &account_id, parent_id.as_deref()).await?;
+            if nodes.iter().any(files::FileNode::in_vault) {
+                e2e.lock().await.open_names(&client, &account_id, &mut nodes).await;
+                files::sort(&mut nodes);
+            }
+            Ok(nodes)
+        })
+        .await?;
         Ok(nodes.into_iter().map(file_node).collect())
     }
 
@@ -1204,8 +1246,17 @@ impl Kernoid {
 
     /// The nodes whose name or text holds `text`, anywhere in the store.
     pub async fn search_files(&self, account_id: String, text: String) -> Result<Vec<FoundFile>, KernoidError> {
-        let client = self.client.clone();
-        let found = run(async move { files::search(&client, &account_id, text.trim()).await }).await?;
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        let found = run(async move {
+            let mut found = files::search(&client, &account_id, text.trim()).await?;
+            let mut e2e = e2e.lock().await;
+            for f in &mut found {
+                e2e.open_names(&client, &account_id, std::slice::from_mut(&mut f.node)).await;
+                e2e.open_names(&client, &account_id, &mut f.path).await;
+            }
+            Ok(found)
+        })
+        .await?;
         Ok(found
             .into_iter()
             .map(|f| FoundFile { node: file_node(f.node), path: f.path.into_iter().map(file_node).collect() })
@@ -1256,27 +1307,38 @@ impl Kernoid {
 
     /// Uploads files of the device into a directory, one after the other, telling how far each is; a file of the same
     /// name there gets the new content, and what it had stays as a version. The stream ends when all are there.
+    /// Into a vault (`vault_id`), each file is encrypted here first.
     pub fn upload_files(
         &self,
         account_id: String,
         parent_id: Option<String>,
+        vault_id: Option<String>,
         paths: Vec<String>,
         sink: StreamSink<UploadProgress>,
     ) {
-        let client = self.client.clone();
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
         RUNTIME.spawn(async move {
             let result = async {
-                let existing = files::children(&client, &account_id, parent_id.as_deref()).await?;
+                let mut existing = files::children(&client, &account_id, parent_id.as_deref()).await?;
+                if vault_id.is_some() {
+                    e2e.lock().await.open_names(&client, &account_id, &mut existing).await;
+                }
                 for (index, path) in paths.iter().enumerate() {
                     let path = std::path::Path::new(path);
                     let name = path.file_name().and_then(|n| n.to_str()).unwrap_or_default();
                     let same = existing.iter().find(|node| node.name == name);
                     let progress = sink.clone();
                     let index = u32::try_from(index).unwrap_or(u32::MAX);
-                    files::upload_file(&client, &account_id, parent_id.as_deref(), path, same, move |sent, total| {
+                    let tell = move |sent, total| {
                         let _ = progress.add(UploadProgress { index, sent: count(sent), total: count(total) });
-                    })
-                    .await?;
+                    };
+                    match (&vault_id, &parent_id) {
+                        (Some(vault), Some(parent)) => {
+                            let mut e2e = e2e.lock().await;
+                            e2e.upload_into(&client, &account_id, vault, parent, path, same, tell).await?;
+                        }
+                        _ => files::upload_file(&client, &account_id, parent_id.as_deref(), path, same, tell).await?,
+                    }
                 }
                 client::Result::Ok(())
             }
@@ -1344,6 +1406,87 @@ impl Kernoid {
             })
             .collect();
         run(async move { files::share(&client, &account_id, &id, &with).await }).await
+    }
+
+    /// Makes a vault (RFC 0006, 6) in a directory – `None`: the top of the store. Needs the account's key unlocked.
+    pub async fn create_vault(
+        &self,
+        account_id: String,
+        parent_id: Option<String>,
+        name: String,
+    ) -> Result<String, KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        run(async move { e2e.lock().await.create_vault(&client, &account_id, parent_id.as_deref(), name.trim()).await })
+            .await
+    }
+
+    /// A directory inside a vault, its name encrypted.
+    pub async fn create_directory_in_vault(
+        &self,
+        account_id: String,
+        vault_id: String,
+        parent_id: String,
+        name: String,
+    ) -> Result<(), KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        run(async move {
+            e2e.lock().await.create_directory_in(&client, &account_id, &vault_id, &parent_id, name.trim()).await
+        })
+        .await
+    }
+
+    /// Renames a node in a vault: the new name encrypted.
+    pub async fn rename_in_vault(
+        &self,
+        account_id: String,
+        vault_id: String,
+        id: String,
+        name: String,
+    ) -> Result<(), KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        run(async move {
+            let node = vault_node(vault_id, id, None);
+            e2e.lock().await.rename_in(&client, &account_id, &node, name.trim()).await
+        })
+        .await
+    }
+
+    /// Downloads a file of a vault, decrypts it here and writes it into `directory` under `name` (made unique);
+    /// returns the path.
+    pub async fn download_from_vault(
+        &self,
+        account_id: String,
+        vault_id: String,
+        id: String,
+        blob_id: String,
+        name: String,
+        directory: String,
+    ) -> Result<String, KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        run(async move {
+            let node = vault_node(vault_id, id, Some(blob_id));
+            let data = e2e.lock().await.download_from(&client, &account_id, &node).await?;
+            write(&directory, &name, data).await
+        })
+        .await
+    }
+
+    /// After sharing a vault: gives its key to those shared with who have a key of their own. Returns those who still
+    /// wait – groups, and people without a key.
+    pub async fn give_vault_keys(
+        &self,
+        account_id: String,
+        vault_id: String,
+        principal_ids: Vec<String>,
+    ) -> Result<Vec<Principal>, KernoidError> {
+        let (client, e2e) = (self.client.clone(), self.e2e.clone());
+        let waiting = run(async move {
+            let ids: Vec<&str> = principal_ids.iter().map(String::as_str).collect();
+            let people = files::principals(&client, &ids).await?;
+            e2e.lock().await.give_vault_keys(&client, &account_id, &vault_id, &people).await
+        })
+        .await?;
+        Ok(waiting.into_iter().map(principal).collect())
     }
 
     /// People and groups of the tenant whose name or address holds `text`.

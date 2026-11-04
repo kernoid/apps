@@ -282,5 +282,14 @@
   "textCut": "Nur das erste Megabyte wird gezeigt – speichere die Datei, um alles zu sehen.",
   "cannotShow": "Diese Datei kann hier nicht gezeigt werden.",
   "dropToUpload": "Hier ablegen zum Hochladen",
-  "foldersNotUploaded": "Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen."
+  "foldersNotUploaded": "Ordner lassen sich noch nicht hochladen – nur die Dateien wurden hochgeladen.",
+  "newVault": "Neuer Tresor",
+  "newVaultName": "Name des Tresors",
+  "newVaultHint": "Neuer Tresor – nur die, mit denen er geteilt ist, können lesen, was darin liegt",
+  "vaultLocked": "Entsperre deinen Schlüssel, um zu lesen, was in Tresoren liegt.",
+  "lockedVault": "Gesperrter Tresor",
+  "lockedFolder": "Verschlüsselter Ordner",
+  "lockedFile": "Verschlüsselte Datei",
+  "vaultMoveNo": "Nichts wird in einen Tresor hinein oder aus ihm heraus verschoben – nur in den Papierkorb.",
+  "vaultKeysWaiting": "Diese können den Tresor öffnen, sobald sie einen eigenen Schlüssel haben und du ihn erneut teilst: {names}"
 }

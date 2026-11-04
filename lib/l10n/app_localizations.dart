@@ -1789,6 +1789,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Folders cannot be uploaded yet – only the files were.'**
   String get foldersNotUploaded;
+
+  /// No description provided for @newVault.
+  ///
+  /// In en, this message translates to:
+  /// **'New vault'**
+  String get newVault;
+
+  /// No description provided for @newVaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name of the vault'**
+  String get newVaultName;
+
+  /// No description provided for @newVaultHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New vault – only those it is shared with can read what is in it'**
+  String get newVaultHint;
+
+  /// No description provided for @vaultLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock your key to read what is in vaults.'**
+  String get vaultLocked;
+
+  /// No description provided for @lockedVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked vault'**
+  String get lockedVault;
+
+  /// No description provided for @lockedFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted folder'**
+  String get lockedFolder;
+
+  /// No description provided for @lockedFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted file'**
+  String get lockedFile;
+
+  /// No description provided for @vaultMoveNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing moves into or out of a vault – only into the trash.'**
+  String get vaultMoveNo;
+
+  /// No description provided for @vaultKeysWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'These can open the vault once they have a key of their own and you share it again: {names}'**
+  String vaultKeysWaiting(String names);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

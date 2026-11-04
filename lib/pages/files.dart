@@ -15,6 +15,7 @@ import '../src/rust/api/kernoid.dart';
 import '../ui/dialogs.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import '../widgets/e2e.dart';
 import '../widgets/states.dart';
 import 'file_dialogs.dart';
 import 'home.dart';
@@ -24,8 +25,9 @@ import 'viewer.dart';
 /// what others share –, their directories, searching names and contents, uploading (also by dropping files onto the
 /// list), and for each node what the user may do with it: view, share, link, versions, copy or move (on desktops also
 /// by dragging it onto a directory or a step of the trail), rename, delete into the trash. In the system's file
-/// manager they come through the native shells (docs/plan.md, 5). **OPEN**: vaults (end-to-end encrypted folders),
-/// uploading whole directories.
+/// manager they come through the native shells (docs/plan.md, 5). Vaults (RFC 0006, 6) are folders only their
+/// members read: names and contents are encrypted here, with the account's key unlocked; links, versions and copies
+/// of what is in one are not offered, as in the web app. **OPEN**: uploading whole directories.
 class FilesPage extends StatefulWidget {
   const FilesPage({super.key, required this.account});
 
@@ -63,6 +65,12 @@ class _FilesPageState extends State<FilesPage> {
   /// Whether files of the system are being dragged over the list.
   bool _dropping = false;
 
+  /// Where end-to-end encryption stands: vaults need the account's key unlocked.
+  E2eStatus? _e2e;
+
+  /// The vault the directory shown lies in, if any.
+  String? get _vaultHere => _path.lastOrNull?.vault;
+
   /// Nodes are dragged with a mouse; on phones a touch scrolls, and moving goes through the menu.
   static bool get _dragging => switch (defaultTargetPlatform) {
     TargetPlatform.iOS || TargetPlatform.android => false,
@@ -74,6 +82,19 @@ class _FilesPageState extends State<FilesPage> {
     super.initState();
     _load();
     _loadTrash();
+    _loadKey();
+  }
+
+  Future<void> _loadKey() async {
+    final status = await widget.account.keyStatus();
+    if (mounted) setState(() => _e2e = status);
+  }
+
+  /// Asks for the recovery code; with the key unlocked, the vaults' names are shown again.
+  Future<void> _unlock() async {
+    if (!await unlockKey(context, widget.account)) return;
+    await _loadKey();
+    await _load();
   }
 
   @override
@@ -181,8 +202,31 @@ class _FilesPageState extends State<FilesPage> {
     final name = await askText(context, title: l.newFolder, confirm: l.create, label: l.newFolderName);
     if (name == null) return;
     final store = _store!;
+    final (vault, parent) = (_vaultHere, _path.lastOrNull?.id);
     await _run(
-      () => widget.account.createDirectory(accountId: store.accountId, parentId: _path.lastOrNull?.id, name: name),
+      () => vault != null && parent != null
+          ? widget.account.createDirectoryInVault(
+              accountId: store.accountId,
+              vaultId: vault,
+              parentId: parent,
+              name: name,
+            )
+          : widget.account.createDirectory(accountId: store.accountId, parentId: parent, name: name),
+    );
+  }
+
+  Future<void> _newVault() async {
+    final l = AppLocalizations.of(context);
+    if (!(_e2e?.unlocked ?? false)) {
+      await _unlock();
+      if (!(_e2e?.unlocked ?? false)) return;
+    }
+    if (!mounted) return;
+    final name = await askText(context, title: l.newVault, confirm: l.create, label: l.newVaultName);
+    if (name == null) return;
+    final store = _store!;
+    await _run(
+      () => widget.account.createVault(accountId: store.accountId, parentId: _path.lastOrNull?.id, name: name),
     );
   }
 
@@ -214,7 +258,12 @@ class _FilesPageState extends State<FilesPage> {
     setState(() => _uploads = [for (final f in files) (name: f.name, sent: 0, total: 0)]);
     final done = Completer<void>();
     widget.account
-        .uploadFiles(accountId: store.accountId, parentId: parent, paths: [for (final f in files) f.path])
+        .uploadFiles(
+          accountId: store.accountId,
+          parentId: parent,
+          vaultId: _vaultHere,
+          paths: [for (final f in files) f.path],
+        )
         .listen(
           (p) {
             if (!mounted || p.index >= _uploads.length) return;
@@ -236,7 +285,12 @@ class _FilesPageState extends State<FilesPage> {
     final name = await askText(context, title: l.rename, confirm: l.rename, initial: node.name, label: l.newName);
     if (name == null || name == node.name) return;
     final store = _store!;
-    await _run(() => widget.account.renameFile(accountId: store.accountId, id: node.id, name: name));
+    final vault = node.vault;
+    await _run(
+      () => vault != null
+          ? widget.account.renameInVault(accountId: store.accountId, vaultId: vault, id: node.id, name: name)
+          : widget.account.renameFile(accountId: store.accountId, id: node.id, name: name),
+    );
   }
 
   Future<void> _delete(FileNode node) async {
@@ -284,6 +338,12 @@ class _FilesPageState extends State<FilesPage> {
   Future<void> _moveInto(FileNode node, FileNode? directory) async {
     final target = directory?.id;
     if (node.id == target || node.parentId == target) return;
+    // Nothing moves into, out of or between vaults – but into the trash, which deleting needs.
+    if (node.vault != directory?.vault && directory?.id != _trash?.id) {
+      final l = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.vaultMoveNo)));
+      return;
+    }
     final store = _store!;
     await _run(
       () => widget.account.copyFile(
@@ -298,30 +358,60 @@ class _FilesPageState extends State<FilesPage> {
 
   /// Shows a file in the viewer, or hands it to another app.
   void _view(FileNode node) {
-    final store = _store!;
     viewFile(
       context,
       name: node.name,
       mediaType: node.mediaType,
-      fetch: (directory) => widget.account.download(
-        accountId: store.accountId,
-        blobId: node.blobId!,
-        name: node.name,
-        mediaType: node.mediaType ?? 'application/octet-stream',
-        directory: directory,
-      ),
+      fetch: (directory) => _fetch(node, directory),
       onSave: () => _save(node),
     );
   }
 
-  void _save(FileNode node) => saveBlob(
-    context,
-    widget.account,
-    accountId: _store!.accountId,
-    blobId: node.blobId!,
-    name: node.name,
-    mediaType: node.mediaType ?? 'application/octet-stream',
-  );
+  /// A file into `directory` – from a vault decrypted here.
+  Future<String> _fetch(FileNode node, String directory) {
+    final store = _store!;
+    final vault = node.vault;
+    if (vault != null) {
+      return widget.account.downloadFromVault(
+        accountId: store.accountId,
+        vaultId: vault,
+        id: node.id,
+        blobId: node.blobId!,
+        name: node.name,
+        directory: directory,
+      );
+    }
+    return widget.account.download(
+      accountId: store.accountId,
+      blobId: node.blobId!,
+      name: node.name,
+      mediaType: node.mediaType ?? 'application/octet-stream',
+      directory: directory,
+    );
+  }
+
+  void _save(FileNode node) => node.vault != null
+      ? _saveFromVault(node)
+      : saveBlob(
+          context,
+          widget.account,
+          accountId: _store!.accountId,
+          blobId: node.blobId!,
+          name: node.name,
+          mediaType: node.mediaType ?? 'application/octet-stream',
+        );
+
+  Future<void> _saveFromVault(FileNode node) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
+    try {
+      final directory = await saveDirectory();
+      final path = await _fetch(node, directory);
+      messenger.showSnackBar(SnackBar(content: Text(l.savedTo(path))));
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    }
+  }
 
   /// What can be done with a node, at the point of a right click, a long press or its button.
   Future<void> _menu(FileNode node, Offset position, [List<FileNode>? path]) async {
@@ -329,17 +419,21 @@ class _FilesPageState extends State<FilesPage> {
     final rights = _rightsOf(node, path);
     final store = _store!;
     final deleteForGood = _trash == null || _inTrash || node.role != null;
+    // In a vault: no links, versions or copies (RFC 0006, 6); a vault is shared as a whole; locked, only deleting.
+    final plain = node.vault == null;
+    final open = !node.locked;
     final choice = await showPointMenu<String>(
       context,
       position: position,
       items: [
-        if (!node.isDirectory) ('open', LucideIcons.eye, l.open, false),
-        if (!node.isDirectory) ('save', LucideIcons.download, l.save, false),
-        if (node.isDirectory && rights.share && node.role == null) ('share', LucideIcons.share2, l.share, false),
-        if (_links && rights.share && node.role == null) ('link', LucideIcons.link, l.link, false),
-        if (!node.isDirectory) ('versions', LucideIcons.history, l.versions, false),
-        if (node.role == null) ('copy', LucideIcons.copy, l.copyOrMove, false),
-        if (rights.rename && node.role == null) ('rename', LucideIcons.pencil, l.rename, false),
+        if (!node.isDirectory && open) ('open', LucideIcons.eye, l.open, false),
+        if (!node.isDirectory && open) ('save', LucideIcons.download, l.save, false),
+        if (node.isDirectory && rights.share && node.role == null && (plain || node.isVault) && open)
+          ('share', LucideIcons.share2, l.share, false),
+        if (_links && rights.share && node.role == null && plain) ('link', LucideIcons.link, l.link, false),
+        if (!node.isDirectory && plain) ('versions', LucideIcons.history, l.versions, false),
+        if (node.role == null && plain) ('copy', LucideIcons.copy, l.copyOrMove, false),
+        if (rights.rename && node.role == null && open) ('rename', LucideIcons.pencil, l.rename, false),
         if (rights.delete && node.role == null)
           ('delete', LucideIcons.trash2, deleteForGood ? l.deleteFileForGood : l.delete, true),
       ],
@@ -381,6 +475,13 @@ class _FilesPageState extends State<FilesPage> {
           tooltip: l.newFolder,
           onPressed: _busy ? null : _newFolder,
         ),
+        if (_vaultHere == null && (_e2e?.vaultsAllowed ?? false))
+          KIconButton(
+            key: const ValueKey('new-vault'),
+            icon: LucideIcons.folderLock,
+            tooltip: l.newVaultHint,
+            onPressed: _busy ? null : _newVault,
+          ),
         KIconButton(
           key: const ValueKey('upload'),
           icon: LucideIcons.upload,
@@ -408,6 +509,8 @@ class _FilesPageState extends State<FilesPage> {
           hint: l.searchFiles,
         ),
         if (_uploads.isNotEmpty) _Uploads(uploads: _uploads),
+        if (!(_e2e?.unlocked ?? false) && (_vaultHere != null || (_nodes ?? const []).any((n) => n.locked)))
+          _LockedNote(text: l.vaultLocked, action: l.unlock, onPressed: _unlock),
         Expanded(
           child: DropTarget(
             enable: here.add && !_inTrash && _query.isEmpty,
@@ -520,7 +623,17 @@ class _FilesPageState extends State<FilesPage> {
       onRefresh: _load,
       child: ListView(
         children: [
-          for (final n in nodes) _row(l, k, n, onOpen: () => n.isDirectory ? _open(_store!, [..._path, n]) : _view(n)),
+          for (final n in nodes)
+            _row(
+              l,
+              k,
+              n,
+              onOpen: () => n.locked && !n.isDirectory
+                  ? _unlock()
+                  : n.isDirectory
+                  ? _open(_store!, [..._path, n])
+                  : _view(n),
+            ),
         ],
       ),
     );
@@ -546,6 +659,10 @@ class _FilesPageState extends State<FilesPage> {
         leading: Icon(
           n.role == 'trash'
               ? LucideIcons.trash2
+              : n.isVault
+              ? LucideIcons.folderLock
+              : n.locked
+              ? LucideIcons.lock
               : n.isDirectory
               ? LucideIcons.folder
               : fileIcon(n.mediaType),
@@ -556,7 +673,11 @@ class _FilesPageState extends State<FilesPage> {
           children: [
             Flexible(
               child: Text(
-                n.role == 'trash' ? l.trash : n.name,
+                n.role == 'trash'
+                    ? l.trash
+                    : n.locked
+                    ? (n.isVault ? l.lockedVault : (n.isDirectory ? l.lockedFolder : l.lockedFile))
+                    : n.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: KText.label(k),
@@ -588,7 +709,8 @@ class _FilesPageState extends State<FilesPage> {
     Widget target = row;
     if (n.isDirectory) {
       target = DragTarget<FileNode>(
-        onWillAcceptWithDetails: (d) => d.data.id != n.id && n.mayAddChildren,
+        onWillAcceptWithDetails: (d) =>
+            d.data.id != n.id && n.mayAddChildren && !n.locked && (d.data.vault == n.vault || n.role == 'trash'),
         onAcceptWithDetails: (d) => _moveInto(d.data, n),
         builder: (context, candidates, _) => candidates.isEmpty
             ? row
@@ -601,7 +723,7 @@ class _FilesPageState extends State<FilesPage> {
               ),
       );
     }
-    if (!rights.rename || _busy) return target;
+    if (!rights.rename || _busy || n.locked) return target;
     return Draggable<FileNode>(
       data: n,
       feedback: _DragFeedback(name: n.name, directory: n.isDirectory),
@@ -724,6 +846,36 @@ class _Trail extends StatelessWidget {
             ),
           ),
           ...actions.expand((a) => [const SizedBox(width: 4), a]),
+        ],
+      ),
+    );
+  }
+}
+
+/// Above the list while a vault's names cannot be read: the way to unlock the account's key.
+class _LockedNote extends StatelessWidget {
+  const _LockedNote({required this.text, required this.action, required this.onPressed});
+
+  final String text;
+  final String action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Container(
+      key: const ValueKey('vault-locked'),
+      padding: const EdgeInsets.fromLTRB(16, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: k.raised,
+        border: Border(bottom: BorderSide(color: k.line)),
+      ),
+      child: Row(
+        children: [
+          Icon(LucideIcons.lock, size: 16, color: k.muted),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: KText.small(k))),
+          KButton(key: const ValueKey('vault-unlock'), label: action, tone: KTone.quiet, onPressed: onPressed),
         ],
       ),
     );

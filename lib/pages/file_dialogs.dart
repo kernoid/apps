@@ -105,6 +105,22 @@ class _ShareDialogState extends State<_ShareDialog> {
     });
     try {
       await widget.account.shareDirectory(accountId: widget.accountId, id: widget.directory.id, shares: _shares);
+      // A vault's key goes to everyone it is shared with, wrapped for their own key (RFC 0006, 6).
+      if (widget.directory.isVault && _shares.isNotEmpty) {
+        final waiting = await widget.account.giveVaultKeys(
+          accountId: widget.accountId,
+          vaultId: widget.directory.id,
+          principalIds: [for (final s in _shares) s.principalId],
+        );
+        if (waiting.isNotEmpty && mounted) {
+          final l = AppLocalizations.of(context);
+          await showNote(
+            context,
+            text: l.vaultKeysWaiting(waiting.map((p) => p.name.isEmpty ? (p.email ?? p.id) : p.name).join(', ')),
+            close: l.done,
+          );
+        }
+      }
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (mounted) {

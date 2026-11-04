@@ -96,6 +96,22 @@ Future<bool> confirmAction(
   return sure ?? false;
 }
 
+/// A note to read, with one button to close it.
+Future<void> showNote(BuildContext context, {required String text, required String close}) => showDialog<void>(
+  context: context,
+  builder: (context) => AlertDialog(
+    content: SizedBox(width: 360, child: Text(text, style: KText.body(context.k))),
+    actions: [
+      KButton(
+        key: const ValueKey('note-close'),
+        label: close,
+        tone: KTone.primary,
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    ],
+  ),
+);
+
 /// A menu at a point – of a right click or a long press – with an icon before every entry.
 Future<T?> showPointMenu<T>(
   BuildContext context, {

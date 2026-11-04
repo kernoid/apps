@@ -914,4 +914,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get foldersNotUploaded => 'Folders cannot be uploaded yet – only the files were.';
+
+  @override
+  String get newVault => 'New vault';
+
+  @override
+  String get newVaultName => 'Name of the vault';
+
+  @override
+  String get newVaultHint => 'New vault – only those it is shared with can read what is in it';
+
+  @override
+  String get vaultLocked => 'Unlock your key to read what is in vaults.';
+
+  @override
+  String get lockedVault => 'Locked vault';
+
+  @override
+  String get lockedFolder => 'Encrypted folder';
+
+  @override
+  String get lockedFile => 'Encrypted file';
+
+  @override
+  String get vaultMoveNo => 'Nothing moves into or out of a vault – only into the trash.';
+
+  @override
+  String vaultKeysWaiting(String names) {
+    return 'These can open the vault once they have a key of their own and you share it again: $names';
+  }
 }
