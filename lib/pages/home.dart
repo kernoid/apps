@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../app/explorer_files.dart';
 import '../app/sync_folders.dart';
 import '../app/tray.dart';
 import '../l10n/app_localizations.dart';
@@ -39,11 +40,15 @@ class _HomePageState extends State<HomePage> {
   /// The icon in the menu bar while folders are kept in step – closing the window then only hides it.
   Tray? _tray;
 
+  /// The stores in Windows' Explorer, kept in step while the app is open.
+  late final _explorer = ExplorerFiles(widget.account);
+
   @override
   void initState() {
     super.initState();
     _sync.addListener(_trayWhenNeeded);
     _sync.start();
+    _explorer.start();
   }
 
   void _trayWhenNeeded() {
@@ -65,6 +70,7 @@ class _HomePageState extends State<HomePage> {
     _sync.removeListener(_trayWhenNeeded);
     _tray?.stop();
     _sync.dispose();
+    _explorer.dispose();
     super.dispose();
   }
 
@@ -83,7 +89,7 @@ class _HomePageState extends State<HomePage> {
       1 => CalendarPage(key: const ValueKey('calendar'), account: widget.account),
       2 => ContactsPage(key: const ValueKey('contacts'), account: widget.account),
       3 => FilesPage(key: const ValueKey('files'), account: widget.account),
-      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync),
+      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync, explorer: _explorer),
     };
     final name = widget.account.username;
     if (MediaQuery.sizeOf(context).width >= wideLayout) {

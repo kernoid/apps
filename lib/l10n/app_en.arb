@@ -506,5 +506,27 @@
   "syncAtLogin": "Start with the computer, so that the folders are kept in step without opening the app",
   "trayOpen": "Open kernoid",
   "traySync": "Sync folders now",
-  "trayQuit": "Quit kernoid"
+  "trayQuit": "Quit kernoid",
+  "explorerTitle": "Files in Explorer",
+  "explorerHint": "Your stores as folders in Explorer: files show at once and are downloaded when they are opened, and what you change there reaches kernoid within a minute while the app is open. Explorer gets a login of its own – kernoid's login page opens once more for it.",
+  "explorerSetUp": "Show in Explorer",
+  "explorerRemove": "Remove from Explorer",
+  "explorerStarting": "Starting …",
+  "explorerLast": "Last compared {time}",
+  "@explorerLast": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "explorerSignedOut": "The login for Explorer has ended – show the files again to sign in anew.",
+  "explorerFailed": "Not shown in Explorer: {error}",
+  "@explorerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

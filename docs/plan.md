@@ -186,6 +186,34 @@ when it asks again (no `changes` rounds or push yet); a file whose upload fails 
 another try; moving between stores; search (`FLAG_SUPPORTS_SEARCH`), recent files, thumbnails; a renewal in flight
 while the idle session closes (after a minute) is lost with it and ends the login.
 
+**Windows (built 2026-11-04, not yet run on Windows):** the Cloud Files shell is Rust in the app's crate
+(`rust/src/provider/cloud_files.rs`, the calls to Windows in `cloud_files/system.rs` with the `windows` crate) and a
+client of the shells' core (`rust/src/provider.rs`) like the others. In the account, “Files in Explorer” makes a login
+of its own with kernoid's login page – never the app's, as two holders would end it at the next renewal – which the
+shell keeps in the app's support directory, protected with DPAPI, together with each store's anchor and tree.
+
+- **Sync roots:** one per store below `%USERPROFILE%\kernoid` (`CfRegisterSyncRoot`, full hydration, the whole
+  namespace placed by the shell – no FETCH_PLACEHOLDERS), connected while the app is open (`CfConnectSyncRoot`).
+- **Placeholders:** a round every minute asks for `changes` since the anchor (all of a store when it is new or the
+  anchor too old) and makes, renames, moves, updates or removes placeholders (`CfCreatePlaceholders`,
+  `CfUpdatePlaceholder` with dehydration when the content changed at kernoid and not here). Vault items, the Trash
+  and names Windows refuses are not shown.
+- **Content:** FETCH_DATA fetches the item through the core into a temporary file and hands it over in pieces of 4 MiB
+  (`CfExecute`, TRANSFER_DATA), with progress.
+- **Changes in Explorer:** NOTIFY_DELETE puts the item into the store's Trash; NOTIFY_RENAME renames or moves it at
+  kernoid (out of the stores, the Recycle Bin included: into the Trash; into another store: refused). New files and
+  folders are found by a scan after each round, uploaded and turned into placeholders; changed files are uploaded
+  again.
+
+**OPEN**: run and test it on Windows at all (only type-checked so far, and only with the core stubbed: the C parts of
+the crate do not build for `x86_64-pc-windows-msvc` on macOS); the registration with `StorageProviderSyncRootManager`
+for Explorer's navigation pane and status icons; which access a handle needs for `CfConvertToPlaceholder` and
+`CfUpdatePlaceholder`; whether the platform sends the provider's own renames and deletions back to it (guarded either
+way); whether a placeholder moved out of a root is always hydrated first; conflicts kept as copies (today the newer
+upload wins and the server keeps the older as a version); deletions while the shell does not run; stores no longer
+reached; several accounts on one Windows user; moving between stores; vaults (section 6); push instead of a timer; a
+provider started at login, without the app; the platform's own pin and free-up commands.
+
 ## 6. End-to-end encryption
 
 End-to-end encryption is **a focus of the apps**. kernoid's server side is in
@@ -236,6 +264,7 @@ the order in which the vault and calendar parts follow mail.
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |
 | Viewing files | pdfrx 2.9 (PDFium, prebuilt and fetched at build time with its hash); text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
 | Dropping files | desktop_drop 0.8.4 – 0.9 needs a cross_file that file_selector does not take yet | Apache-2.0; on Linux dbus (MPL-2.0, file-level copyleft, Dart source unchanged) | moving inside the app with Flutter's own drag and drop |
+| Windows' Cloud Files, DPAPI | `windows` 0.62 (Microsoft), only built for Windows | MIT OR Apache-2.0 | the Explorer shell of section 5 |
 | Tray, start at login | tray_manager 0.5.3 and window_manager 0.5.2 – 0.6 and later build a native library (nativeapi) on every platform; start at login without a package (SMAppService, the registry, XDG Autostart) | MIT; on Linux the system's libayatana-appindicator (LGPL, linked as WebKitGTK is) | decided 2026-11-04 |
 
 All versions are exact and at least two weeks old when taken, as in kernoid.

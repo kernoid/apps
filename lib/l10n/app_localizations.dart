@@ -1969,6 +1969,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit kernoid'**
   String get trayQuit;
+
+  /// No description provided for @explorerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Files in Explorer'**
+  String get explorerTitle;
+
+  /// No description provided for @explorerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your stores as folders in Explorer: files show at once and are downloaded when they are opened, and what you change there reaches kernoid within a minute while the app is open. Explorer gets a login of its own – kernoid\'s login page opens once more for it.'**
+  String get explorerHint;
+
+  /// No description provided for @explorerSetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Explorer'**
+  String get explorerSetUp;
+
+  /// No description provided for @explorerRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Explorer'**
+  String get explorerRemove;
+
+  /// No description provided for @explorerStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting …'**
+  String get explorerStarting;
+
+  /// No description provided for @explorerLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last compared {time}'**
+  String explorerLast(String time);
+
+  /// No description provided for @explorerSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The login for Explorer has ended – show the files again to sign in anew.'**
+  String get explorerSignedOut;
+
+  /// No description provided for @explorerFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not shown in Explorer: {error}'**
+  String explorerFailed(String error);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

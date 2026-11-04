@@ -312,5 +312,13 @@
   "syncAtLogin": "Mit dem Computer starten, damit die Ordner abgeglichen werden, ohne die App zu öffnen",
   "trayOpen": "kernoid öffnen",
   "traySync": "Ordner jetzt abgleichen",
-  "trayQuit": "kernoid beenden"
+  "trayQuit": "kernoid beenden",
+  "explorerTitle": "Dateien im Explorer",
+  "explorerHint": "Deine Speicher als Ordner im Explorer: Dateien erscheinen sofort und werden geladen, wenn man sie öffnet, und was du dort änderst, kommt binnen einer Minute bei kernoid an, solange die App offen ist. Der Explorer bekommt eine eigene Anmeldung – die Anmeldeseite von kernoid öffnet sich dafür noch einmal.",
+  "explorerSetUp": "Im Explorer zeigen",
+  "explorerRemove": "Aus dem Explorer entfernen",
+  "explorerStarting": "Wird gestartet …",
+  "explorerLast": "Zuletzt abgeglichen {time}",
+  "explorerSignedOut": "Die Anmeldung für den Explorer ist abgelaufen – zeige die Dateien erneut, um dich neu anzumelden.",
+  "explorerFailed": "Nicht im Explorer gezeigt: {error}"
 }

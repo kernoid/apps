@@ -21,6 +21,10 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
   opened, written, made, renamed, moved within a store and deleted into the Trash; vault items listed as locked.
   Switched on in the account with a sign-in of its own; signing out of the app removes it again. Not yet tried on a
   device.
+- Files in Explorer (Windows, not yet tried on Windows): the stores as cloud folders below `%USERPROFILE%\kernoid`
+  through the Cloud Files API – files show at once and are downloaded when opened; deleting, renaming, moving, new and
+  changed files reach kernoid. Set up in the account with a login of its own, kept protected with DPAPI; runs while
+  the app is open.
 
 ### Fixed
 

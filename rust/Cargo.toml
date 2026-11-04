@@ -39,6 +39,17 @@ tokio = { version = "=1.53.3", features = ["rt-multi-thread", "fs", "io-util"] }
 [target.'cfg(target_os = "android")'.dependencies]
 jni = { version = "=0.22.4", default-features = false }
 rustls-platform-verifier = "=0.7.1"
+# Windows' Cloud Files API (cfapi) for the stores in Explorer, and DPAPI for the shell's login (docs/plan.md, 5).
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Cryptography",
+    "Win32_Storage_CloudFilters",
+    "Win32_Storage_FileSystem",
+    "Win32_System_CorrelationVector",
+    "Win32_System_IO",
+] }
 
 [dev-dependencies]
 tokio = { version = "=1.53.3", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }

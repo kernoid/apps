@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/appearance.dart';
 import '../app/login_item.dart';
 import '../app/documents_provider.dart';
+import '../app/explorer_files.dart';
 import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -16,6 +17,7 @@ import '../src/rust/api/kernoid.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import '../widgets/e2e.dart';
+import 'login.dart';
 
 /// The user's own account – never administration, which stays in the web app and the terminal app (docs/plan.md, 2):
 /// who is signed in, the look on this device, the vacation response, the end-to-end key – and, with a login of
@@ -23,13 +25,16 @@ import '../widgets/e2e.dart';
 /// with the password – the password itself, second factors, passkeys, app passwords, sessions – is the web app's, a
 /// click away.
 class AccountPage extends StatelessWidget {
-  const AccountPage({super.key, required this.account, required this.onSignOut, this.sync});
+  const AccountPage({super.key, required this.account, required this.onSignOut, this.sync, this.explorer});
 
   final Kernoid account;
   final VoidCallback onSignOut;
 
   /// The folders of this computer kept in step (desktops).
   final SyncFolders? sync;
+
+  /// The stores in Windows' Explorer.
+  final ExplorerFiles? explorer;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +93,8 @@ class AccountPage extends StatelessWidget {
                     _MailSettingsSection(account: account),
                   ],
                   if (sync != null && SyncFolders.available) _SyncSection(account: account, sync: sync!),
+                  if (explorer != null && ExplorerFiles.available)
+                    _ExplorerSection(account: account, explorer: explorer!),
                   if (DocumentsProvider.available) _DocumentsSection(account: account),
                   _VacationSection(account: account),
                   _KeyCard(account: account),
@@ -1104,6 +1111,97 @@ class _DocumentsSectionState extends State<_DocumentsSection> {
             Text(_error!, style: KText.small(k).copyWith(color: k.error)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// kernoid's stores in Windows' Explorer: set up with a login of its own (kernoid's login page once more), shown with
+/// its folders and how the last round went, and taken out again.
+class _ExplorerSection extends StatefulWidget {
+  const _ExplorerSection({required this.account, required this.explorer});
+
+  final Kernoid account;
+  final ExplorerFiles explorer;
+
+  @override
+  State<_ExplorerSection> createState() => _ExplorerSectionState();
+}
+
+class _ExplorerSectionState extends State<_ExplorerSection> {
+  bool _signingIn = false;
+  String? _error;
+
+  Future<void> _setUp() async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _signingIn = true;
+      _error = null;
+    });
+    try {
+      // A login of its own for the shell – never the app's: two holders would end it at the next renewal.
+      final shell = await signInWithBrowser(widget.account.server, widget.account.username);
+      await widget.explorer.setUp(shell);
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _error = error.code == 'CANCELED' ? l.signInCancelled : error.message ?? error.code);
+    } catch (error) {
+      if (mounted) setState(() => _error = errorText(error));
+    } finally {
+      if (mounted) setState(() => _signingIn = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final k = context.k;
+    return KSection(
+      title: l.explorerTitle,
+      icon: LucideIcons.hardDrive,
+      description: l.explorerHint,
+      child: ListenableBuilder(
+        listenable: widget.explorer,
+        builder: (context, _) {
+          final explorer = widget.explorer;
+          final status = explorer.status;
+          final signedOut = status?.signedOut ?? false;
+          final error = _error ?? explorer.error;
+          final lines = <String>[
+            if (explorer.busy || _signingIn) l.explorerStarting,
+            if (signedOut) l.explorerSignedOut,
+            if (error != null) l.explorerFailed(error),
+            if (DateTime.tryParse(status?.lastRound ?? '') case final last?)
+              l.explorerLast(TimeOfDay.fromDateTime(last.toLocal()).format(context)),
+            ...?status?.problems.take(5),
+          ];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final folder in status?.folders ?? const <String>[])
+                Text(folder, style: TextStyle(color: k.text, fontSize: 13)),
+              for (final line in lines)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(line, style: TextStyle(color: k.muted, fontSize: 13)),
+                ),
+              const SizedBox(height: 8),
+              if (explorer.configured && !signedOut)
+                KButton(
+                  key: const ValueKey('explorer-remove'),
+                  label: l.explorerRemove,
+                  icon: LucideIcons.folderX,
+                  onPressed: explorer.busy ? null : explorer.remove,
+                )
+              else
+                KButton(
+                  key: const ValueKey('explorer-set-up'),
+                  label: l.explorerSetUp,
+                  icon: LucideIcons.folderSymlink,
+                  onPressed: explorer.busy || _signingIn ? null : _setUp,
+                ),
+            ],
+          );
+        },
       ),
     );
   }
