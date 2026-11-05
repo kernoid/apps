@@ -7,6 +7,8 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-11-05
+
 ### Added
 
 - Folders of this computer kept in step with the stores (desktops): chosen in the account, one per store, synced by
@@ -146,7 +148,8 @@ Marked `OPEN` in [docs/plan.md](docs/plan.md), among them: files in the system's
 syncing a folder, unlocking with a passkey, one instance of a recurring event on its own, a month view, HTML mail,
 forwarding the attachments of an encrypted message, signed builds and the app stores.
 
-[Unreleased]: https://github.com/kernoid/apps/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/kernoid/apps/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kernoid/apps/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/kernoid/apps/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/kernoid/apps/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/kernoid/apps/compare/v0.2.0...v0.2.1
