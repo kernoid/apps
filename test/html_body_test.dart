@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
+import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
 import 'package:kernoid/widgets/html_body.dart';

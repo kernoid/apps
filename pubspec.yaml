@@ -7,7 +7,7 @@ publish_to: 'none'
 version: 0.3.0+6
 
 environment:
-  sdk: ^3.13.7
+  sdk: ^3.14.0
 
 dependencies:
   file_selector: 1.1.0
@@ -30,6 +30,9 @@ dependencies:
   desktop_drop: 0.8.4
   tray_manager: 0.5.3
   window_manager: 0.5.2
+  # Material and Cupertino as packages of their own since Flutter 3.50 (`dart fix --code=migrate_design_widgets`).
+  material_ui: 1.8.0
+  cupertino_ui: 1.1.4
 
 dev_dependencies:
   flutter_lints: 6.0.0

@@ -276,7 +276,7 @@ the order in which the vault and calendar parts follow mail.
 
 | Block | Choice | Licence | Note |
 |---|---|---|---|
-| UI | Flutter 3.47, Dart 3.13 | BSD-3-Clause | one code base for five platforms, accessibility on all of them |
+| UI | Flutter 3.50, Dart 3.14; Material and Cupertino from the packages `material_ui` and `cupertino_ui` | BSD-3-Clause | one code base for five platforms, accessibility on all of them |
 | Dart ↔ Rust | flutter_rust_bridge 2.13 | MIT | async and streams in both directions |
 | Swift/Kotlin ↔ Rust | a C boundary by hand: JSON through two C functions (`rust/src/provider.rs`), JNI for Kotlin | MIT | chosen 2026-11-04 instead of UniFFI 0.32 (MPL-2.0, file-level copyleft) |
 | Kotlin ↔ Rust (built) | JSON messages over JNI, jni 0.22.4 | MIT OR Apache-2.0 | the core of the shells (`rust/src/provider.rs`); jni came already with reqwest on Android |

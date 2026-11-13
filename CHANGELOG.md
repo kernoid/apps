@@ -7,6 +7,11 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Changed
+
+- Flutter 3.50.0 with Dart 3.14 (from 3.47.8). Material and Cupertino come from their own packages, `material_ui`
+  1.8.0 and `cupertino_ui` 1.1.4, as Flutter 3.50 deprecates `package:flutter/material.dart` and `cupertino.dart`.
+
 ### Fixed
 
 - The file shells (Android's Files app, Explorer, Finder) showed files read-only: kernoid gives rights on directories

@@ -2,7 +2,7 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';

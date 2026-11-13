@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';

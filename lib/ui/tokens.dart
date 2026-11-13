@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// kernoid's look, as the web app has it (kernoid/kernoid, web/app/src/style.css): dark by default, light when the
 /// system is light. Every colour, size and space of the app comes from here, through `context.k`.

@@ -43,7 +43,8 @@ layout and the checks.
 - **kernoid's look, not Material's:** pages are built from `lib/ui/` – colours, sizes and text from `KTokens`
   (`context.k`, the web app's values, light and dark), the widgets `KButton`, `KIconButton`, `KTopBar`, `KListRow`,
   `KSideItem`, `KAvatar`, `KBadge`, `KSegmented`, `KSection`. Icons are Lucide (`lucide_icons_flutter`), text IBM Plex.
-  Material stays only underneath (navigation, text input, overlays) and is themed in `ui/theme.dart`; a new widget
+  Material stays only underneath (navigation, text input, overlays) – from the package `material_ui`, not
+  `package:flutter/material.dart`, deprecated since Flutter 3.50 – and is themed in `ui/theme.dart`; a new widget
   that is seen goes into `lib/ui/` rather than taking Material's.
 - Dart lines up to 120 characters (`analysis_options.yaml`), like the Rust side (`rust/rustfmt.toml`).
 

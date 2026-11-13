@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoPageTransitionsBuilder;
+import 'package:material_ui/material_ui.dart';
 
 import 'tokens.dart';
 
