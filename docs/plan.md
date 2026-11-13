@@ -199,7 +199,11 @@ locked. It has a login of its own: the account page signs in once more with Open
 (`lib/app/documents_provider.dart`); the provider keeps it encrypted with a key of the Android Keystore and keeps every
 renewal the core reports. The same JNI boundary hands the JVM to rustls-platform-verifier, which reqwest checks
 certificates with on Android – needed by the app itself too; its Kotlin part comes from the rustls project's Maven
-repository on GitHub. **OPEN**: not yet run on a device or emulator; changes made elsewhere reach the Files app only
+repository on GitHub. **Run 2026-11-13** in an emulator (Android Automotive 15, the only complete image at hand – no
+Files app there, so through the system's document picker): the app logs in (app password and OpenID Connect, kept
+across a restart), verifies certificates, and the provider lists, opens, writes, renames, moves and deletes into the
+Trash; files lacked rights until the core gave them their directory's. **OPEN**: a phone image or device and the real
+Files app; the system's browser in the OpenID Connect login; changes made elsewhere reach the Files app only
 when it asks again (no `changes` rounds or push yet); a file whose upload fails on close is dropped, not kept for
 another try; moving between stores; search (`FLAG_SUPPORTS_SEARCH`), recent files, thumbnails; a renewal in flight
 while the idle session closes (after a minute) is lost with it and ends the login.
