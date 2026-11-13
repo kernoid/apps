@@ -1076,4 +1076,43 @@ class AppLocalizationsDe extends AppLocalizations {
   String fileProviderShown(String stores) {
     return 'Angezeigt: $stores';
   }
+
+  @override
+  String get back => 'Zurück';
+
+  @override
+  String get close => 'Schließen';
+
+  @override
+  String get clear => 'Leeren';
+
+  @override
+  String get cut => 'Ausschneiden';
+
+  @override
+  String get paste => 'Einfügen';
+
+  @override
+  String get selectAll => 'Alles auswählen';
+
+  @override
+  String get pickDate => 'Datum wählen';
+
+  @override
+  String get pickTime => 'Uhrzeit wählen';
+
+  @override
+  String get previousMonth => 'Voriger Monat';
+
+  @override
+  String get nextMonth => 'Nächster Monat';
+
+  @override
+  String get hour => 'Stunde';
+
+  @override
+  String get minute => 'Minute';
+
+  @override
+  String get moreOptions => 'Mehr';
 }

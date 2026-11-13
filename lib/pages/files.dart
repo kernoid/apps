@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/file_provider.dart';
@@ -12,9 +11,7 @@ import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/dialogs.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 import '../widgets/e2e.dart';
 import '../widgets/states.dart';
 import 'file_dialogs.dart';
@@ -186,13 +183,13 @@ class _FilesPageState extends State<FilesPage> {
       (add: n.mayAddChildren, rename: n.mayRename, delete: n.mayDelete, share: n.mayShare, content: n.mayModifyContent);
 
   Future<void> _run(Future<void> Function() work) async {
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
       await work();
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -339,7 +336,7 @@ class _FilesPageState extends State<FilesPage> {
     // Nothing moves into, out of or between vaults – but into the trash, which deleting needs.
     if (node.vault != directory?.vault && directory?.id != _trash?.id) {
       final l = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.vaultMoveNo)));
+      KToast.of(context).show(l.vaultMoveNo);
       return;
     }
     final store = _store!;
@@ -400,14 +397,14 @@ class _FilesPageState extends State<FilesPage> {
         );
 
   Future<void> _saveFromVault(FileNode node) async {
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     try {
       final directory = await saveDirectory();
       final path = await _fetch(node, directory);
-      messenger.showSnackBar(SnackBar(content: Text(l.savedTo(path))));
+      messenger.show(l.savedTo(path));
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     }
   }
 
@@ -534,29 +531,17 @@ class _FilesPageState extends State<FilesPage> {
       ],
     );
     if (!wide) {
-      return Scaffold(
-        appBar: KTopBar(
+      return KScaffold(
+        topBar: KTopBar(
           leading: const SizedBox(width: 6),
           actions: actions,
           titleWidget: Align(
             alignment: Alignment.centerLeft,
-            child: PopupMenuButton<FileStore>(
+            child: KMenuButton<FileStore>(
               key: const ValueKey('store-menu'),
               tooltip: l.files,
               onSelected: (s) => _open(s, const []),
-              itemBuilder: (_) => [
-                for (final s in _stores)
-                  PopupMenuItem(
-                    value: s,
-                    child: Row(
-                      children: [
-                        Icon(_storeIcon(s), size: 17, color: k.muted),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(storeName(l, s))),
-                      ],
-                    ),
-                  ),
-              ],
+              items: () => [for (final s in _stores) KMenuItem(value: s, label: storeName(l, s), icon: _storeIcon(s))],
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -579,7 +564,7 @@ class _FilesPageState extends State<FilesPage> {
         body: main,
       );
     }
-    return Scaffold(
+    return KScaffold(
       body: Row(
         children: [
           SizedBox(
@@ -604,7 +589,7 @@ class _FilesPageState extends State<FilesPage> {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     if (_query.isNotEmpty) {
       final found = _found;
-      if (found == null) return const Center(child: CircularProgressIndicator());
+      if (found == null) return const Center(child: KSpinner());
       if (found.isEmpty) return EmptyView(l.nothingFound, icon: LucideIcons.searchX);
       return ListView(
         children: [
@@ -621,11 +606,11 @@ class _FilesPageState extends State<FilesPage> {
       );
     }
     final nodes = _nodes;
-    if (nodes == null) return const Center(child: CircularProgressIndicator());
+    if (nodes == null) return const Center(child: KSpinner());
     if (nodes.isEmpty) {
       return EmptyView(_inTrash ? l.trashEmptyNote : l.folderEmpty, icon: LucideIcons.folderOpen);
     }
-    return RefreshIndicator(
+    return KRefresh(
       onRefresh: _load,
       child: ListView(
         children: [
@@ -810,12 +795,17 @@ class _Trail extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final k = context.k;
     Widget crumb(String label, List<FileNode> to, bool last) {
-      final button = TextButton(
-        onPressed: last ? null : () => onOpen(to),
-        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 6), minimumSize: const Size(0, 32)),
-        child: Text(
-          label,
-          style: last ? KText.heading(k).copyWith(fontSize: 15) : KText.label(k).copyWith(color: k.muted),
+      final button = KTappable(
+        onTap: last ? null : () => onOpen(to),
+        borderRadius: BorderRadius.circular(KSize.radiusSmall),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: last ? KText.heading(k).copyWith(fontSize: 15) : KText.label(k).copyWith(color: k.muted),
+          ),
         ),
       );
       final drop = onDropNode;
@@ -902,8 +892,8 @@ class _DragFeedback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return Material(
-      color: Colors.transparent,
+    return DefaultTextStyle(
+      style: KText.body(k),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
@@ -990,13 +980,7 @@ class _Uploads extends StatelessWidget {
                     child: Text(u.name, overflow: TextOverflow.ellipsis, style: KText.label(k)),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: u.total == 0 ? null : u.sent / u.total,
-                      color: k.accent,
-                      backgroundColor: k.line,
-                    ),
-                  ),
+                  Expanded(child: KProgressBar(value: u.total == 0 ? null : u.sent / u.total)),
                 ],
               ),
             ),

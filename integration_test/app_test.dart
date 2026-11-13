@@ -14,7 +14,6 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +27,7 @@ import 'package:kernoid/main.dart';
 import 'package:kernoid/pages/mail.dart';
 import 'package:kernoid/src/rust/api/kernoid.dart';
 import 'package:kernoid/src/rust/frb_generated.dart';
-import 'package:kernoid/ui/widgets.dart';
+import 'package:kernoid/ui/ui.dart';
 
 const server = String.fromEnvironment('KERNOID_TEST_SERVER');
 const address = String.fromEnvironment('KERNOID_TEST_ADDRESS');
@@ -182,16 +181,18 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('answer-accepted')));
       await waitFor(
         tester,
-        find.byWidgetPredicate((w) => w is ChoiceChip && w.key == const ValueKey('answer-accepted') && w.selected),
+        find.byWidgetPredicate(
+          (w) => w is KChip && w.key == const ValueKey('answer-accepted') && (w.selected ?? false),
+        ),
       );
       await shoot(tester, '$name-event-accepted');
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(find.byKey(const ValueKey('back')).first);
       await tester.pumpAndSettle();
 
       // A contact found by search; its address starts an email to it.
       await tester.tap(find.byKey(const ValueKey('nav-contacts')));
       await waitFor(tester, find.text(contact));
-      await tester.enterText(find.byType(SearchBar), contact.split(' ').first);
+      await tester.enterText(find.byKey(const ValueKey('contacts-search')), contact.split(' ').first);
       await waitFor(tester, find.text(contact));
       await shoot(tester, '$name-contacts');
       await tester.tap(find.text(contact).last);
@@ -202,10 +203,10 @@ void main() {
       await shoot(tester, '$name-contact');
       await tester.tap(write.first);
       await waitFor(tester, find.byKey(const ValueKey('to')));
-      final to = tester.widget<TextField>(
-        find.descendant(of: find.byKey(const ValueKey('to')), matching: find.byType(TextField)),
+      final to = tester.widget<EditableText>(
+        find.descendant(of: find.byKey(const ValueKey('to')), matching: find.byType(EditableText)),
       );
-      expect(to.controller!.text, contains('@'));
+      expect(to.controller.text, contains('@'));
       await shoot(tester, '$name-contact-compose');
     });
   }
@@ -248,7 +249,7 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
     await waitGone(tester, find.descendant(of: listRows, matching: find.textContaining('Probe $stamp')));
     // The snack bar that says so covers the button of the next page until it has gone.
-    await waitGone(tester, find.byType(SnackBar));
+    await waitGone(tester, find.byKey(const ValueKey('toast')));
 
     // A contact made, changed and deleted.
     await settledTap(tester, find.byKey(const ValueKey('nav-contacts')));
@@ -344,7 +345,7 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('this-event')));
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
     // The list reloads after the deletion: wait for it, then the other one is gone and the changed one stays.
-    await waitGone(tester, find.byType(SnackBar));
+    await waitGone(tester, find.byKey(const ValueKey('toast')));
     await waitFor(tester, inList('$title einmal'));
     await waitGone(tester, inList(title));
     expect(inList('$title einmal'), findsOneWidget);
@@ -367,7 +368,7 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('whole-series')));
     // Back on the calendar once deleted, the list loaded again without the series.
     await waitFor(tester, find.byKey(const ValueKey('new-event')));
-    await waitGone(tester, find.byType(CircularProgressIndicator));
+    await waitGone(tester, find.byType(KSpinner));
     await waitGone(tester, find.descendant(of: listRows, matching: find.textContaining(title)));
   });
 
@@ -430,7 +431,7 @@ void main() {
     await waitFor(tester, find.descendant(of: row, matching: find.byIcon(LucideIcons.flag)));
     await shoot(tester, 'mail-chosen');
     await settledTap(tester, find.byKey(const ValueKey('move-to')));
-    await settledTap(tester, find.widgetWithText(PopupMenuItem<Mailbox>, 'Website'));
+    await settledTap(tester, find.descendant(of: find.byKey(kMenuKey), matching: find.text('Website')));
     await waitGone(tester, inList('Treffen am Montag'));
     await settledTap(tester, side('Website'));
     await waitFor(tester, inList('Treffen am Montag'));
@@ -445,7 +446,7 @@ void main() {
     await tester.longPress(find.ancestor(of: find.text('Treffen am Montag'), matching: find.byType(KListRow)));
     await settledTap(tester, find.byKey(const ValueKey('mark-flag')));
     await settledTap(tester, find.byKey(const ValueKey('move-to')));
-    await settledTap(tester, find.widgetWithText(PopupMenuItem<Mailbox>, l.inbox).first);
+    await settledTap(tester, find.descendant(of: find.byKey(kMenuKey), matching: find.text(l.inbox)).first);
     await waitGone(tester, inList('Treffen am Montag'));
 
     // The shared mailbox, under its name, with its own inbox.
@@ -636,7 +637,12 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('link-create')));
     await settledTap(tester, find.byKey(const ValueKey('link-create')));
     await waitFor(tester, find.byKey(const ValueKey('link-made')));
-    expect(tester.widget<SelectableText>(find.byKey(const ValueKey('link-made'))).data, startsWith('http'));
+    expect(
+      tester
+          .widget<Text>(find.descendant(of: find.byKey(const ValueKey('link-made')), matching: find.byType(Text)))
+          .data,
+      startsWith('http'),
+    );
     await shoot(tester, 'files-link');
     await settledTap(tester, find.text(l.done));
 
@@ -696,7 +702,10 @@ void main() {
     // A text file opens in the viewer, and a picture and a PDF where the store has them.
     await settledTap(tester, row('Notizen.txt'));
     await waitFor(tester, find.byKey(const ValueKey('viewer-text')));
-    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, isNotEmpty);
+    expect(
+      tester.widget<Text>(find.descendant(of: find.byType(KSelectable), matching: find.byType(Text)).first).data,
+      isNotEmpty,
+    );
     await shoot(tester, 'viewer-text');
     await settledTap(tester, find.byKey(const ValueKey('back')));
     await waitGone(tester, find.byKey(const ValueKey('viewer')));
@@ -855,7 +864,10 @@ void main() {
     await shoot(tester, 'vault');
     await settledTap(tester, row('Brief.txt'));
     await waitFor(tester, find.byKey(const ValueKey('viewer-text')));
-    expect(tester.widget<SelectableText>(find.byType(SelectableText)).data, contains('Mitglieder'));
+    expect(
+      tester.widget<Text>(find.descendant(of: find.byType(KSelectable), matching: find.byType(Text)).first).data,
+      contains('Mitglieder'),
+    );
     await shoot(tester, 'vault-viewer');
     await settledTap(tester, find.byKey(const ValueKey('back')));
     await waitGone(tester, find.byKey(const ValueKey('viewer')));
@@ -1050,7 +1062,8 @@ void main() {
       await settledTap(tester, find.byKey(const ValueKey('nav-account')));
       await waitFor(tester, find.byKey(const ValueKey('vacation-on')));
       final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('sign-out'))));
-      Brightness brightness() => Theme.of(tester.element(find.byKey(const ValueKey('sign-out')))).brightness;
+      Brightness brightness() =>
+          KTheme.of(tester.element(find.byKey(const ValueKey('sign-out')))).dark ? Brightness.dark : Brightness.light;
 
       // Light, then as the system again.
       await settledTap(tester, find.byKey(const ValueKey('segment-ThemeMode.light')));
@@ -1076,7 +1089,7 @@ void main() {
       await waitFor(tester, find.byKey(const ValueKey('write')));
       await settledTap(tester, find.byKey(const ValueKey('nav-account')));
       await waitFor(tester, find.text(subject));
-      expect(tester.widget<Switch>(find.byKey(const ValueKey('vacation-on'))).value, isTrue);
+      expect(tester.widget<KSwitch>(find.byKey(const ValueKey('vacation-on'))).value, isTrue);
       await settledTap(tester, find.byKey(const ValueKey('vacation-on')));
       await save();
     });
@@ -1104,7 +1117,7 @@ void main() {
     await shoot(tester, 'compose-copies');
     await settledTap(tester, find.byKey(const ValueKey('send')));
     await waitFor(tester, find.byKey(const ValueKey('write')));
-    await waitGone(tester, find.byType(SnackBar));
+    await waitGone(tester, find.byKey(const ValueKey('toast')));
 
     // Found in Sent and answered to all: the user is not among the copies, the text quoted.
     await settledTap(tester, find.byIcon(LucideIcons.send).first);
@@ -1114,7 +1127,10 @@ void main() {
     await shoot(tester, 'message-actions');
     await settledTap(tester, find.byKey(const ValueKey('replyAll')));
     await waitFor(tester, find.byKey(const ValueKey('cc')));
-    String field(String key) => tester.widget<TextFormField>(find.byKey(ValueKey(key))).controller!.text;
+    String field(String key) => tester
+        .widget<EditableText>(find.descendant(of: find.byKey(ValueKey(key)), matching: find.byType(EditableText)))
+        .controller
+        .text;
     expect(field('subject'), 'Re: $subject');
     expect(field('to'), contains(address));
     expect(field('cc'), 'carol@example.org');
@@ -1122,7 +1138,7 @@ void main() {
     await shoot(tester, 'compose-reply');
     await settledTap(tester, find.byKey(const ValueKey('send')));
     await waitFor(tester, inList('Re: $subject'));
-    await waitGone(tester, find.byType(SnackBar));
+    await waitGone(tester, find.byKey(const ValueKey('toast')));
 
     // Forwarded: the original below the user's words, the recipients left to the user.
     await settledTap(tester, inList(subject));
@@ -1221,12 +1237,25 @@ void main() {
     }
 
     // The name, changed and back.
-    final before = tester.widget<TextField>(find.byKey(const ValueKey('display-name'))).controller!.text;
+    final before = tester
+        .widget<EditableText>(
+          find.descendant(of: find.byKey(const ValueKey('display-name')), matching: find.byType(EditableText)),
+        )
+        .controller
+        .text;
     await tester.enterText(find.byKey(const ValueKey('display-name')), 'Alice aus der App');
     await settledTap(tester, find.byKey(const ValueKey('name-save')));
     await saved('profile-note');
     await reload();
-    expect(tester.widget<TextField>(find.byKey(const ValueKey('display-name'))).controller!.text, 'Alice aus der App');
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(of: find.byKey(const ValueKey('display-name')), matching: find.byType(EditableText)),
+          )
+          .controller
+          .text,
+      'Alice aus der App',
+    );
     await tester.enterText(find.byKey(const ValueKey('display-name')), before.isEmpty ? address : before);
     await settledTap(tester, find.byKey(const ValueKey('name-save')));
     await saved('profile-note');
@@ -1244,7 +1273,7 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
     await saved('mail-settings-note');
     await reload();
-    expect(tester.widget<DropdownButton<int>>(find.byKey(const ValueKey('undo-send'))).value, 10);
+    expect(tester.widget<KSelect<int>>(find.byKey(const ValueKey('undo-send'))).value, 10);
     await choose('undo-send', l.off);
     await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
     await saved('mail-settings-note');
@@ -1376,12 +1405,12 @@ Future<String> browser(String loginUrl, String address, String password) async {
 
 /// A text in a list entry – not the same text in a field of a form still open.
 /// Rows of a list – the app's own (KListRow) or Material's.
-final Finder listRows = find.byWidgetPredicate((w) => w is ListTile || w is KListRow);
+final Finder listRows = find.byType(KListRow);
 
 Finder inList(String text) => find.descendant(of: listRows, matching: find.text(text));
 
 /// The entry of an open menu of labels that sets `label`.
-Finder menuItem(String label) => find.byWidgetPredicate((w) => w is CheckedPopupMenuItem<String> && w.value == label);
+Finder menuItem(String label) => find.byKey(ValueKey('menu-$label'));
 
 /// Taps once the target stopped moving – pages sliding in or out, a button lifted by a snack bar: a tap during a
 /// movement lands on something else.

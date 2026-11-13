@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: MIT
 import 'dart:io';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../ui/ui.dart';
 
 /// Light, dark or as the system is – kept on this device in the app's support directory, not at the server.
 abstract final class Appearance {
-  static final mode = ValueNotifier<ThemeMode>(ThemeMode.system);
+  static final mode = ValueNotifier<KThemeMode>(KThemeMode.system);
 
   static Future<File> _file() async => File('${(await getApplicationSupportDirectory()).path}/appearance');
 
   static Future<void> load() async {
     try {
       final name = (await (await _file()).readAsString()).trim();
-      mode.value = ThemeMode.values.firstWhere((m) => m.name == name, orElse: () => ThemeMode.system);
+      mode.value = KThemeMode.values.firstWhere((m) => m.name == name, orElse: () => KThemeMode.system);
     } catch (_) {
       // Nothing kept yet: as the system is.
     }
   }
 
-  static Future<void> set(ThemeMode value) async {
+  static Future<void> set(KThemeMode value) async {
     mode.value = value;
     try {
       final file = await _file();

@@ -40,12 +40,18 @@ layout and the checks.
 - `lib/src/rust/` and `rust/src/frb_generated.rs` are generated (`flutter_rust_bridge_codegen generate`, see
   `flutter_rust_bridge.yaml`) – change `rust/src/api/` and generate again, never edit them.
 - Strings in `lib/l10n/app_en.arb` and `app_de.arb`; English is the source.
-- **kernoid's look, not Material's:** pages are built from `lib/ui/` – colours, sizes and text from `KTokens`
-  (`context.k`, the web app's values, light and dark), the widgets `KButton`, `KIconButton`, `KTopBar`, `KListRow`,
-  `KSideItem`, `KAvatar`, `KBadge`, `KSegmented`, `KSection`. Icons are Lucide (`lucide_icons_flutter`), text IBM Plex.
-  Material stays only underneath (navigation, text input, overlays) – from the package `material_ui`, not
-  `package:flutter/material.dart`, deprecated since Flutter 3.50 – and is themed in `ui/theme.dart`; a new widget
-  that is seen goes into `lib/ui/` rather than taking Material's.
+- **No Material, no Cupertino** (maintainer, 2026-11-13): the app is built on Flutter's `widgets` layer and `lib/ui/`
+  alone – pages import `ui/ui.dart`, never `material_ui`, `cupertino_ui` or `package:flutter/material.dart` and
+  `cupertino.dart`. `lib/ui/` holds the frame (`KApp` on `WidgetsApp`, `KPageRoute`, `KScaffold`, `KToast`), the look
+  (`KTokens` through `KTheme`, `context.k`: the web app's values, light and dark), text input on `EditableText`
+  (`KTextField`, `KTextFormField`, `KSelectable` – the platform's gestures, kernoid's handles and menu), dialogs,
+  menus and choices (`showKDialog`, `KDialog`, `showKMenu`, `KMenuButton`, `KSelect`), date and time
+  (`showKDatePicker`, `showKTimePicker`, `KTime`) and the controls (`KButton`, `KIconButton`, `KSwitch`, `KCheckbox`,
+  `KRadioRow`, `KToggleRow`, `KChip`, `KSpinner`, `KProgressBar`, `KTooltip`, `KRefresh`, `KTappable`, …). Icons are
+  Lucide (`lucide_icons_flutter`), text IBM Plex. Something new that is seen goes into `lib/ui/`. A dependency that
+  brings Material is replaced where it can be (PDFs: `pdfrx_engine` instead of `pdfrx`); what is left –
+  `window_manager` and `flutter_widget_from_html_core` import Flutter's own `material.dart` – is used without its
+  Material widgets (the HTML view's tooltip and loading come from `lib/ui/`).
 - Dart lines up to 120 characters (`analysis_options.yaml`), like the Rust side (`rust/rustfmt.toml`).
 
 ## Building – what is not obvious

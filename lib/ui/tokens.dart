@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
 /// kernoid's look, as the web app has it (kernoid/kernoid, web/app/src/style.css): dark by default, light when the
 /// system is light. Every colour, size and space of the app comes from here, through `context.k`.
 @immutable
-class KTokens extends ThemeExtension<KTokens> {
+class KTokens {
   const KTokens({
     required this.bg,
     required this.panel,
@@ -83,11 +83,28 @@ class KTokens extends ThemeExtension<KTokens> {
     dark: false,
   );
 
-  @override
-  KTokens copyWith() => this;
+  /// For the brightness of a theme.
+  static KTokens of(Brightness brightness) => brightness == Brightness.dark ? darkTokens : lightTokens;
+}
+
+/// Colours that do not depend on the theme.
+abstract final class KColor {
+  static const transparent = Color(0x00000000);
+  static const white = Color(0xFFFFFFFF);
+  static const black = Color(0xFF000000);
+}
+
+/// The tokens of the app below it – what Material's `Theme` was. [KApp] puts it above every page.
+class KTheme extends InheritedWidget {
+  const KTheme({super.key, required this.tokens, required super.child});
+
+  final KTokens tokens;
+
+  static KTokens of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<KTheme>()?.tokens ?? KTokens.darkTokens;
 
   @override
-  KTokens lerp(ThemeExtension<KTokens>? other, double t) => t < 0.5 || other is! KTokens ? this : other;
+  bool updateShouldNotify(KTheme oldWidget) => tokens != oldWidget.tokens;
 }
 
 /// Sizes of the comfortable density (the web app's default).
@@ -131,5 +148,5 @@ abstract final class KText {
 
 extension KContext on BuildContext {
   /// The tokens of the current theme.
-  KTokens get k => Theme.of(this).extension<KTokens>()!;
+  KTokens get k => KTheme.of(this);
 }

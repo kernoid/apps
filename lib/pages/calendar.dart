@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 import '../widgets/states.dart';
 import 'event_form.dart';
 
@@ -80,7 +81,7 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  int get _firstWeekday => MaterialLocalizations.of(context).firstDayOfWeekIndex;
+  int get _firstWeekday => firstDayOfWeekIndex(context);
 
   /// Earlier (-1), later (1) or to today (0): by two weeks in the list, by a month in the grid.
   void _move(int step) {
@@ -121,33 +122,31 @@ class _CalendarPageState extends State<CalendarPage> {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final last = _from.add(const Duration(days: _span - 1));
     final month = _month;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          month == null
-              ? '${DateFormat.MMMd(locale).format(_from)} – ${DateFormat.MMMd(locale).format(last)}'
-              : DateFormat.yMMMM(locale).format(month),
-        ),
+    return KScaffold(
+      topBar: KTopBar(
+        title: month == null
+            ? '${DateFormat.MMMd(locale).format(_from)} – ${DateFormat.MMMd(locale).format(last)}'
+            : DateFormat.yMMMM(locale).format(month),
         actions: [
-          IconButton(
+          KIconButton(
             key: const ValueKey('calendar-view'),
             tooltip: month == null ? l.monthView : l.listView,
             onPressed: _toggleMonth,
-            icon: Icon(month == null ? LucideIcons.calendarDays : LucideIcons.list),
+            icon: month == null ? LucideIcons.calendarDays : LucideIcons.list,
           ),
-          IconButton(tooltip: l.earlier, onPressed: () => _move(-1), icon: const Icon(LucideIcons.chevronLeft)),
-          TextButton(onPressed: () => _move(0), child: Text(l.today)),
-          IconButton(tooltip: l.later, onPressed: () => _move(1), icon: const Icon(LucideIcons.chevronRight)),
+          KIconButton(tooltip: l.earlier, onPressed: () => _move(-1), icon: LucideIcons.chevronLeft),
+          KButton(tone: KTone.quiet, onPressed: () => _move(0), label: l.today),
+          KIconButton(tooltip: l.later, onPressed: () => _move(1), icon: LucideIcons.chevronRight),
         ],
       ),
       body: _body(l, locale),
-      floatingActionButton: _writable.isEmpty
+      floating: _writable.isEmpty
           ? null
-          : FloatingActionButton(
+          : KFloatingButton(
               key: const ValueKey('new-event'),
               tooltip: l.newEvent,
               onPressed: _new,
-              child: const Icon(LucideIcons.plus),
+              icon: LucideIcons.plus,
             ),
     );
   }
@@ -162,7 +161,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ? _from
         : today;
     final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
+      KPageRoute(
         fullscreenDialog: true,
         builder: (_) => EventFormPage(
           account: widget.account,
@@ -177,14 +176,14 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _body(AppLocalizations l, String locale) {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final events = _events;
-    if (events == null) return const Center(child: CircularProgressIndicator());
+    if (events == null) return const Center(child: KSpinner());
     final month = _month;
     if (month != null) return _grid(l, locale, month, events);
     if (events.isEmpty) return EmptyView(l.noEvents, icon: LucideIcons.calendarCheck);
     final days = _byDay(events, _from, _from.add(const Duration(days: _span)));
     final today = _day(DateTime.now());
     final entries = days.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
-    return RefreshIndicator(
+    return KRefresh(
       onRefresh: _load,
       child: ListView(
         children: [
@@ -195,8 +194,9 @@ class _CalendarPageState extends State<CalendarPage> {
                 day == today
                     ? '${l.today} · ${DateFormat.MMMMEEEEd(locale).format(day)}'
                     : DateFormat.MMMMEEEEd(locale).format(day),
-                style: Theme.of(context).textTheme.titleSmall
-                    ?.copyWith(color: day == today ? Theme.of(context).colorScheme.primary : null),
+                style: KText.heading(context.k)
+                    .copyWith(fontSize: 14)
+                    .copyWith(color: day == today ? context.k.accent : null),
               ),
             ),
             for (final e in list) _EventTile(event: e, color: _color(e), onTap: () => _open(e)),
@@ -228,7 +228,6 @@ class _CalendarPageState extends State<CalendarPage> {
 
   /// The month as six weeks of days, each with its events as far as they fit; the chosen day's events below.
   Widget _grid(AppLocalizations l, String locale, DateTime month, List<Event> events) {
-    final theme = Theme.of(context);
     final start = _gridStart(month, _firstWeekday);
     final days = _byDay(events, start, start.add(const Duration(days: _gridDays)));
     final today = _day(DateTime.now());
@@ -249,7 +248,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       child: Text(
                         weekdays.format(start.add(Duration(days: i))),
                         textAlign: TextAlign.center,
-                        style: theme.textTheme.labelSmall,
+                        style: KText.small(context.k).copyWith(fontSize: 12),
                       ),
                     ),
                   ),
@@ -263,14 +262,14 @@ class _CalendarPageState extends State<CalendarPage> {
                     for (var i = 0; i < 7; i++)
                       Expanded(
                         child: _DayCell(
-                          day: DateUtils.addDaysToDate(start, week * 7 + i),
-                          inMonth: DateUtils.addDaysToDate(start, week * 7 + i).month == month.month,
-                          today: DateUtils.addDaysToDate(start, week * 7 + i) == today,
-                          chosen: DateUtils.addDaysToDate(start, week * 7 + i) == _chosen,
-                          events: days[DateUtils.addDaysToDate(start, week * 7 + i)] ?? const [],
+                          day: KDates.addDays(start, week * 7 + i),
+                          inMonth: KDates.addDays(start, week * 7 + i).month == month.month,
+                          today: KDates.addDays(start, week * 7 + i) == today,
+                          chosen: KDates.addDays(start, week * 7 + i) == _chosen,
+                          events: days[KDates.addDays(start, week * 7 + i)] ?? const [],
                           titles: titles,
                           color: _color,
-                          onTap: () => setState(() => _chosen = DateUtils.addDaysToDate(start, week * 7 + i)),
+                          onTap: () => setState(() => _chosen = KDates.addDays(start, week * 7 + i)),
                         ),
                       ),
                   ],
@@ -282,7 +281,10 @@ class _CalendarPageState extends State<CalendarPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text(DateFormat.MMMMEEEEd(locale).format(_chosen), style: theme.textTheme.titleSmall),
+              child: Text(
+                DateFormat.MMMMEEEEd(locale).format(_chosen),
+                style: KText.heading(context.k).copyWith(fontSize: 14),
+              ),
             ),
             if (chosen.isEmpty)
               Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Text(l.noEvents)),
@@ -294,7 +296,7 @@ class _CalendarPageState extends State<CalendarPage> {
           return Row(
             children: [
               Expanded(flex: 3, child: grid),
-              const VerticalDivider(width: 1),
+              const KDivider(),
               Expanded(flex: 2, child: list),
             ],
           );
@@ -302,7 +304,7 @@ class _CalendarPageState extends State<CalendarPage> {
         return Column(
           children: [
             Expanded(flex: 3, child: grid),
-            const Divider(height: 1),
+            const KDivider(),
             Expanded(flex: 2, child: list),
           ],
         );
@@ -312,7 +314,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> _open(Event e) async {
     final answered = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
+      KPageRoute(
         builder: (_) => EventPage(account: widget.account, event: e, color: _color(e), calendars: _writable),
       ),
     );
@@ -386,31 +388,31 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final number = Container(
       width: 24,
       height: 24,
       alignment: Alignment.center,
-      decoration: today ? BoxDecoration(color: scheme.primary, shape: BoxShape.circle) : null,
+      decoration: today ? BoxDecoration(color: context.k.accent, shape: BoxShape.circle) : null,
       child: Text(
         '${day.day}',
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: today
-              ? scheme.onPrimary
-              : inMonth
-              ? null
-              : scheme.onSurface.withValues(alpha: 0.4),
-        ),
+        style: KText.label(context.k)
+            .copyWith(fontSize: 13)
+            .copyWith(
+              color: today
+                  ? context.k.accentText
+                  : inMonth
+                  ? null
+                  : context.k.text.withValues(alpha: 0.4),
+            ),
       ),
     );
-    return InkWell(
+    return KTappable(
       key: ValueKey('day-${DateFormat('yyyy-MM-dd').format(day)}'),
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: chosen ? scheme.primaryContainer.withValues(alpha: 0.5) : null,
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3), width: 0.5),
+          color: chosen ? context.k.accentSoft.withValues(alpha: 0.5) : null,
+          border: Border.all(color: context.k.line.withValues(alpha: 0.3), width: 0.5),
         ),
         padding: const EdgeInsets.all(2),
         child: Column(
@@ -428,16 +430,16 @@ class _DayCell extends StatelessWidget {
                           margin: const EdgeInsets.only(top: 1),
                           padding: const EdgeInsets.symmetric(horizontal: 3),
                           decoration: BoxDecoration(
-                            color: (color(e) ?? scheme.primary).withValues(alpha: 0.18),
+                            color: (color(e) ?? context.k.accent).withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
                             e.title.isEmpty ? '–' : e.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              decoration: e.cancelled ? TextDecoration.lineThrough : null,
-                            ),
+                            style: KText.small(context.k)
+                                .copyWith(fontSize: 12)
+                                .copyWith(decoration: e.cancelled ? TextDecoration.lineThrough : null),
                           ),
                         ),
                     ],
@@ -456,7 +458,7 @@ class _DayCell extends StatelessWidget {
                       Container(
                         width: 5,
                         height: 5,
-                        decoration: BoxDecoration(color: color(e) ?? scheme.primary, shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: color(e) ?? context.k.accent, shape: BoxShape.circle),
                       ),
                   ],
                 ),
@@ -479,13 +481,12 @@ class _EventTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final theme = Theme.of(context);
     final details = [_times(l, locale, event), if (event.location != null) event.location!].join(' · ');
-    return ListTile(
+    return KListRow(
       leading: Container(
         width: 4,
         height: 36,
-        decoration: BoxDecoration(color: color ?? theme.colorScheme.primary, borderRadius: BorderRadius.circular(2)),
+        decoration: BoxDecoration(color: color ?? context.k.accent, borderRadius: BorderRadius.circular(2)),
       ),
       title: Text(
         event.title.isEmpty ? l.noSubject : event.title,
@@ -493,7 +494,7 @@ class _EventTile extends StatelessWidget {
       ),
       subtitle: Text(event.cancelled ? '${l.cancelled} · $details' : details),
       trailing: event.invitationKey != null && (event.myStatus ?? 'needs-action') == 'needs-action'
-          ? Icon(LucideIcons.mailWarning, color: theme.colorScheme.primary)
+          ? Icon(LucideIcons.mailWarning, color: context.k.accent)
           : null,
       onTap: onTap,
     );
@@ -530,7 +531,7 @@ class _EventPageState extends State<EventPage> {
   Future<void> _answer(String status) async {
     final e = widget.event;
     setState(() => _busy = true);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     try {
       await widget.account.answerEvent(
@@ -541,9 +542,9 @@ class _EventPageState extends State<EventPage> {
       );
       _answered = true;
       if (mounted) setState(() => _status = status);
-      messenger.showSnackBar(SnackBar(content: Text(l.answerSent)));
+      messenger.show(l.answerSent);
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -553,21 +554,23 @@ class _EventPageState extends State<EventPage> {
   /// neither (`null`).
   Future<bool?> _which(String question) {
     final l = AppLocalizations.of(context);
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+    return showKDialog<bool>(
+      context,
+      builder: (context) => KDialog(
         content: Text(question),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l.cancel)),
-          TextButton(
+          KButton(tone: KTone.quiet, onPressed: () => Navigator.of(context).pop(), label: l.cancel),
+          KButton(
+            tone: KTone.quiet,
             key: const ValueKey('whole-series'),
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l.wholeSeries),
+            label: l.wholeSeries,
           ),
-          FilledButton(
+          KButton(
+            tone: KTone.primary,
             key: const ValueKey('this-event'),
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l.thisEvent),
+            label: l.thisEvent,
           ),
         ],
       ),
@@ -576,7 +579,7 @@ class _EventPageState extends State<EventPage> {
 
   Future<void> _edit() async {
     final e = widget.event;
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     final one = e.recurrenceId == null ? false : await _which(l.changeWhich);
     if (one == null || !mounted) return;
@@ -589,7 +592,7 @@ class _EventPageState extends State<EventPage> {
           ? [Calendar(id: draft.calendarId, accountId: draft.accountId, name: '', writable: true)]
           : widget.calendars;
       final saved = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
+        KPageRoute(
           fullscreenDialog: true,
           builder: (_) => EventFormPage(
             account: widget.account,
@@ -601,32 +604,33 @@ class _EventPageState extends State<EventPage> {
         ),
       );
       if ((saved ?? false) && mounted) {
-        messenger.showSnackBar(SnackBar(content: Text(l.saved)));
+        messenger.show(l.saved);
         Navigator.of(context).pop(true);
       }
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     }
   }
 
   Future<void> _delete() async {
     final e = widget.event;
     final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final bool? one;
     if (e.recurrenceId != null) {
       one = await _which(l.deleteWhich);
     } else {
-      final sure = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
+      final sure = await showKDialog<bool>(
+        context,
+        builder: (context) => KDialog(
           content: Text(e.recurring ? l.deleteRecurringConfirm : l.deleteEventConfirm),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
-            FilledButton(
+            KButton(tone: KTone.quiet, onPressed: () => Navigator.of(context).pop(false), label: l.cancel),
+            KButton(
+              tone: KTone.primary,
               key: const ValueKey('confirm-delete'),
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l.delete),
+              label: l.delete,
             ),
           ],
         ),
@@ -640,10 +644,10 @@ class _EventPageState extends State<EventPage> {
       } else {
         await widget.account.deleteEvent(accountId: e.accountId, eventId: e.eventId);
       }
-      messenger.showSnackBar(SnackBar(content: Text(l.deleted)));
+      messenger.show(l.deleted);
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     }
   }
 
@@ -651,7 +655,6 @@ class _EventPageState extends State<EventPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final theme = Theme.of(context);
     final e = widget.event;
     final start = _when(e, e.start);
     return PopScope(
@@ -659,22 +662,22 @@ class _EventPageState extends State<EventPage> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) Navigator.of(context).pop(_answered);
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(e.title.isEmpty ? l.noSubject : e.title),
+      child: KScaffold(
+        topBar: KTopBar(
+          title: e.title.isEmpty ? l.noSubject : e.title,
           actions: [
             if (e.editable) ...[
-              IconButton(
+              KIconButton(
                 key: const ValueKey('edit-event'),
                 tooltip: l.edit,
                 onPressed: _edit,
-                icon: const Icon(LucideIcons.pencil),
+                icon: LucideIcons.pencil,
               ),
-              IconButton(
+              KIconButton(
                 key: const ValueKey('delete-event'),
                 tooltip: l.deleteEvent,
                 onPressed: _delete,
-                icon: const Icon(LucideIcons.trash2),
+                icon: LucideIcons.trash2,
               ),
             ],
           ],
@@ -685,28 +688,20 @@ class _EventPageState extends State<EventPage> {
             if (e.cancelled)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text(l.cancelled, style: TextStyle(color: theme.colorScheme.error)),
+                child: Text(l.cancelled, style: TextStyle(color: context.k.error)),
               ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
+            KListRow(
               leading: Icon(LucideIcons.clock, color: widget.color),
               title: Text(start == null ? '' : DateFormat.yMMMMEEEEd(locale).format(start)),
               subtitle: Text([_times(l, locale, e), if (e.recurring) l.recurring].join(' · ')),
             ),
-            if (e.location != null)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(LucideIcons.mapPin),
-                title: Text(e.location!),
-              ),
-            if (e.description != null) ...[const SizedBox(height: 8), SelectableText(e.description!)],
+            if (e.location != null) KListRow(leading: const Icon(LucideIcons.mapPin), title: Text(e.location!)),
+            if (e.description != null) ...[const SizedBox(height: 8), KSelectable.text(e.description!)],
             if (e.participants.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text(l.participants, style: theme.textTheme.titleSmall),
+              Text(l.participants, style: KText.heading(context.k).copyWith(fontSize: 14)),
               for (final p in e.participants)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
+                KListRow(
                   leading: const Icon(LucideIcons.user),
                   title: Text(p.name ?? p.email ?? ''),
                   subtitle: Text(
@@ -716,7 +711,10 @@ class _EventPageState extends State<EventPage> {
             ],
             if (e.invitationKey != null && !e.cancelled) ...[
               const SizedBox(height: 16),
-              Text('${l.yourAnswer}: ${_statusText(l, _status)}', style: theme.textTheme.titleSmall),
+              Text(
+                '${l.yourAnswer}: ${_statusText(l, _status)}',
+                style: KText.heading(context.k).copyWith(fontSize: 14),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -726,11 +724,11 @@ class _EventPageState extends State<EventPage> {
                     ('tentative', l.maybe),
                     ('declined', l.decline),
                   ])
-                    ChoiceChip(
+                    KChip(
                       key: ValueKey('answer-$status'),
-                      label: Text(label),
+                      label: label,
                       selected: _status == status,
-                      onSelected: _busy || _status == status ? null : (_) => _answer(status),
+                      onTap: _busy || _status == status ? null : () => _answer(status),
                     ),
                 ],
               ),

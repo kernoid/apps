@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// Making or changing a contact: name, organisation, addresses and numbers – each with its labels (work, private, and
 /// for a number what it is) –, a note. Pops `true` once saved.
@@ -77,16 +78,17 @@ class _ContactFormPageState extends State<ContactFormPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.contact == null ? l.newContact : l.editContact),
+    return KScaffold(
+      topBar: KTopBar(
+        title: widget.contact == null ? l.newContact : l.editContact,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: FilledButton(
+            child: KButton(
+              tone: KTone.primary,
               key: const ValueKey('save-contact'),
               onPressed: _busy ? null : _save,
-              child: Text(l.save),
+              label: l.save,
             ),
           ),
         ],
@@ -96,18 +98,18 @@ class _ContactFormPageState extends State<ContactFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
+            KTextFormField(
               key: const ValueKey('contact-name'),
               controller: _name,
               autofocus: widget.contact == null,
-              decoration: InputDecoration(labelText: l.name),
+              label: l.name,
               validator: (v) => (v ?? '').trim().isEmpty ? l.required : null,
             ),
             const SizedBox(height: 8),
-            TextFormField(
+            KTextFormField(
               key: const ValueKey('contact-organization'),
               controller: _organization,
-              decoration: InputDecoration(labelText: l.organization),
+              label: l.organization,
             ),
             const SizedBox(height: 8),
             _LabelledFields(
@@ -133,16 +135,16 @@ class _ContactFormPageState extends State<ContactFormPage> {
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 8),
-            TextFormField(
+            KTextFormField(
               key: const ValueKey('contact-note'),
               controller: _note,
               minLines: 2,
               maxLines: 6,
-              decoration: InputDecoration(labelText: l.note, alignLabelWithHint: true),
+              label: l.note,
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(_error!, style: TextStyle(color: context.k.error)),
             ],
           ],
         ),
@@ -206,46 +208,42 @@ class _LabelledFields extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        Text(title, style: KText.heading(context.k).copyWith(fontSize: 14)),
         for (final (i, row) in rows.indexed)
           Row(
             children: [
               Icon(icon, size: 20),
               const SizedBox(width: 12),
               Expanded(
-                child: TextFormField(
+                child: KTextFormField(
                   key: ValueKey('contact-$kind-$i'),
                   controller: row.text,
                   keyboardType: keyboard,
                   validator: validator,
                 ),
               ),
-              PopupMenuButton<String>(
+              KMenuButton<String>(
                 key: ValueKey('contact-$kind-$i-labels'),
                 tooltip: l.labels,
                 onSelected: (label) {
                   if (!row.labels.remove(label)) row.labels.add(label);
                   onChanged();
                 },
-                itemBuilder: (_) => [
+                items: () => [
                   for (final label in allowed)
-                    CheckedPopupMenuItem(
-                      value: label,
-                      checked: row.labels.contains(label),
-                      child: Text(labelName(l, label)),
-                    ),
+                    KMenuItem(value: label, label: labelName(l, label), checked: row.labels.contains(label)),
                 ],
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                   child: Text(
                     row.labels.isEmpty ? l.labels : row.labels.map((label) => labelName(l, label)).join(', '),
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                    style: TextStyle(color: context.k.accent),
                   ),
                 ),
               ),
-              IconButton(
+              KIconButton(
                 tooltip: l.remove,
-                icon: const Icon(LucideIcons.x),
+                icon: LucideIcons.x,
                 onPressed: () {
                   rows.removeAt(i).text.dispose();
                   onChanged();
@@ -253,14 +251,15 @@ class _LabelledFields extends StatelessWidget {
               ),
             ],
           ),
-        TextButton.icon(
+        KButton(
+          tone: KTone.quiet,
           key: ValueKey('add-$kind'),
           onPressed: () {
             rows.add(_Row('', const []));
             onChanged();
           },
-          icon: const Icon(LucideIcons.plus),
-          label: Text(add),
+          icon: LucideIcons.plus,
+          label: add,
         ),
       ],
     );

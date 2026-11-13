@@ -327,5 +327,18 @@
   "fileProviderOn": "Einschalten",
   "fileProviderUpdate": "Speicher aktualisieren",
   "fileProviderOff": "Ausschalten",
-  "fileProviderShown": "Angezeigt: {stores}"
+  "fileProviderShown": "Angezeigt: {stores}",
+  "back": "Zurück",
+  "close": "Schließen",
+  "clear": "Leeren",
+  "cut": "Ausschneiden",
+  "paste": "Einfügen",
+  "selectAll": "Alles auswählen",
+  "pickDate": "Datum wählen",
+  "pickTime": "Uhrzeit wählen",
+  "previousMonth": "Voriger Monat",
+  "nextMonth": "Nächster Monat",
+  "hour": "Stunde",
+  "minute": "Minute",
+  "moreOptions": "Mehr"
 }

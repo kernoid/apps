@@ -2,12 +2,12 @@
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// How a message went out.
 enum Sent { encrypted, plain }
@@ -26,15 +26,14 @@ Future<bool> writeMessage(
   Reply kind = Reply.reply,
 }) async {
   final sent = await Navigator.of(context).push<Sent>(
-    MaterialPageRoute(
+    KPageRoute(
       fullscreenDialog: true,
       builder: (_) => ComposePage(account: account, to: to, replyTo: replyTo, replyAccount: replyAccount, kind: kind),
     ),
   );
   if (sent == null || !context.mounted) return false;
   final l = AppLocalizations.of(context);
-  ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text(sent == Sent.encrypted ? l.sentEncrypted : l.messageSent)));
+  KToast.of(context).show(sent == Sent.encrypted ? l.sentEncrypted : l.messageSent);
   return true;
 }
 
@@ -214,59 +213,58 @@ class _ComposePageState extends State<ComposePage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final plan = _plan;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.write),
+    return KScaffold(
+      topBar: KTopBar(
+        title: l.write,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: FilledButton.icon(
+            child: KButton(
+              tone: KTone.primary,
               key: const ValueKey('send'),
               onPressed: _busy || _loading ? null : _send,
-              icon: Icon(plan?.encrypted ?? false ? LucideIcons.lock : LucideIcons.send),
-              label: Text(l.send),
+              icon: plan?.encrypted ?? false ? LucideIcons.lock : LucideIcons.send,
+              label: l.send,
             ),
           ),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: KSpinner())
           : Form(
               key: _form,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  TextFormField(
+                  KTextFormField(
                     key: const ValueKey('to'),
                     controller: _to,
-                    decoration: InputDecoration(
-                      labelText: l.to,
-                      suffixIcon: _copies
-                          ? null
-                          : TextButton(
-                              key: const ValueKey('show-cc'),
-                              onPressed: () => setState(() => _copies = true),
-                              child: Text('${l.cc} ${l.bcc}'),
-                            ),
-                    ),
+                    label: l.to,
+                    suffix: _copies
+                        ? null
+                        : KButton(
+                            tone: KTone.quiet,
+                            key: const ValueKey('show-cc'),
+                            onPressed: () => setState(() => _copies = true),
+                            label: '${l.cc} ${l.bcc}',
+                          ),
                     keyboardType: TextInputType.emailAddress,
                     autocorrect: false,
                     validator: (_) => _recipients.isEmpty ? l.required : null,
                   ),
                   if (_copies) ...[
-                    TextFormField(
+                    KTextFormField(
                       key: const ValueKey('cc'),
                       controller: _cc,
-                      decoration: InputDecoration(labelText: l.cc),
+                      label: l.cc,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                     ),
-                    TextFormField(
+                    KTextFormField(
                       key: const ValueKey('bcc'),
                       controller: _bcc,
-                      decoration: InputDecoration(labelText: l.bcc),
+                      label: l.bcc,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                     ),
@@ -280,34 +278,25 @@ class _ComposePageState extends State<ComposePage> {
                           Icon(
                             plan.encrypted ? LucideIcons.lock : LucideIcons.lockOpen,
                             size: 16,
-                            color: plan.encrypted ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                            color: plan.encrypted ? context.k.accent : context.k.muted,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               plan.encrypted ? l.willEncrypt : l.wontEncrypt(plan.reason ?? ''),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: plan.encrypted ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-                              ),
+                              style: KText.small(context.k)
+                                  .copyWith(color: plan.encrypted ? context.k.accent : context.k.muted),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  TextFormField(
-                    key: const ValueKey('subject'),
-                    controller: _subject,
-                    decoration: InputDecoration(labelText: l.subject),
-                  ),
+                  KTextFormField(key: const ValueKey('subject'), controller: _subject, label: l.subject),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  KTextFormField(
                     key: const ValueKey('text'),
                     controller: _text,
-                    decoration: InputDecoration(
-                      labelText: l.message,
-                      alignLabelWithHint: true,
-                      border: const OutlineInputBorder(),
-                    ),
+                    label: l.message,
                     minLines: 10,
                     maxLines: null,
                   ),
@@ -318,40 +307,41 @@ class _ComposePageState extends State<ComposePage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       for (final a in _forwarded)
-                        InputChip(
+                        KChip(
                           key: ValueKey('attachment-${a.name}'),
-                          avatar: const Icon(LucideIcons.paperclip, size: 18),
-                          label: Text('${a.name} · ${bytes(a.size)}'),
-                          deleteButtonTooltipMessage: l.remove,
+                          icon: LucideIcons.paperclip,
+                          label: '${a.name} · ${bytes(a.size)}',
+                          tooltip: l.remove,
                           onDeleted: () => setState(() => _forwarded.remove(a)),
                         ),
                       for (final p in _forwardedParts)
-                        InputChip(
+                        KChip(
                           key: ValueKey('attachment-${p.name}'),
-                          avatar: const Icon(LucideIcons.lock, size: 18),
-                          label: Text('${p.name} · ${bytes(p.size)}'),
-                          deleteButtonTooltipMessage: l.remove,
+                          icon: LucideIcons.lock,
+                          label: '${p.name} · ${bytes(p.size)}',
+                          tooltip: l.remove,
                           onDeleted: () => setState(() => _forwardedParts.remove(p)),
                         ),
                       for (final file in _files)
-                        InputChip(
+                        KChip(
                           key: ValueKey('attachment-${file.name}'),
-                          avatar: const Icon(LucideIcons.paperclip, size: 18),
-                          label: Text(file.name),
-                          deleteButtonTooltipMessage: l.remove,
+                          icon: LucideIcons.paperclip,
+                          label: file.name,
+                          tooltip: l.remove,
                           onDeleted: () => setState(() => _files.remove(file)),
                         ),
-                      TextButton.icon(
+                      KButton(
+                        tone: KTone.quiet,
                         key: const ValueKey('attach'),
                         onPressed: _busy ? null : _attach,
-                        icon: const Icon(LucideIcons.paperclip),
-                        label: Text(l.attachFile),
+                        icon: LucideIcons.paperclip,
+                        label: l.attachFile,
                       ),
                     ],
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                    Text(_error!, style: TextStyle(color: context.k.error)),
                   ],
                 ],
               ),

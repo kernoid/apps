@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:intl/intl.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// Making or changing an event: title, calendar, when (or all day), where, who is invited, how it repeats, a
 /// description. A recurring event is changed as a whole, or – with `recurrenceId` – one of its instances alone, in what
@@ -80,12 +81,7 @@ class _EventFormPageState extends State<EventFormPage> {
 
   Future<void> _pickDay(bool start) async {
     final current = start ? _start : _end;
-    final day = await showDatePicker(
-      context: context,
-      initialDate: current,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+    final day = await showKDatePicker(context, initial: current, first: DateTime(2000), last: DateTime(2100));
     if (day == null) return;
     setState(() {
       final picked = DateTime(day.year, day.month, day.day, current.hour, current.minute);
@@ -101,7 +97,7 @@ class _EventFormPageState extends State<EventFormPage> {
 
   Future<void> _pickTime(bool start) async {
     final current = start ? _start : _end;
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(current));
+    final time = await showKTimePicker(context, initial: KTime.fromDateTime(current));
     if (time == null) return;
     setState(() {
       final picked = DateTime(current.year, current.month, current.day, time.hour, time.minute);
@@ -172,37 +168,38 @@ class _EventFormPageState extends State<EventFormPage> {
       return Row(
         children: [
           SizedBox(width: 80, child: Text(label)),
-          TextButton(
+          KButton(
+            tone: KTone.quiet,
             key: ValueKey(start ? 'start-day' : 'end-day'),
             onPressed: () => _pickDay(start),
-            child: Text(day.format(t)),
+            label: day.format(t),
           ),
           if (!_allDay)
-            TextButton(
+            KButton(
+              tone: KTone.quiet,
               key: ValueKey(start ? 'start-time' : 'end-time'),
               onPressed: () => _pickTime(start),
-              child: Text(hm.format(t)),
+              label: hm.format(t),
             ),
         ],
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.eventId == null
-              ? l.newEvent
-              : one
-              ? l.editThisEvent
-              : l.editEvent,
-        ),
+    return KScaffold(
+      topBar: KTopBar(
+        title: widget.eventId == null
+            ? l.newEvent
+            : one
+            ? l.editThisEvent
+            : l.editEvent,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: FilledButton(
+            child: KButton(
+              tone: KTone.primary,
               key: const ValueKey('save-event'),
               onPressed: _busy ? null : _save,
-              child: Text(l.save),
+              label: l.save,
             ),
           ),
         ],
@@ -212,30 +209,26 @@ class _EventFormPageState extends State<EventFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
+            KTextFormField(
               key: const ValueKey('event-title'),
               controller: _title,
               autofocus: widget.eventId == null,
-              decoration: InputDecoration(labelText: l.title),
+              label: l.title,
               validator: (v) => (v ?? '').trim().isEmpty ? l.required : null,
             ),
             const SizedBox(height: 8),
             if (widget.calendars.length > 1)
-              DropdownButtonFormField<String>(
-                initialValue: _calendar,
-                decoration: InputDecoration(labelText: l.calendarField),
-                items: [
+              KSelect<String>(
+                value: _calendar,
+                label: l.calendarField,
+                options: [
                   for (final c in widget.calendars)
-                    DropdownMenuItem(
-                      value: '${c.accountId}/${c.id}',
-                      child: Text(c.sharedBy == null ? c.name : '${c.name} (${l.sharedBy(c.sharedBy!)})'),
-                    ),
+                    ('${c.accountId}/${c.id}', c.sharedBy == null ? c.name : '${c.name} (${l.sharedBy(c.sharedBy!)})'),
                 ],
-                onChanged: widget.eventId == null ? (v) => setState(() => _calendar = v!) : null,
+                onChanged: widget.eventId == null ? (v) => setState(() => _calendar = v) : null,
               ),
-            SwitchListTile(
+            KToggleRow(
               key: const ValueKey('all-day'),
-              contentPadding: EdgeInsets.zero,
               title: Text(l.allDay),
               value: _allDay,
               onChanged: (v) => setState(() => _allDay = v),
@@ -243,11 +236,11 @@ class _EventFormPageState extends State<EventFormPage> {
             when(l.starts, true),
             when(l.ends, false),
             if (!one)
-              DropdownButtonFormField<String?>(
+              KSelect<String?>(
                 key: const ValueKey('event-repeat'),
-                initialValue: _repeat,
-                decoration: InputDecoration(labelText: l.repeat),
-                items: [
+                value: _repeat,
+                label: l.repeat,
+                options: [
                   for (final (value, label) in [
                     (null, l.repeatNone),
                     ('daily', l.repeatDaily),
@@ -255,43 +248,40 @@ class _EventFormPageState extends State<EventFormPage> {
                     ('monthly', l.repeatMonthly),
                     ('yearly', l.repeatYearly),
                   ])
-                    DropdownMenuItem(value: value, child: Text(label)),
+                    (value, label),
                 ],
                 onChanged: (v) => setState(() => _repeat = v),
               ),
             const SizedBox(height: 8),
-            TextFormField(
-              key: const ValueKey('event-location'),
-              controller: _location,
-              decoration: InputDecoration(labelText: l.location),
-            ),
+            KTextFormField(key: const ValueKey('event-location'), controller: _location, label: l.location),
             if (!one) ...[
               const SizedBox(height: 8),
-              TextFormField(
+              KTextFormField(
                 key: const ValueKey('event-invite'),
                 controller: _invite,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(labelText: l.invite, helperText: l.inviteHint, helperMaxLines: 2),
+                label: l.invite,
+                helper: l.inviteHint,
               ),
             ],
             const SizedBox(height: 8),
-            TextFormField(
+            KTextFormField(
               key: const ValueKey('event-description'),
               controller: _description,
               minLines: 3,
               maxLines: 8,
-              decoration: InputDecoration(labelText: l.description, alignLabelWithHint: true),
+              label: l.description,
             ),
             if (one) ...[
               const SizedBox(height: 8),
-              Text(l.instanceEditsOne, style: Theme.of(context).textTheme.bodySmall),
+              Text(l.instanceEditsOne, style: KText.small(context.k)),
             ] else if (widget.eventId != null && widget.draft.repeat != null) ...[
               const SizedBox(height: 8),
-              Text(l.recurringEditsAll, style: Theme.of(context).textTheme.bodySmall),
+              Text(l.recurringEditsAll, style: KText.small(context.k)),
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              Text(_error!, style: TextStyle(color: context.k.error)),
             ],
           ],
         ),

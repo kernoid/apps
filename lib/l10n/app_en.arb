@@ -542,5 +542,18 @@
         "type": "String"
       }
     }
-  }
+  },
+  "back": "Back",
+  "close": "Close",
+  "clear": "Clear",
+  "cut": "Cut",
+  "paste": "Paste",
+  "selectAll": "Select all",
+  "pickDate": "Choose a date",
+  "pickTime": "Choose a time",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "hour": "Hour",
+  "minute": "Minute",
+  "moreOptions": "More"
 }

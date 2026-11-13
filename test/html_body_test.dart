@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
-import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kernoid/l10n/app_localizations.dart';
+import 'package:kernoid/ui/ui.dart' show KApp, KThemeMode, KScaffold;
 import 'package:kernoid/widgets/html_body.dart';
 
-Widget _app(Widget child) => MaterialApp(
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
+Widget _app(Widget child) => KApp(
+  mode: KThemeMode.dark,
+  onGenerateTitle: (_) => 'kernoid',
+  localizationsDelegates: const [AppLocalizations.delegate, GlobalWidgetsLocalizations.delegate],
   supportedLocales: AppLocalizations.supportedLocales,
-  home: Scaffold(body: SingleChildScrollView(child: child)),
+  home: KScaffold(body: SingleChildScrollView(child: child)),
 );
 
 /// The image widgets drawn and what they would load.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -7,9 +7,7 @@ import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/dialogs.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 
 /// A dialog of the files page: a title, its content scrolling, buttons at its foot.
 class _FileDialog extends StatelessWidget {
@@ -21,11 +19,7 @@ class _FileDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-      content: SizedBox(width: 440, child: child),
-      actions: actions,
-    );
+    return KDialog(title: title, width: 480, content: child, actions: actions);
   }
 }
 
@@ -38,8 +32,8 @@ String levelName(AppLocalizations l, String level) => switch (level) {
 /// With whom a directory is shared and how far: people and groups found by name, each with a level; saved at once
 /// for all of them.
 Future<bool> shareDialog(BuildContext context, Kernoid account, String accountId, FileNode directory) async {
-  final done = await showDialog<bool>(
-    context: context,
+  final done = await showKDialog<bool>(
+    context,
     builder: (_) => _ShareDialog(account: account, accountId: accountId, directory: directory),
   );
   return done ?? false;
@@ -146,14 +140,12 @@ class _ShareDialogState extends State<_ShareDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
+          KTextField(
             key: const ValueKey('share-find'),
             controller: _search,
             onChanged: _find,
-            decoration: InputDecoration(
-              hintText: l.findPeople,
-              prefixIcon: Icon(LucideIcons.search, size: 16, color: k.faint),
-            ),
+            hint: l.findPeople,
+            icon: LucideIcons.search,
           ),
           for (final p in _found.take(6))
             KListRow(
@@ -185,17 +177,18 @@ class _ShareDialogState extends State<_ShareDialog> {
                       style: KText.label(k),
                     ),
                   ),
-                  PopupMenuButton<String>(
+                  KMenuButton<String>(
                     key: ValueKey('level-$i'),
                     tooltip: l.share,
                     onSelected: (level) =>
                         setState(() => _shares[i] = FileShare(principalId: s.principalId, level: level)),
-                    itemBuilder: (_) => [
+                    items: () => [
                       for (final level in ['read', 'edit', 'full'])
-                        PopupMenuItem(
+                        KMenuItem(
                           key: ValueKey('level-option-$level'),
                           value: level,
-                          child: Text(levelName(l, level)),
+                          label: levelName(l, level),
+                          checked: level == s.level,
                         ),
                     ],
                     child: Row(
@@ -234,8 +227,8 @@ String linkModeName(AppLocalizations l, String mode) => switch (mode) {
 
 /// The links to a file or folder for people without an account: those there are, and making one – its address shown
 /// only then.
-Future<void> linkDialog(BuildContext context, Kernoid account, String accountId, FileNode node) => showDialog<void>(
-  context: context,
+Future<void> linkDialog(BuildContext context, Kernoid account, String accountId, FileNode node) => showKDialog<void>(
+  context,
   builder: (_) => _LinkDialog(account: account, accountId: accountId, node: node),
 );
 
@@ -332,7 +325,7 @@ class _LinkDialogState extends State<_LinkDialog> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: SelectableText(_made!, key: const ValueKey('link-made'), style: KText.mono(k)),
+                      child: KSelectable.text(_made!, key: const ValueKey('link-made'), style: KText.mono(k)),
                     ),
                     KIconButton(
                       icon: LucideIcons.copy,
@@ -340,7 +333,7 @@ class _LinkDialogState extends State<_LinkDialog> {
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: _made!));
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied)));
+                          KToast.of(context).show(l.copied);
                         }
                       },
                     ),
@@ -349,7 +342,7 @@ class _LinkDialogState extends State<_LinkDialog> {
               ),
               const SizedBox(height: 16),
             ],
-            if (links == null && _error == null) const LinearProgressIndicator(),
+            if (links == null && _error == null) const KProgressBar(),
             if (links != null && links.isEmpty) Text(l.noLinks, style: KText.small(k)),
             for (final link in links ?? const <FileLink>[])
               KListRow(
@@ -385,22 +378,18 @@ class _LinkDialogState extends State<_LinkDialog> {
               children: [
                 Text(l.expires, style: KText.small(k)),
                 const SizedBox(width: 12),
-                DropdownButton<int>(
+                KSelect<int>(
                   value: _days,
-                  underline: const SizedBox(),
-                  items: [
-                    DropdownMenuItem(value: 0, child: Text(l.never)),
-                    for (final days in [1, 7, 30]) DropdownMenuItem(value: days, child: Text(l.inDays(days))),
+                  options: [
+                    (0, l.never),
+                    for (final days in [1, 7, 30]) (days, l.inDays(days)),
                   ],
-                  onChanged: (days) => setState(() => _days = days ?? 0),
+                  onChanged: (days) => setState(() => _days = days),
+                  expand: false,
                 ),
               ],
             ),
-            TextField(
-              controller: _password,
-              obscureText: true,
-              decoration: InputDecoration(labelText: l.passwordOptional),
-            ),
+            KTextField(controller: _password, obscureText: true, label: l.passwordOptional),
             const SizedBox(height: 12),
             KButton(
               key: const ValueKey('link-create'),
@@ -423,8 +412,8 @@ class _LinkDialogState extends State<_LinkDialog> {
 
 /// The current content and the earlier versions of a file: each saved, an earlier one made current again.
 Future<bool> versionsDialog(BuildContext context, Kernoid account, String accountId, FileNode file) async {
-  final changed = await showDialog<bool>(
-    context: context,
+  final changed = await showKDialog<bool>(
+    context,
     builder: (_) => _VersionsDialog(account: account, accountId: accountId, file: file),
   );
   return changed ?? false;
@@ -486,7 +475,7 @@ class _VersionsDialogState extends State<_VersionsDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (versions == null && _error == null) const LinearProgressIndicator(),
+            if (versions == null && _error == null) const KProgressBar(),
             for (final (i, v) in (versions ?? const <FileVersion>[]).indexed)
               KListRow(
                 key: ValueKey('version-$i'),
@@ -545,8 +534,8 @@ Future<FileTarget?> chooseTarget(
   List<FileStore> stores,
   FileStore from,
   FileNode node,
-) => showDialog<FileTarget>(
-  context: context,
+) => showKDialog<FileTarget>(
+  context,
   builder: (_) => _TargetDialog(account: account, stores: stores, from: from, node: node),
 );
 
@@ -623,14 +612,11 @@ class _TargetDialogState extends State<_TargetDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (widget.stores.length > 1)
-            DropdownButton<String>(
+            KSelect<String>(
               key: const ValueKey('target-store'),
               value: _store.accountId,
-              isExpanded: true,
-              underline: const SizedBox(),
-              items: [
-                for (final s in widget.stores) DropdownMenuItem(value: s.accountId, child: Text(storeName(l, s))),
-              ],
+              expand: true,
+              options: [for (final s in widget.stores) (s.accountId, storeName(l, s))],
               onChanged: (id) {
                 _store = widget.stores.firstWhere((s) => s.accountId == id);
                 _path.clear();
@@ -640,21 +626,23 @@ class _TargetDialogState extends State<_TargetDialog> {
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              TextButton(
+              KButton(
+                tone: KTone.quiet,
                 onPressed: () {
                   _path.clear();
                   _load();
                 },
-                child: Text(storeName(l, _store)),
+                label: storeName(l, _store),
               ),
               for (final (i, d) in _path.indexed) ...[
                 Icon(LucideIcons.chevronRight, size: 14, color: k.faint),
-                TextButton(
+                KButton(
+                  tone: KTone.quiet,
                   onPressed: () {
                     _path.removeRange(i + 1, _path.length);
                     _load();
                   },
-                  child: Text(d.name),
+                  label: d.name,
                 ),
               ],
             ],
@@ -664,7 +652,7 @@ class _TargetDialogState extends State<_TargetDialog> {
             child: _error != null
                 ? Text(errorText(_error!), style: KText.small(k).copyWith(color: k.error))
                 : _directories == null
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: KSpinner())
                 : ListView(
                     children: [
                       for (final d in _directories!)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -7,9 +7,7 @@ import '../app/format.dart';
 import '../app/save.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/dialogs.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 import '../widgets/e2e.dart';
 import '../widgets/html_body.dart';
 import '../widgets/states.dart';
@@ -173,9 +171,9 @@ class _MailPageState extends State<MailPage> {
       setState(() => _open = email.id);
     } else {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: const KTopBar(),
+        KPageRoute(
+          builder: (_) => KScaffold(
+            topBar: const KTopBar(),
             body: EmailView(
               account: widget.account,
               accountId: _accountId,
@@ -224,9 +222,9 @@ class _MailPageState extends State<MailPage> {
     final trash = (_boxes[_accountId] ?? const <Mailbox>[]).where((b) => b.role == 'trash').firstOrNull;
     final forGood = trash == null || _mailbox?.role == 'trash' || _mailbox?.role == 'junk';
     if (forGood) {
-      final sure = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
+      final sure = await showKDialog<bool>(
+        context,
+        builder: (context) => KDialog(
           content: Text(l.deleteForGood(ids.length)),
           actions: [
             KButton(label: l.cancel, tone: KTone.quiet, onPressed: () => Navigator.of(context).pop(false)),
@@ -252,7 +250,7 @@ class _MailPageState extends State<MailPage> {
     bool keep = false,
     EmailSummary Function(EmailSummary)? update,
   }) async {
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     try {
       await action();
@@ -271,7 +269,7 @@ class _MailPageState extends State<MailPage> {
       });
       _refreshCounts();
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     }
   }
 
@@ -326,10 +324,10 @@ class _MailPageState extends State<MailPage> {
     for (final (b, _) in mailboxTree(boxes)) {
       if (b.parentId != null && below.contains(b.parentId)) below.add(b.id);
     }
-    final target = await showDialog<(bool, String?)>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l.moveFolderTo(box.name)),
+    final target = await showKDialog<(bool, String?)>(
+      context,
+      builder: (context) => KDialog(
+        title: l.moveFolderTo(box.name),
         content: SizedBox(
           width: 360,
           height: 360,
@@ -390,7 +388,7 @@ class _MailPageState extends State<MailPage> {
   /// Runs a change of folders and shows the account's folders as they are now; the folder shown, if it went, gives way
   /// to the inbox.
   Future<void> _folderAction(String accountId, Future<Object?> Function() action) async {
-    final messenger = ScaffoldMessenger.of(context);
+    final messenger = KToast.of(context);
     final l = AppLocalizations.of(context);
     try {
       await action();
@@ -402,7 +400,7 @@ class _MailPageState extends State<MailPage> {
         if (inbox != null) _select(accountId, inbox);
       }
     } catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+      messenger.show(l.error(errorText(error)));
     }
   }
 
@@ -410,10 +408,10 @@ class _MailPageState extends State<MailPage> {
   Future<void> _folderPage() async {
     final l = AppLocalizations.of(context);
     await Navigator.of(context).push(
-      MaterialPageRoute(
+      KPageRoute(
         builder: (page) => StatefulBuilder(
-          builder: (page, rebuild) => Scaffold(
-            appBar: KTopBar(title: l.folders),
+          builder: (page, rebuild) => KScaffold(
+            topBar: KTopBar(title: l.folders),
             body: _Mailboxes(
               accounts: _accounts,
               boxes: _boxes,
@@ -453,9 +451,7 @@ class _MailPageState extends State<MailPage> {
     final l = AppLocalizations.of(context);
     final wide = MediaQuery.sizeOf(context).width >= wideLayout;
     if (_boxes.isEmpty) {
-      return _error != null
-          ? ErrorView(error: _error!, onRetry: _loadMailboxes)
-          : const Center(child: CircularProgressIndicator());
+      return _error != null ? ErrorView(error: _error!, onRetry: _loadMailboxes) : const Center(child: KSpinner());
     }
     final list = Column(
       children: [
@@ -502,8 +498,8 @@ class _MailPageState extends State<MailPage> {
         : mailboxName(l, _mailbox!);
     if (!wide) {
       final k = context.k;
-      return Scaffold(
-        appBar: KTopBar(
+      return KScaffold(
+        topBar: KTopBar(
           leading: const SizedBox(width: 6),
           actions: [
             KIconButton(
@@ -515,32 +511,20 @@ class _MailPageState extends State<MailPage> {
           ],
           titleWidget: Align(
             alignment: Alignment.centerLeft,
-            child: PopupMenuButton<(String, Mailbox)>(
+            child: KMenuButton<(String, Mailbox)>(
               key: const ValueKey('mailbox-menu'),
               tooltip: l.mailboxes,
               onSelected: (choice) => _select(choice.$1, choice.$2),
-              itemBuilder: (_) => [
+              items: () => [
                 for (final a in _accounts) ...[
-                  if (_accounts.length > 1)
-                    PopupMenuItem(
-                      enabled: false,
-                      height: 30,
-                      child: KOverline(_accountName(l, a), padding: EdgeInsets.zero),
-                    ),
+                  if (_accounts.length > 1) KMenuItem.header(_accountName(l, a)),
                   for (final (b, depth) in mailboxTree(_boxes[a.id] ?? const []))
-                    PopupMenuItem(
+                    KMenuItem(
                       value: (a.id, b),
-                      child: Padding(
-                        padding: EdgeInsets.only(left: depth * 16.0),
-                        child: Row(
-                          children: [
-                            Icon(mailboxIcon(b), size: 17, color: k.muted),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(mailboxName(l, b))),
-                            if (b.unread > 0) Text('${b.unread}', style: KText.small(k).copyWith(color: k.accent)),
-                          ],
-                        ),
-                      ),
+                      label: mailboxName(l, b),
+                      icon: mailboxIcon(b),
+                      indent: depth * 16.0,
+                      trailing: b.unread > 0 ? '${b.unread}' : null,
                     ),
                 ],
               ],
@@ -558,17 +542,17 @@ class _MailPageState extends State<MailPage> {
           ),
         ),
         body: list,
-        floatingActionButton: _chosen.isNotEmpty
+        floating: _chosen.isNotEmpty
             ? null
-            : FloatingActionButton(
+            : KFloatingButton(
                 key: const ValueKey('write'),
                 tooltip: l.write,
                 onPressed: _write,
-                child: const Icon(LucideIcons.pencil),
+                icon: LucideIcons.pencil,
               ),
       );
     }
-    return Scaffold(
+    return KScaffold(
       body: Row(
         children: [
           SizedBox(
@@ -803,33 +787,22 @@ class _ChosenBar extends StatelessWidget {
               onPressed: onRead,
             ),
             KIconButton(key: const ValueKey('mark-flag'), icon: LucideIcons.flag, tooltip: l.flag, onPressed: onFlag),
-            PopupMenuButton<Mailbox>(
+            KMenuButton<Mailbox>(
               key: const ValueKey('move-to'),
               tooltip: l.moveTo,
               onSelected: onMove,
-              itemBuilder: (_) => [
+              icon: LucideIcons.folderInput,
+              items: () => [
                 for (final (b, depth) in mailboxTree(boxes))
                   if (b.id != current)
-                    PopupMenuItem(
+                    KMenuItem(
                       key: ValueKey('move-to-${b.id}'),
                       value: b,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: depth * 16.0),
-                        child: Row(
-                          children: [
-                            Icon(mailboxIcon(b), size: 17, color: k.muted),
-                            const SizedBox(width: 10),
-                            Text(mailboxName(l, b)),
-                          ],
-                        ),
-                      ),
+                      label: mailboxName(l, b),
+                      icon: mailboxIcon(b),
+                      indent: depth * 16.0,
                     ),
               ],
-              child: SizedBox(
-                width: KSize.control,
-                height: KSize.control,
-                child: Icon(LucideIcons.folderInput, size: KSize.icon, color: k.muted),
-              ),
             ),
             KIconButton(
               key: const ValueKey('delete-emails'),
@@ -879,7 +852,7 @@ class _EmailList extends StatelessWidget {
     if (error != null && emails.isEmpty) return ErrorView(error: error!, onRetry: onRefresh);
     if (emails.isEmpty) {
       return loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: KSpinner())
           : EmptyView(
               searching ? l.nothingFound : l.noMessages,
               icon: searching ? LucideIcons.searchX : LucideIcons.inbox,
@@ -888,7 +861,7 @@ class _EmailList extends StatelessWidget {
     final more = emails.length < total;
     return ColoredBox(
       color: k.surface,
-      child: RefreshIndicator(
+      child: KRefresh(
         onRefresh: onRefresh,
         child: ListView.builder(
           itemCount: emails.length + (more ? 1 : 0),
@@ -1020,7 +993,6 @@ class _EmailViewState extends State<EmailView> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return FutureBuilder<Email>(
       future: _email,
       builder: (context, snapshot) {
@@ -1033,7 +1005,7 @@ class _EmailViewState extends State<EmailView> {
           );
         }
         final e = snapshot.data;
-        if (e == null) return const Center(child: CircularProgressIndicator());
+        if (e == null) return const Center(child: KSpinner());
         if (e.locked) {
           return Center(
             child: Padding(
@@ -1041,7 +1013,7 @@ class _EmailViewState extends State<EmailView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.lock, size: 40, color: theme.colorScheme.primary),
+                  Icon(LucideIcons.lock, size: 40, color: context.k.accent),
                   const SizedBox(height: 12),
                   Text(l.lockedEmail, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
@@ -1066,7 +1038,7 @@ class _EmailViewState extends State<EmailView> {
         }
         final k = context.k;
         final sender = e.from.firstOrNull;
-        return SelectionArea(
+        return KSelectable(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(28, 22, 28, 28),
             children: [
@@ -1129,10 +1101,7 @@ class _EmailViewState extends State<EmailView> {
                     ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Divider(color: k.line),
-              ),
+              Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: const KDivider()),
               if (e.html != null && !_asText)
                 HtmlBody(
                   html: e.html!,
@@ -1141,10 +1110,7 @@ class _EmailViewState extends State<EmailView> {
               else
                 Text(e.text, style: KText.body(k).copyWith(height: 1.6)),
               if (e.attachments.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Divider(color: k.line),
-                ),
+                Padding(padding: const EdgeInsets.symmetric(vertical: 20), child: const KDivider()),
                 KOverline(l.attachments, padding: const EdgeInsets.only(bottom: 10)),
                 Wrap(
                   spacing: 10,

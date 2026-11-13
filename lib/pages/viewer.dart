@@ -3,17 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfrx/pdfrx.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
+import '../widgets/pdf_view.dart';
 import '../widgets/states.dart';
 
 /// How the viewer shows a file: in the app – text, images, PDF –, or handed to another app of the system (audio,
@@ -58,7 +56,7 @@ Future<void> viewFile(
     return;
   }
   await Navigator.of(context).push<void>(
-    MaterialPageRoute(
+    KPageRoute(
       fullscreenDialog: true,
       builder: (_) => ViewerPage(name: name, mediaType: mediaType, kind: kind, fetch: fetch, onSave: onSave),
     ),
@@ -79,7 +77,7 @@ Future<void> openElsewhere(
   required String? mediaType,
   required FetchFile fetch,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = KToast.of(context);
   final l = AppLocalizations.of(context);
   final box = context.findRenderObject() as RenderBox?;
   final origin = box == null || !box.hasSize ? null : box.localToGlobal(Offset.zero) & box.size;
@@ -95,10 +93,10 @@ Future<void> openElsewhere(
         ),
       );
     } else if (!await launchUrl(Uri.file(path))) {
-      messenger.showSnackBar(SnackBar(content: Text(l.noAppFor(name))));
+      messenger.show(l.noAppFor(name));
     }
   } catch (error) {
-    messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    messenger.show(l.error(errorText(error)));
   }
 }
 
@@ -176,10 +174,10 @@ class _ViewerPageState extends State<ViewerPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final k = context.k;
-    return Scaffold(
+    return KScaffold(
       key: const ValueKey('viewer'),
-      backgroundColor: k.surface,
-      appBar: KTopBar(
+      background: k.surface,
+      topBar: KTopBar(
         title: widget.name,
         actions: [
           if (widget.onSave != null) KIconButton(icon: LucideIcons.download, tooltip: l.save, onPressed: widget.onSave),
@@ -207,7 +205,7 @@ class _ViewerPageState extends State<ViewerPage> {
   Widget _body(AppLocalizations l, KTokens k) {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final path = _path;
-    if (path == null) return const Center(child: CircularProgressIndicator());
+    if (path == null) return const Center(child: KSpinner());
     switch (widget.kind) {
       case ViewKind.text:
         return Column(
@@ -223,7 +221,7 @@ class _ViewerPageState extends State<ViewerPage> {
               child: SingleChildScrollView(
                 key: const ValueKey('viewer-text'),
                 padding: const EdgeInsets.all(16),
-                child: SelectableText(_text ?? '', style: KText.mono(k).copyWith(color: k.text)),
+                child: KSelectable.text(_text ?? '', style: KText.mono(k).copyWith(color: k.text)),
               ),
             ),
           ],
@@ -240,7 +238,11 @@ class _ViewerPageState extends State<ViewerPage> {
           ),
         );
       case ViewKind.pdf:
-        return PdfViewer.file(path, key: const ValueKey('viewer-pdf'));
+        return PdfView(
+          key: const ValueKey('viewer-pdf'),
+          path: path,
+          error: EmptyView(l.cannotShow, icon: LucideIcons.fileX),
+        );
       case ViewKind.other:
         return EmptyView(l.cannotShow, icon: LucideIcons.fileQuestion);
     }

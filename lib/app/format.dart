@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// A sender or recipient as people read it: the name, else the address.
 String person(Address a) => (a.name?.trim().isNotEmpty ?? false) ? a.name!.trim() : a.email;

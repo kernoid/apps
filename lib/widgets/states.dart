@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+import '../ui/ui.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
@@ -22,7 +22,7 @@ class ErrorView extends StatelessWidget {
           children: [
             Text(l.error(errorText(error)), textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: Text(l.retry)),
+            KButton(onPressed: onRetry, label: l.retry),
           ],
         ),
       ),
@@ -39,7 +39,7 @@ class EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    final color = context.k.muted;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

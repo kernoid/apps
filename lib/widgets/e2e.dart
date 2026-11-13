@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// Asks for the recovery code and unlocks the key with it. True once unlocked. **OPEN**: unlocking with a passkey
 /// (PRF) and a copy for this device in the system's key store (docs/plan.md, 6).
 Future<bool> unlockKey(BuildContext context, Kernoid account) async {
-  final unlocked = await showDialog<bool>(
-    context: context,
-    builder: (_) => _UnlockDialog(account: account),
-  );
+  final unlocked = await showKDialog<bool>(context, builder: (_) => _UnlockDialog(account: account));
   return unlocked ?? false;
 }
 
@@ -55,8 +53,8 @@ class _UnlockDialogState extends State<_UnlockDialog> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l.unlock),
+    return KDialog(
+      title: l.unlock,
       content: SizedBox(
         width: 380,
         child: Column(
@@ -65,28 +63,22 @@ class _UnlockDialogState extends State<_UnlockDialog> {
           children: [
             Text(l.e2eLocked),
             const SizedBox(height: 12),
-            TextField(
+            KTextField(
               key: const ValueKey('recovery-code'),
               controller: _code,
               autofocus: true,
               autocorrect: false,
-              enableSuggestions: false,
-              style: const TextStyle(fontFamily: 'monospace'),
-              decoration: InputDecoration(labelText: l.recoveryCode, errorText: _error, errorMaxLines: 3),
+              style: KText.mono(context.k).copyWith(fontSize: 15, color: context.k.text),
+              label: l.recoveryCode,
+              error: _error,
               onSubmitted: (_) => _unlock(),
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(false), child: Text(l.cancel)),
-        FilledButton(
-          key: const ValueKey('unlock'),
-          onPressed: _busy ? null : _unlock,
-          child: _busy
-              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(l.unlock),
-        ),
+        KButton(tone: KTone.quiet, onPressed: _busy ? null : () => Navigator.of(context).pop(false), label: l.cancel),
+        KButton(key: const ValueKey('unlock'), tone: KTone.primary, onPressed: _unlock, busy: _busy, label: l.unlock),
       ],
     );
   }
@@ -94,11 +86,7 @@ class _UnlockDialogState extends State<_UnlockDialog> {
 
 /// Shows the recovery code of a new key once; closes only when the user says they kept it.
 Future<void> showRecoveryCode(BuildContext context, String code) {
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => _RecoveryDialog(code: code),
-  );
+  return showKDialog<void>(context, dismissible: false, builder: (_) => _RecoveryDialog(code: code));
 }
 
 class _RecoveryDialog extends StatefulWidget {
@@ -116,9 +104,8 @@ class _RecoveryDialogState extends State<_RecoveryDialog> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return AlertDialog(
-      title: Text(l.recoveryTitle),
+    return KDialog(
+      title: l.recoveryTitle,
       content: SizedBox(
         width: 420,
         child: Column(
@@ -129,44 +116,42 @@ class _RecoveryDialogState extends State<_RecoveryDialog> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SelectableText(
+              decoration: BoxDecoration(color: context.k.hover, borderRadius: BorderRadius.circular(8)),
+              child: KSelectable.text(
                 widget.code,
                 key: const ValueKey('the-recovery-code'),
-                style: theme.textTheme.titleMedium?.copyWith(fontFamily: 'monospace', letterSpacing: 1.2),
+                style: KText.heading(context.k).copyWith(fontFamily: 'monospace', letterSpacing: 1.2),
               ),
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton.icon(
+              child: KButton(
+                tone: KTone.quiet,
                 onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
+                  final messenger = KToast.of(context);
                   await Clipboard.setData(ClipboardData(text: widget.code));
-                  messenger.showSnackBar(SnackBar(content: Text(l.copied)));
+                  messenger.show(l.copied);
                 },
-                icon: const Icon(LucideIcons.copy, size: 18),
-                label: Text(l.copy),
+                icon: LucideIcons.copy,
+                label: l.copy,
               ),
             ),
-            CheckboxListTile(
+            KToggleRow(
               key: const ValueKey('recovery-kept'),
-              contentPadding: EdgeInsets.zero,
               value: _kept,
-              onChanged: (v) => setState(() => _kept = v ?? false),
+              onChanged: (v) => setState(() => _kept = v),
               title: Text(l.recoveryKept),
-              controlAffinity: ListTileControlAffinity.leading,
+              checkbox: true,
             ),
           ],
         ),
       ),
       actions: [
-        FilledButton(
+        KButton(
+          tone: KTone.primary,
           key: const ValueKey('recovery-done'),
           onPressed: _kept ? () => Navigator.of(context).pop() : null,
-          child: Text(l.done),
+          label: l.done,
         ),
       ],
     );
@@ -189,7 +174,6 @@ class SealBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final signature = !email.signed
         ? l.notSigned
         : email.verified
@@ -200,15 +184,15 @@ class SealBadge extends StatelessWidget {
       spacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Icon(LucideIcons.lock, size: 16, color: scheme.primary),
-        Text(l.e2eEncrypted, style: TextStyle(color: scheme.primary)),
-        Text('·', style: TextStyle(color: scheme.onSurfaceVariant)),
+        Icon(LucideIcons.lock, size: 16, color: context.k.accent),
+        Text(l.e2eEncrypted, style: TextStyle(color: context.k.accent)),
+        Text('·', style: TextStyle(color: context.k.muted)),
         Icon(
           good ? LucideIcons.badgeCheck : LucideIcons.circleHelp,
           size: 16,
-          color: good ? scheme.primary : scheme.error,
+          color: good ? context.k.accent : context.k.error,
         ),
-        Text(signature, style: TextStyle(color: good ? scheme.onSurfaceVariant : scheme.error)),
+        Text(signature, style: TextStyle(color: good ? context.k.muted : context.k.error)),
       ],
     );
   }

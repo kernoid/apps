@@ -9,8 +9,15 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ### Changed
 
+- No Material and no Cupertino any more: the app is built on Flutter's widgets layer and kernoid's own widgets alone –
+  the frame, text fields with the platform's gestures and kernoid's selection handles and menu, dialogs, menus,
+  choices, date and time pickers, switches, short notes, tooltips, pull to refresh. It looks the same on every system,
+  as the web app does. PDFs are drawn page by page through pdfrx's engine (zoom with a pinch, the trackpad or Ctrl/⌘
+  and the wheel; the wheel alone turns the pages) instead of pdfrx's viewer, which brings Material. `material_ui` and
+  `cupertino_ui` are no longer dependencies.
 - Flutter 3.50.0 with Dart 3.14 (from 3.47.8). Material and Cupertino come from their own packages, `material_ui`
-  1.8.0 and `cupertino_ui` 1.1.4, as Flutter 3.50 deprecates `package:flutter/material.dart` and `cupertino.dart`.
+  1.8.0 and `cupertino_ui` 1.1.4, as Flutter 3.50 deprecates `package:flutter/material.dart` and `cupertino.dart` –
+  replaced the same day by kernoid's own widgets (above).
 
 ### Fixed
 

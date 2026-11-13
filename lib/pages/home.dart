@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/explorer_files.dart';
@@ -7,8 +7,7 @@ import '../app/sync_folders.dart';
 import '../app/tray.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 import 'account.dart';
 import 'calendar.dart';
 import 'contacts.dart';
@@ -93,8 +92,8 @@ class _HomePageState extends State<HomePage> {
     };
     final name = widget.account.username;
     if (MediaQuery.sizeOf(context).width >= wideLayout) {
-      return Scaffold(
-        backgroundColor: k.bg,
+      return KScaffold(
+        background: k.bg,
         body: Row(
           children: [
             Container(
@@ -120,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                           onTap: () => setState(() => _section = i),
                         ),
                       const Spacer(),
-                      Divider(color: k.line, height: 17),
+                      const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: KDivider()),
                       _AccountItem(
                         key: const ValueKey('nav-account'),
                         name: name,
@@ -138,9 +137,9 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-    return Scaffold(
+    return KScaffold(
       body: page,
-      bottomNavigationBar: Container(
+      bottom: Container(
         decoration: BoxDecoration(
           color: k.panel,
           border: Border(top: BorderSide(color: k.line)),
@@ -205,7 +204,7 @@ class _AccountItemState extends State<_AccountItem> {
                   ? k.accentSoft
                   : _hover
                   ? k.hover
-                  : Colors.transparent,
+                  : KColor.transparent,
               borderRadius: BorderRadius.circular(KSize.radiusSmall),
             ),
             child: Row(
@@ -264,7 +263,7 @@ class _BottomItem extends StatelessWidget {
               height: 3,
               margin: const EdgeInsets.only(bottom: 7),
               decoration: BoxDecoration(
-                color: selected ? k.accent : Colors.transparent,
+                color: selected ? k.accent : KColor.transparent,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

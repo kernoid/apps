@@ -276,7 +276,7 @@ the order in which the vault and calendar parts follow mail.
 
 | Block | Choice | Licence | Note |
 |---|---|---|---|
-| UI | Flutter 3.50, Dart 3.14; Material and Cupertino from the packages `material_ui` and `cupertino_ui` | BSD-3-Clause | one code base for five platforms, accessibility on all of them |
+| UI | Flutter 3.50, Dart 3.14, its `widgets` layer only – no Material, no Cupertino (decided 2026-11-13); kernoid's own widgets in `lib/ui/` | BSD-3-Clause | one code base for five platforms, accessibility on all of them; the look is the web app's on every platform |
 | Dart ↔ Rust | flutter_rust_bridge 2.13 | MIT | async and streams in both directions |
 | Swift/Kotlin ↔ Rust | a C boundary by hand: JSON through two C functions (`rust/src/provider.rs`), JNI for Kotlin | MIT | chosen 2026-11-04 instead of UniFFI 0.32 (MPL-2.0, file-level copyleft) |
 | Kotlin ↔ Rust (built) | JSON messages over JNI, jni 0.22.4 | MIT OR Apache-2.0 | the core of the shells (`rust/src/provider.rs`); jni came already with reqwest on Android |
@@ -284,7 +284,7 @@ the order in which the vault and calendar parts follow mail.
 | Async runtime, HTTP | tokio, reqwest 0.13 with rustls (AWS-LC, post-quantum key exchange preferred) – through kernoid's SDK | MIT/Apache-2.0, ISC | async – the engine waits on many transfers and push at once |
 | Local state | SQLite | public domain | one file on every system |
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |
-| Viewing files | pdfrx 2.9 (PDFium, prebuilt and fetched at build time with its hash); text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
+| Viewing files | pdfrx_engine 0.7 with pdfium_flutter 0.4 (PDFium, prebuilt and fetched at build time with its hash), the pages drawn by the app itself – pdfrx's viewer brings Material; text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
 | Dropping files | desktop_drop 0.8.4 – 0.9 needs a cross_file that file_selector does not take yet | Apache-2.0; on Linux dbus (MPL-2.0, file-level copyleft, Dart source unchanged) | moving inside the app with Flutter's own drag and drop |
 | Windows' Cloud Files, DPAPI | `windows` 0.62 (Microsoft), only built for Windows | MIT OR Apache-2.0 | the Explorer shell of section 5 |
 | Tray, start at login | tray_manager 0.5.3 and window_manager 0.5.2 – 0.6 and later build a native library (nativeapi) on every platform; start at login without a package (SMAppService, the registry, XDG Autostart) | MIT; on Linux the system's libayatana-appindicator (LGPL, linked as WebKitGTK is) | decided 2026-11-04 |

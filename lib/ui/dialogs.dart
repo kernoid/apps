@@ -1,8 +1,101 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/widgets.dart';
 
+import '../l10n/app_localizations.dart';
+import 'fields.dart';
 import 'tokens.dart';
 import 'widgets.dart';
+
+export 'menus.dart' show showPointMenu;
+
+/// Opens a dialog above the page – the page dimmed behind it, closed by a tap beside it or Escape – and returns what
+/// it pops with. What Material's `showDialog` was.
+Future<T?> showKDialog<T>(BuildContext context, {required WidgetBuilder builder, bool dismissible = true}) {
+  final tokens = context.k;
+  return showGeneralDialog<T>(
+    context: context,
+    barrierDismissible: dismissible,
+    barrierLabel: AppLocalizations.of(context).close,
+    barrierColor: const Color(0x8C000000),
+    transitionDuration: const Duration(milliseconds: 160),
+    pageBuilder: (context, animation, secondaryAnimation) => KTheme(
+      tokens: tokens,
+      child: SafeArea(child: Builder(builder: builder)),
+    ),
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(scale: Tween(begin: 0.97, end: 1.0).animate(curved), child: child),
+      );
+    },
+  );
+}
+
+/// The frame of a dialog: a title, its content (scrolling when long), its buttons at the bottom end. What Material's
+/// alert dialog was.
+class KDialog extends StatelessWidget {
+  const KDialog({super.key, this.title, required this.content, this.actions = const [], this.width = 420});
+
+  final String? title;
+  final Widget content;
+  final List<Widget> actions;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final insets = MediaQuery.viewInsetsOf(context);
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 100),
+      padding: EdgeInsets.only(bottom: insets.bottom) + const EdgeInsets.all(20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: width),
+          child: Container(
+            decoration: BoxDecoration(
+              color: k.surface,
+              border: Border.all(color: k.line),
+              borderRadius: BorderRadius.circular(KSize.radius),
+              boxShadow: const [BoxShadow(color: Color(0x40000000), blurRadius: 30, offset: Offset(0, 10))],
+            ),
+            child: Semantics(
+              scopesRoute: true,
+              namesRoute: true,
+              explicitChildNodes: true,
+              label: title,
+              child: DefaultTextStyle(
+                style: KText.body(k),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (title != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
+                        child: Text(title!, style: KText.heading(k).copyWith(fontSize: 17)),
+                      ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(22, title != null ? 14 : 22, 22, actions.isEmpty ? 22 : 8),
+                        child: content,
+                      ),
+                    ),
+                    if (actions.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: Wrap(alignment: WrapAlignment.end, spacing: 8, runSpacing: 8, children: actions),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Asks for a line of text – a name – and returns it, or `null` when cancelled or left empty.
 Future<String?> askText(
@@ -12,8 +105,8 @@ Future<String?> askText(
   String initial = '',
   String? label,
 }) async {
-  final result = await showDialog<String>(
-    context: context,
+  final result = await showKDialog<String>(
+    context,
     builder: (_) => _AskText(title: title, confirm: confirm, initial: initial, label: label),
   );
   return result == null || result.isEmpty ? null : result;
@@ -46,21 +139,19 @@ class _AskTextState extends State<_AskText> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: SizedBox(
-        width: 360,
-        child: TextField(
-          key: const ValueKey('ask-text'),
-          controller: _controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: widget.label),
-          onSubmitted: (_) => _done(),
-        ),
+    return KDialog(
+      title: widget.title,
+      width: 400,
+      content: KTextField(
+        key: const ValueKey('ask-text'),
+        controller: _controller,
+        autofocus: true,
+        label: widget.label,
+        onSubmitted: (_) => _done(),
       ),
       actions: [
         KButton(
-          label: MaterialLocalizations.of(context).cancelButtonLabel,
+          label: AppLocalizations.of(context).cancel,
           tone: KTone.quiet,
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -77,13 +168,17 @@ Future<bool> confirmAction(
   required String confirm,
   bool danger = false,
 }) async {
-  final cancel = MaterialLocalizations.of(context).cancelButtonLabel;
-  final sure = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      content: SizedBox(width: 360, child: Text(text, style: KText.body(context.k))),
+  final sure = await showKDialog<bool>(
+    context,
+    builder: (context) => KDialog(
+      width: 400,
+      content: Text(text, style: KText.body(context.k)),
       actions: [
-        KButton(label: cancel, tone: KTone.quiet, onPressed: () => Navigator.of(context).pop(false)),
+        KButton(
+          label: AppLocalizations.of(context).cancel,
+          tone: KTone.quiet,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
         KButton(
           key: const ValueKey('confirm-action'),
           label: confirm,
@@ -97,10 +192,11 @@ Future<bool> confirmAction(
 }
 
 /// A note to read, with one button to close it.
-Future<void> showNote(BuildContext context, {required String text, required String close}) => showDialog<void>(
-  context: context,
-  builder: (context) => AlertDialog(
-    content: SizedBox(width: 360, child: Text(text, style: KText.body(context.k))),
+Future<void> showNote(BuildContext context, {required String text, required String close}) => showKDialog<void>(
+  context,
+  builder: (context) => KDialog(
+    width: 400,
+    content: Text(text, style: KText.body(context.k)),
     actions: [
       KButton(
         key: const ValueKey('note-close'),
@@ -111,32 +207,3 @@ Future<void> showNote(BuildContext context, {required String text, required Stri
     ],
   ),
 );
-
-/// A menu at a point – of a right click or a long press – with an icon before every entry.
-Future<T?> showPointMenu<T>(
-  BuildContext context, {
-  required Offset position,
-  required List<(T value, IconData icon, String label, bool danger)> items,
-}) {
-  final k = context.k;
-  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
-  return showMenu<T>(
-    context: context,
-    position: RelativeRect.fromRect(position & const Size(1, 1), Offset.zero & overlay.size),
-    items: [
-      for (final (value, icon, label, danger) in items)
-        PopupMenuItem<T>(
-          key: ValueKey('menu-$value'),
-          value: value,
-          height: KSize.control,
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: danger ? k.error : k.muted),
-              const SizedBox(width: 10),
-              Text(label, style: KText.label(k).copyWith(color: danger ? k.error : k.text)),
-            ],
-          ),
-        ),
-    ],
-  );
-}

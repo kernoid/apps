@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-import 'dart:typed_data';
-
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../l10n/app_localizations.dart';
+import 'controls.dart';
+import 'fields.dart';
 import 'tokens.dart';
 
 /// What a button is for: the one thing to do (primary), anything else, a quiet one in toolbars, one that destroys.
@@ -18,12 +20,16 @@ class KButton extends StatefulWidget {
     required this.onPressed,
     this.tone = KTone.normal,
     this.expand = false,
+    this.busy = false,
   });
 
   final String label;
   final IconData? icon;
   final VoidCallback? onPressed;
   final KTone tone;
+
+  /// Its work runs: a spinner instead of the icon, and it does not react.
+  final bool busy;
 
   /// As wide as its parent.
   final bool expand;
@@ -39,18 +45,24 @@ class _KButtonState extends State<KButton> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final enabled = widget.onPressed != null;
+    final enabled = widget.onPressed != null && !widget.busy;
     final (background, foreground, border) = switch (widget.tone) {
       KTone.primary => (k.accent, k.accentText, k.accent),
       KTone.normal => (_hover ? k.hover : k.raised, k.text, _hover ? k.lineStrong : k.line),
-      KTone.quiet => (_hover ? k.hover : Colors.transparent, k.text, Colors.transparent),
+      KTone.quiet => (_hover ? k.hover : KColor.transparent, k.text, KColor.transparent),
       KTone.danger => (_hover ? k.errorSoft : k.raised, k.error, k.line),
     };
     final content = Row(
       mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (widget.icon != null) ...[Icon(widget.icon, size: 16, color: foreground), const SizedBox(width: 7)],
+        if (widget.busy) ...[
+          KSpinner(size: 15, stroke: 2, color: foreground),
+          const SizedBox(width: 8),
+        ] else if (widget.icon != null) ...[
+          Icon(widget.icon, size: 16, color: foreground),
+          const SizedBox(width: 7),
+        ],
         Flexible(
           child: Text(
             widget.label,
@@ -74,10 +86,10 @@ class _KButtonState extends State<KButton> {
           onTapDown: enabled ? (_) => setState(() => _down = true) : null,
           onTapUp: enabled ? (_) => setState(() => _down = false) : null,
           onTapCancel: () => setState(() => _down = false),
-          onTap: widget.onPressed,
+          onTap: enabled ? widget.onPressed : null,
           child: Focus(
             child: Opacity(
-              opacity: enabled ? 1 : 0.5,
+              opacity: enabled || widget.busy ? 1 : 0.5,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
                 transform: Matrix4.translationValues(0, _down ? 0.5 : 0, 0),
@@ -86,7 +98,7 @@ class _KButtonState extends State<KButton> {
                 alignment: widget.expand ? Alignment.center : null,
                 decoration: BoxDecoration(
                   color: widget.tone == KTone.primary && _hover
-                      ? Color.lerp(background, Colors.white, 0.08)
+                      ? Color.lerp(background, KColor.white, 0.08)
                       : background,
                   borderRadius: BorderRadius.circular(KSize.radiusSmall),
                   border: Border.all(color: border),
@@ -131,7 +143,7 @@ class _KIconButtonState extends State<KIconButton> {
   Widget build(BuildContext context) {
     final k = context.k;
     final enabled = widget.onPressed != null;
-    return Tooltip(
+    return KTooltip(
       message: widget.tooltip,
       child: Semantics(
         button: true,
@@ -153,7 +165,7 @@ class _KIconButtonState extends State<KIconButton> {
                       ? k.accentSoft
                       : _hover && enabled
                       ? k.hover
-                      : Colors.transparent,
+                      : KColor.transparent,
                   borderRadius: BorderRadius.circular(KSize.radiusSmall),
                 ),
                 child: Icon(
@@ -191,7 +203,7 @@ class KTopBar extends StatelessWidget implements PreferredSizeWidget {
     final route = ModalRoute.of(context);
     final canPop = back != null || (route?.canPop ?? false);
     final closes = route is PageRoute && route.fullscreenDialog;
-    final localizations = MaterialLocalizations.of(context);
+    final t = AppLocalizations.of(context);
     return Container(
       height: KSize.bar,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -209,7 +221,7 @@ class KTopBar extends StatelessWidget implements PreferredSizeWidget {
               KIconButton(
                 key: const ValueKey('back'),
                 icon: closes ? LucideIcons.x : LucideIcons.arrowLeft,
-                tooltip: closes ? localizations.closeButtonTooltip : localizations.backButtonTooltip,
+                tooltip: closes ? t.close : t.back,
                 onPressed: back ?? () => Navigator.of(context).maybePop(),
               ),
             SizedBox(width: canPop || leading != null ? 6 : 6),
@@ -286,7 +298,7 @@ class _KListRowState extends State<KListRow> {
                 ? k.accentSoft
                 : _hover && widget.onTap != null
                 ? k.hover
-                : Colors.transparent,
+                : KColor.transparent,
             border: widget.divider ? Border(bottom: BorderSide(color: k.line)) : null,
           ),
           child: Row(
@@ -374,7 +386,7 @@ class _KSideItemState extends State<KSideItem> {
                 ? k.accentSoft
                 : _hover
                 ? k.hover
-                : Colors.transparent,
+                : KColor.transparent,
             borderRadius: BorderRadius.circular(KSize.radiusSmall),
           ),
           child: Row(
@@ -523,7 +535,7 @@ class KSegmented<T> extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: option == value ? k.accent : Colors.transparent,
+                    color: option == value ? k.accent : KColor.transparent,
                     border: i == 0 ? null : Border(left: BorderSide(color: k.line)),
                   ),
                   child: Text(
@@ -655,7 +667,7 @@ class _KSearchFieldState extends State<KSearchField> {
         color: k.surface,
         border: Border(bottom: BorderSide(color: k.line)),
       ),
-      child: TextField(
+      child: KTextField(
         key: widget.fieldKey,
         controller: widget.controller,
         textInputAction: TextInputAction.search,
@@ -665,30 +677,23 @@ class _KSearchFieldState extends State<KSearchField> {
           if (text.isEmpty) widget.onSubmitted('');
         },
         style: KText.body(k).copyWith(fontSize: 14),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          filled: true,
-          fillColor: k.raised,
-          prefixIcon: Icon(LucideIcons.search, size: 16, color: k.faint),
-          prefixIconConstraints: const BoxConstraints(minWidth: 36),
-          suffixIcon: widget.controller.text.isEmpty
-              ? null
-              : KIconButton(
-                  icon: LucideIcons.x,
-                  tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
-                  size: 30,
-                  onPressed: () {
-                    widget.controller.clear();
-                    widget.onSubmitted('');
-                    setState(() {});
-                  },
-                ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(KSize.radiusSmall),
-            borderSide: BorderSide.none,
-          ),
-        ),
+        hint: widget.hint,
+        fill: k.raised,
+        borderless: true,
+        icon: LucideIcons.search,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        suffix: widget.controller.text.isEmpty
+            ? null
+            : KIconButton(
+                icon: LucideIcons.x,
+                tooltip: AppLocalizations.of(context).clear,
+                size: 28,
+                onPressed: () {
+                  widget.controller.clear();
+                  widget.onSubmitted('');
+                  setState(() {});
+                },
+              ),
       ),
     );
   }

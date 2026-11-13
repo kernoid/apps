@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 import '../widgets/states.dart';
 import '../app/format.dart';
 import 'compose.dart';
@@ -64,53 +63,57 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.contacts),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: SearchBar(
+    return KScaffold(
+      topBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KTopBar(title: l.contacts),
+          Container(
+            color: context.k.panel,
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            child: KTextField(
+              key: const ValueKey('contacts-search'),
               controller: _search,
-              hintText: l.searchContacts,
-              leading: const Icon(LucideIcons.search),
+              hint: l.searchContacts,
+              icon: LucideIcons.search,
               onChanged: _searchChanged,
-              elevation: const WidgetStatePropertyAll(0),
+              fill: context.k.raised,
+              borderless: true,
+              textInputAction: TextInputAction.search,
             ),
           ),
-        ),
+        ],
       ),
       body: _body(l),
-      floatingActionButton: FloatingActionButton(
+      floating: KFloatingButton(
         key: const ValueKey('new-contact'),
         tooltip: l.newContact,
         onPressed: () => _show(ContactFormPage(account: widget.account), dialog: true),
-        child: const Icon(LucideIcons.userPlus),
+        icon: LucideIcons.userPlus,
       ),
     );
   }
 
   /// Opens a page; anything saved or deleted there loads the list again.
   Future<void> _show(Widget page, {bool dialog = false}) async {
-    final changed = await Navigator.of(context)
-        .push<bool>(MaterialPageRoute(fullscreenDialog: dialog, builder: (_) => page));
+    final changed = await Navigator.of(context).push<bool>(KPageRoute(fullscreenDialog: dialog, builder: (_) => page));
     if (changed ?? false) _load();
   }
 
   Widget _body(AppLocalizations l) {
     if (_error != null) return ErrorView(error: _error!, onRetry: _load);
     final contacts = _contacts;
-    if (contacts == null) return const Center(child: CircularProgressIndicator());
+    if (contacts == null) return const Center(child: KSpinner());
     if (contacts.isEmpty) return EmptyView(l.noContacts, icon: LucideIcons.userSearch);
-    return RefreshIndicator(
+    return KRefresh(
       onRefresh: _load,
       child: ListView.builder(
         itemCount: contacts.length,
         itemBuilder: (context, i) {
           final c = contacts[i];
           final details = c.organization ?? c.emails.firstOrNull?.value ?? c.phones.firstOrNull?.value;
-          return ListTile(
+          return KListRow(
             leading: KAvatar(name: c.name),
             title: Text(c.name),
             subtitle: details == null ? null : Text(details),
@@ -137,11 +140,10 @@ class ContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final c = contact;
     Future<void> edit() async {
       final saved = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
+        KPageRoute(
           fullscreenDialog: true,
           builder: (_) => ContactFormPage(account: account, contact: c),
         ),
@@ -150,17 +152,18 @@ class ContactPage extends StatelessWidget {
     }
 
     Future<void> delete() async {
-      final messenger = ScaffoldMessenger.of(context);
-      final sure = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
+      final messenger = KToast.of(context);
+      final sure = await showKDialog<bool>(
+        context,
+        builder: (context) => KDialog(
           content: Text(l.deleteContactConfirm),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l.cancel)),
-            FilledButton(
+            KButton(tone: KTone.quiet, onPressed: () => Navigator.of(context).pop(false), label: l.cancel),
+            KButton(
+              tone: KTone.primary,
               key: const ValueKey('confirm-delete'),
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l.delete),
+              label: l.delete,
             ),
           ],
         ),
@@ -168,28 +171,23 @@ class ContactPage extends StatelessWidget {
       if (!(sure ?? false)) return;
       try {
         await account.deleteContact(accountId: c.accountId, contactId: c.id);
-        messenger.showSnackBar(SnackBar(content: Text(l.deleted)));
+        messenger.show(l.deleted);
         if (context.mounted) Navigator.of(context).pop(true);
       } catch (error) {
-        messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+        messenger.show(l.error(errorText(error)));
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(c.name),
+    return KScaffold(
+      topBar: KTopBar(
+        title: c.name,
         actions: [
-          IconButton(
-            key: const ValueKey('edit-contact'),
-            tooltip: l.edit,
-            onPressed: edit,
-            icon: const Icon(LucideIcons.pencil),
-          ),
-          IconButton(
+          KIconButton(key: const ValueKey('edit-contact'), tooltip: l.edit, onPressed: edit, icon: LucideIcons.pencil),
+          KIconButton(
             key: const ValueKey('delete-contact'),
             tooltip: l.delete,
             onPressed: delete,
-            icon: const Icon(LucideIcons.trash2),
+            icon: LucideIcons.trash2,
           ),
         ],
       ),
@@ -198,39 +196,39 @@ class ContactPage extends StatelessWidget {
         children: [
           Center(child: KAvatar(name: c.name, size: 72)),
           const SizedBox(height: 8),
-          Center(child: Text(c.name, style: theme.textTheme.titleLarge)),
+          Center(child: Text(c.name, style: KText.title(context.k))),
           if (c.organization != null) Center(child: Text(c.organization!)),
           const SizedBox(height: 16),
           for (final email in c.emails)
-            ListTile(
+            KListRow(
               leading: const Icon(LucideIcons.mail),
               title: Text(email.value),
               subtitle: Text(_labelled(l, l.emails, email.labels)),
-              trailing: IconButton(
+              trailing: KIconButton(
                 key: ValueKey('write-to-${email.value}'),
                 tooltip: l.writeEmail,
-                icon: const Icon(LucideIcons.send),
+                icon: LucideIcons.send,
                 onPressed: () => writeMessage(context, account, to: email.value),
               ),
             ),
           for (final phone in c.phones)
-            ListTile(
+            KListRow(
               leading: const Icon(LucideIcons.phone),
               title: Text(phone.value),
               subtitle: Text(_labelled(l, l.phones, phone.labels)),
-              trailing: IconButton(
+              trailing: KIconButton(
                 tooltip: l.copy,
-                icon: const Icon(LucideIcons.copy),
+                icon: LucideIcons.copy,
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: phone.value));
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied)));
+                  KToast.of(context).show(l.copied);
                 },
               ),
             ),
           if (c.notes.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text(l.notes, style: theme.textTheme.titleSmall),
-            for (final note in c.notes) Padding(padding: const EdgeInsets.only(top: 4), child: SelectableText(note)),
+            Text(l.notes, style: KText.heading(context.k).copyWith(fontSize: 14)),
+            for (final note in c.notes) Padding(padding: const EdgeInsets.only(top: 4), child: KSelectable.text(note)),
           ],
         ],
       ),

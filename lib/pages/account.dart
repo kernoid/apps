@@ -2,10 +2,8 @@
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app/appearance.dart';
@@ -17,8 +15,7 @@ import '../app/sync_folders.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
-import '../ui/tokens.dart';
-import '../ui/widgets.dart';
+import '../ui/ui.dart';
 import '../widgets/e2e.dart';
 import 'login.dart';
 
@@ -44,9 +41,9 @@ class AccountPage extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final k = context.k;
     final web = Uri.tryParse(account.server)?.resolve('/app/#/account');
-    return Scaffold(
-      backgroundColor: k.bg,
-      appBar: KTopBar(title: l.account, leading: const SizedBox(width: 6)),
+    return KScaffold(
+      background: k.bg,
+      topBar: KTopBar(title: l.account, leading: const SizedBox(width: 6)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -74,15 +71,15 @@ class AccountPage extends StatelessWidget {
                     title: l.appearance,
                     icon: LucideIcons.sunMoon,
                     description: l.appearanceHint,
-                    child: ValueListenableBuilder<ThemeMode>(
+                    child: ValueListenableBuilder<KThemeMode>(
                       valueListenable: Appearance.mode,
                       builder: (context, mode, _) => Align(
                         alignment: Alignment.centerLeft,
-                        child: KSegmented<ThemeMode>(
+                        child: KSegmented<KThemeMode>(
                           options: [
-                            (ThemeMode.system, l.themeSystem),
-                            (ThemeMode.light, l.themeLight),
-                            (ThemeMode.dark, l.themeDark),
+                            (KThemeMode.system, l.themeSystem),
+                            (KThemeMode.light, l.themeLight),
+                            (KThemeMode.dark, l.themeDark),
                           ],
                           value: mode,
                           onChanged: Appearance.set,
@@ -247,7 +244,7 @@ class _ProfileSectionState extends _SettingsState<_ProfileSection> {
       icon: LucideIcons.circleUser,
       description: l.pictureHint,
       child: !loaded
-          ? const LinearProgressIndicator()
+          ? const KProgressBar()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -294,11 +291,7 @@ class _ProfileSectionState extends _SettingsState<_ProfileSection> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
-                      child: TextField(
-                        key: const ValueKey('display-name'),
-                        controller: _name,
-                        decoration: InputDecoration(labelText: l.displayName),
-                      ),
+                      child: KTextField(key: const ValueKey('display-name'), controller: _name, label: l.displayName),
                     ),
                     const SizedBox(width: 12),
                     KButton(
@@ -347,24 +340,18 @@ class _LanguageSectionState extends _SettingsState<_LanguageSection> {
       icon: LucideIcons.languages,
       description: l.emailLanguageHint,
       child: !loaded || language == null
-          ? (loaded ? noteLine('language-note') : const LinearProgressIndicator())
+          ? (loaded ? noteLine('language-note') : const KProgressBar())
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButton<String>(
+                KSelect<String>(
                   key: const ValueKey('email-language'),
                   value: language.language ?? '',
-                  underline: const SizedBox(),
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      // What the tenant chose is known only while it is the one used.
-                      child: Text(
-                        language.language == null ? l.asTenantLanguage(_languageName(l, language.used)) : l.asTenant,
-                      ),
-                    ),
-                    for (final code in language.available)
-                      DropdownMenuItem(value: code, child: Text(_languageName(l, code))),
+                  expand: false,
+                  options: [
+                    // What the tenant chose is known only while it is the one used.
+                    ('', language.language == null ? l.asTenantLanguage(_languageName(l, language.used)) : l.asTenant),
+                    for (final code in language.available) (code, _languageName(l, code)),
                   ],
                   onChanged: busy
                       ? null
@@ -435,75 +422,62 @@ class _MailSettingsSectionState extends _SettingsState<_MailSettingsSection> {
       title: l.mailSettings,
       icon: LucideIcons.mailCheck,
       child: s == null
-          ? const LinearProgressIndicator()
+          ? const KProgressBar()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 row(
                   l.sendFrom,
-                  DropdownButton<String>(
+                  KSelect<String>(
                     key: const ValueKey('send-from'),
                     value: _from,
-                    isExpanded: true,
-                    underline: const SizedBox(),
-                    items: [
-                      DropdownMenuItem(value: '', child: Text(l.myAddress)),
-                      for (final address in {...s.senders, if (_from.isNotEmpty) _from})
-                        DropdownMenuItem(
-                          value: address,
-                          child: Text(address, overflow: TextOverflow.ellipsis),
-                        ),
+                    expand: true,
+                    options: [
+                      ('', l.myAddress),
+                      for (final address in {...s.senders, if (_from.isNotEmpty) _from}) (address, address),
                     ],
-                    onChanged: (v) => setState(() => _from = v ?? ''),
+                    onChanged: (v) => setState(() => _from = v),
                   ),
                 ),
                 row(
                   l.undoSend,
-                  DropdownButton<int>(
+                  KSelect<int>(
                     key: const ValueKey('undo-send'),
                     value: _undo,
-                    underline: const SizedBox(),
-                    items: [
-                      for (final n in undoChoices)
-                        DropdownMenuItem(value: n, child: Text(n == 0 ? l.off : l.seconds(n))),
-                    ],
-                    onChanged: (v) => setState(() => _undo = v ?? 0),
+                    options: [for (final n in undoChoices) (n, n == 0 ? l.off : l.seconds(n))],
+                    onChanged: (v) => setState(() => _undo = v),
+                    expand: false,
                   ),
                 ),
                 KOverline(l.keepTrash, padding: const EdgeInsets.only(top: 6, bottom: 4)),
-                RadioGroup<bool>(
-                  groupValue: _own,
-                  onChanged: (v) => setState(() => _own = v ?? false),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Radio<bool>(key: ValueKey('trash-tenant'), value: false),
-                          Flexible(
-                            child: GestureDetector(
-                              onTap: () => setState(() => _own = false),
-                              child: Text(
-                                s.tenantTrashRetentionDays == null
-                                    ? l.asTenantForever
-                                    : l.asTenantDays(s.tenantTrashRetentionDays!),
-                                style: KText.body(k),
-                              ),
-                            ),
-                          ),
-                        ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    KRadioRow<bool>(
+                      key: const ValueKey('trash-tenant'),
+                      value: false,
+                      groupValue: _own,
+                      onChanged: (v) => setState(() => _own = v),
+                      child: Text(
+                        s.tenantTrashRetentionDays == null
+                            ? l.asTenantForever
+                            : l.asTenantDays(s.tenantTrashRetentionDays!),
+                        style: KText.body(k),
                       ),
-                      Row(
+                    ),
+                    KRadioRow<bool>(
+                      key: const ValueKey('trash-own'),
+                      value: true,
+                      groupValue: _own,
+                      onChanged: (v) => setState(() => _own = v),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Radio<bool>(key: ValueKey('trash-own'), value: true),
-                          GestureDetector(
-                            onTap: () => setState(() => _own = true),
-                            child: Text(l.ownDays, style: KText.body(k)),
-                          ),
+                          Text(l.ownDays, style: KText.body(k)),
                           const SizedBox(width: 12),
                           SizedBox(
                             width: 80,
-                            child: TextField(
+                            child: KTextField(
                               key: const ValueKey('trash-days'),
                               controller: _days,
                               enabled: _own,
@@ -512,8 +486,8 @@ class _MailSettingsSectionState extends _SettingsState<_MailSettingsSection> {
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Align(
@@ -647,18 +621,18 @@ class _VacationSectionState extends State<_VacationSection> {
 
   Future<DateTime?> _pick(DateTime? current, {required bool end}) async {
     final now = DateTime.now();
-    final day = await showDatePicker(
-      context: context,
-      initialDate: current ?? now,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 5),
+    final day = await showKDatePicker(
+      context,
+      initial: current ?? now,
+      first: DateTime(now.year - 1),
+      last: DateTime(now.year + 5),
     );
     if (day == null || !mounted) return null;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: current == null
-          ? (end ? const TimeOfDay(hour: 23, minute: 59) : const TimeOfDay(hour: 0, minute: 0))
-          : TimeOfDay.fromDateTime(current),
+    final time = await showKTimePicker(
+      context,
+      initial: current == null
+          ? (end ? const KTime(hour: 23, minute: 59) : const KTime(hour: 0, minute: 0))
+          : KTime.fromDateTime(current),
     );
     if (time == null) return null;
     return DateTime(day.year, day.month, day.day, time.hour, time.minute);
@@ -696,13 +670,13 @@ class _VacationSectionState extends State<_VacationSection> {
       title: l.vacation,
       icon: LucideIcons.plane,
       description: l.vacationHint,
-      trailing: Switch(
+      trailing: KSwitch(
         key: const ValueKey('vacation-on'),
         value: _on,
         onChanged: _loaded && !_failed ? (on) => setState(() => _on = on) : null,
       ),
       child: !_loaded
-          ? const LinearProgressIndicator()
+          ? const KProgressBar()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -710,18 +684,19 @@ class _VacationSectionState extends State<_VacationSection> {
                   when(l.fromOptional, _from, (t) => _from = t, end: false, key: const ValueKey('vacation-from')),
                   when(l.untilOptional, _until, (t) => _until = t, end: true, key: const ValueKey('vacation-until')),
                   const SizedBox(height: 8),
-                  TextField(
+                  KTextField(
                     key: const ValueKey('vacation-subject'),
                     controller: _subject,
-                    decoration: InputDecoration(labelText: l.subject, hintText: l.vacationSubjectHint),
+                    label: l.subject,
+                    hint: l.vacationSubjectHint,
                   ),
                   const SizedBox(height: 10),
-                  TextField(
+                  KTextField(
                     key: const ValueKey('vacation-text'),
                     controller: _text,
                     minLines: 3,
                     maxLines: 8,
-                    decoration: InputDecoration(labelText: l.text, alignLabelWithHint: true),
+                    label: l.text,
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -809,7 +784,7 @@ class _KeyCardState extends State<_KeyCard> {
     final s = _status;
     final children = <Widget>[];
     if (s == null) {
-      children.add(const LinearProgressIndicator());
+      children.add(const KProgressBar());
     } else if (!s.available) {
       children.add(Text(l.e2eUnavailable, style: KText.body(context.k)));
     } else if (!s.hasKey) {
@@ -857,7 +832,7 @@ class _KeyCardState extends State<_KeyCard> {
     return KSection(
       title: l.e2eTitle,
       icon: s?.unlocked ?? false ? LucideIcons.lockOpen : LucideIcons.lock,
-      trailing: _busy ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : null,
+      trailing: _busy ? const SizedBox.square(dimension: 18, child: KSpinner(stroke: 2)) : null,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
   }
@@ -879,7 +854,7 @@ class _Line extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (label.isNotEmpty) KOverline(label, padding: const EdgeInsets.only(bottom: 2)),
-          SelectableText(value, style: mono ? KText.mono(k) : KText.small(k)),
+          KSelectable.text(value, style: mono ? KText.mono(k) : KText.small(k)),
         ],
       ),
     );
@@ -904,7 +879,7 @@ class _SyncSection extends StatelessWidget {
       if (status.error != null) l.syncFailed(status.error!),
       if (status.last case final last?)
         l.syncDone(
-          TimeOfDay.fromDateTime(last).format(context),
+          KTime.fromDateTime(last).format(context),
           status.report?.downloaded ?? 0,
           status.report?.uploaded ?? 0,
         )
@@ -1014,7 +989,7 @@ class _AtLoginState extends State<_AtLogin> {
         Expanded(
           child: Text(l.syncAtLogin, style: TextStyle(color: context.k.muted, fontSize: 13)),
         ),
-        Switch(
+        KSwitch(
           key: const ValueKey('sync-at-login'),
           value: _on ?? false,
           onChanged: _on == null
@@ -1091,7 +1066,7 @@ class _DocumentsSectionState extends State<_DocumentsSection> {
       title: l.documentsTitle,
       icon: LucideIcons.folderOpen,
       description: l.documentsHint,
-      trailing: _busy ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)) : null,
+      trailing: _busy ? const SizedBox.square(dimension: 18, child: KSpinner(stroke: 2)) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1175,7 +1150,7 @@ class _ExplorerSectionState extends State<_ExplorerSection> {
             if (signedOut) l.explorerSignedOut,
             if (error != null) l.explorerFailed(error),
             if (DateTime.tryParse(status?.lastRound ?? '') case final last?)
-              l.explorerLast(TimeOfDay.fromDateTime(last.toLocal()).format(context)),
+              l.explorerLast(KTime.fromDateTime(last.toLocal()).format(context)),
             ...?status?.problems.take(5),
           ];
           return Column(
@@ -1257,7 +1232,7 @@ class _FileProviderSectionState extends _SettingsState<_FileProviderSection> {
       icon: LucideIcons.hardDrive,
       description: l.fileProviderHint,
       child: !loaded
-          ? const LinearProgressIndicator()
+          ? const KProgressBar()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

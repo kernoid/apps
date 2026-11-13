@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
+
 import 'package:path_provider/path_provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 import 'format.dart';
 
 /// Where saved files go: the Downloads folder, or the app's documents where a system has none (iOS, Android).
@@ -20,7 +21,7 @@ Future<void> saveBlob(
   required String name,
   required String mediaType,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = KToast.of(context);
   final l = AppLocalizations.of(context);
   try {
     final directory = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
@@ -31,9 +32,9 @@ Future<void> saveBlob(
       mediaType: mediaType,
       directory: directory.path,
     );
-    messenger.showSnackBar(SnackBar(content: Text(l.savedTo(path))));
+    messenger.show(l.savedTo(path));
   } catch (error) {
-    messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    messenger.show(l.error(errorText(error)));
   }
 }
 
@@ -45,13 +46,13 @@ Future<void> savePart(
   required int part,
   required String name,
 }) async {
-  final messenger = ScaffoldMessenger.of(context);
+  final messenger = KToast.of(context);
   final l = AppLocalizations.of(context);
   try {
     final directory = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
     final path = await account.savePart(emailId: emailId, partIndex: part, name: name, directory: directory.path);
-    messenger.showSnackBar(SnackBar(content: Text(l.savedTo(path))));
+    messenger.show(l.savedTo(path));
   } catch (error) {
-    messenger.showSnackBar(SnackBar(content: Text(l.error(errorText(error)))));
+    messenger.show(l.error(errorText(error)));
   }
 }

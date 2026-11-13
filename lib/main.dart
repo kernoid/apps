@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-import 'package:material_ui/material_ui.dart';
-import 'package:cupertino_ui/cupertino_ui.dart' show GlobalCupertinoLocalizations;
 import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/appearance.dart';
 import 'app/documents_provider.dart';
 import 'app/kept_login.dart';
-import 'ui/theme.dart';
+import 'ui/ui.dart';
 import 'l10n/app_localizations.dart';
 import 'pages/home.dart';
 import 'pages/login.dart';
@@ -15,6 +14,8 @@ import 'src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await RustLib.init();
+  // Dates in every language of the app (Material's localizations did this before).
+  await initializeDateFormatting();
   await Appearance.load();
   runApp(const KernoidApp());
 }
@@ -87,22 +88,15 @@ class _KernoidAppState extends State<KernoidApp> {
     final account = _account;
     return RepaintBoundary(
       key: KernoidApp.screen,
-      child: ValueListenableBuilder<ThemeMode>(
+      child: ValueListenableBuilder<KThemeMode>(
         valueListenable: Appearance.mode,
-        builder: (context, mode, _) => MaterialApp(
+        builder: (context, mode, _) => KApp(
           onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-          theme: kernoidTheme(Brightness.light),
-          darkTheme: kernoidTheme(Brightness.dark),
-          themeMode: mode,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          mode: mode,
+          localizationsDelegates: const [AppLocalizations.delegate, GlobalWidgetsLocalizations.delegate],
           supportedLocales: AppLocalizations.supportedLocales,
           home: _resuming
-              ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+              ? const KScaffold(body: KLoading())
               : account == null
               ? LoginPage(onSignedIn: _signedIn, notice: _resumeError)
               : HomePage(account: account, onSignOut: _signOut),

@@ -2,7 +2,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -10,6 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../app/format.dart';
 import '../l10n/app_localizations.dart';
 import '../src/rust/api/kernoid.dart';
+import '../ui/ui.dart';
 
 /// Where the browser comes back: the app's own scheme on Apple's systems and Android, a loopback address on a port of
 /// our choosing on desktops (RFC 8252, 7.1 and 7.3).
@@ -112,9 +112,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     String? required(String? v) => (v == null || v.trim().isEmpty) ? l.required : null;
-    return Scaffold(
+    return KScaffold(
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -126,79 +125,71 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'kern0id',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
+                    const Align(alignment: AlignmentDirectional.centerStart, child: KWordmark(size: 26)),
                     const SizedBox(height: 8),
-                    Text(l.signInTitle, style: theme.textTheme.titleMedium),
+                    Text(l.signInTitle, style: KText.heading(context.k)),
                     const SizedBox(height: 24),
-                    TextFormField(
+                    KTextFormField(
                       key: const ValueKey('server'),
                       controller: _server,
-                      decoration: InputDecoration(labelText: l.server, hintText: l.serverHint),
+                      label: l.server,
+                      hint: l.serverHint,
                       keyboardType: TextInputType.url,
                       autocorrect: false,
                       validator: required,
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
+                    KTextFormField(
                       key: const ValueKey('address'),
                       controller: _address,
-                      decoration: InputDecoration(labelText: l.address),
+                      label: l.address,
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       autofillHints: const [AutofillHints.username, AutofillHints.email],
                     ),
                     const SizedBox(height: 20),
-                    FilledButton.icon(
+                    KButton(
                       key: const ValueKey('sign-in-browser'),
-                      onPressed: _busy ? null : _signInWithBrowser,
-                      icon: _busy
-                          ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(LucideIcons.keyRound),
-                      label: Text(l.signInBrowser),
+                      tone: KTone.primary,
+                      expand: true,
+                      onPressed: _signInWithBrowser,
+                      busy: _busy,
+                      icon: LucideIcons.keyRound,
+                      label: l.signInBrowser,
                     ),
                     const SizedBox(height: 6),
-                    Text(l.signInBrowserHint, style: theme.textTheme.bodySmall),
+                    Text(l.signInBrowserHint, style: KText.small(context.k)),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        const Expanded(child: Divider()),
+                        const Expanded(child: KDivider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(l.orAppPassword, style: theme.textTheme.bodySmall),
+                          child: Text(l.orAppPassword, style: KText.small(context.k)),
                         ),
-                        const Expanded(child: Divider()),
+                        const Expanded(child: KDivider()),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
+                    KTextFormField(
                       key: const ValueKey('password'),
                       controller: _password,
-                      decoration: InputDecoration(
-                        labelText: l.appPassword,
-                        helperText: l.appPasswordHint,
-                        helperMaxLines: 2,
-                      ),
+                      label: l.appPassword,
+                      helper: l.appPasswordHint,
                       obscureText: true,
                       autofillHints: const [AutofillHints.password],
                       validator: required,
-                      onFieldSubmitted: (_) => _signIn(),
+                      onSubmitted: (_) => _signIn(),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
-                      Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                      Text(_error!, style: TextStyle(color: context.k.error)),
                     ],
                     const SizedBox(height: 24),
-                    OutlinedButton(
+                    KButton(
                       key: const ValueKey('sign-in'),
                       onPressed: _busy ? null : _signIn,
-                      child: Text(l.signInAppPassword),
+                      label: l.signInAppPassword,
                     ),
                   ],
                 ),
