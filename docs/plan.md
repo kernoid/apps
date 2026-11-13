@@ -76,21 +76,19 @@ Until then, in this order:
 ```
 apps/
 ├── lib/                 the Flutter app: UI, state, i18n (en, de) – one code base for all five platforms
-├── rust/                Cargo workspace (MIT), its own lock file
-│   ├── bridge/            the API Dart sees, generated with flutter_rust_bridge, on kernoid-client and kernoid-sync
-│   ├── apple/             the Rust side of the File Provider extensions (C boundary, section 7)
-│   ├── android/           the Rust side of the DocumentsProvider (JNI)
-│   └── windows-sync/      the Cloud Files provider (cfapi, `windows` crate)
-├── native/apple/        Swift package shared by both File Provider extensions
-├── macos/, ios/         Flutter runners; FileProvider/ extension targets
+├── rust/                one crate, `kernoid_bridge` (MIT), its own lock file
+│   ├── src/api/           the API Dart sees, generated with flutter_rust_bridge, on kernoid-client and kernoid-sync
+│   ├── src/provider.rs    the core of the file shells: JSON messages through a C boundary (section 5)
+│   └── src/provider/      its JNI functions for Android (`jni.rs`) and the Cloud Files shell for Windows
+├── native/apple/        the File Provider extension (Swift), shared by macOS and iOS
+├── macos/, ios/         Flutter runners; the `KernoidFileProvider` extension target
 ├── android/             Flutter runner; the DocumentsProvider in Kotlin
 ├── windows/, linux/     Flutter runners
 ├── test/, integration_test/
 └── docs/                this plan, later the user documentation
 ```
 
-`unsafe_code = "forbid"` everywhere in `rust/` except where foreign functions are called (`bridge`, `apple`,
-`android`, `windows-sync`).
+`unsafe_code` only where foreign functions are called: the C boundary, JNI and the calls to Windows.
 
 **The first prototype (2026-10-30)** has a simpler shape: `rust/` is one crate, `kernoid_bridge` – the API Dart sees
 (`src/api/`), on `kernoid-client` – by commit at first, from crates.io since 0.2.0 – (its own JMAP client
@@ -279,7 +277,7 @@ the order in which the vault and calendar parts follow mail.
 | Swift/Kotlin ↔ Rust | a C boundary by hand: JSON through two C functions (`rust/src/provider.rs`), JNI for Kotlin | MIT | chosen 2026-11-04 instead of UniFFI 0.32 (MPL-2.0, file-level copyleft) |
 | Kotlin ↔ Rust (built) | JSON messages over JNI, jni 0.22.4 | MIT OR Apache-2.0 | the core of the shells (`rust/src/provider.rs`); jni came already with reqwest on Android |
 | Certificates on Android | rustls-platform-verifier 0.7.1 and its Kotlin part 0.2.0 (the rustls project's Maven repository on GitHub) | MIT OR Apache-2.0 | reqwest's verifier; the JVM is handed to it at start, the Kotlin part's version checked against `rust/Cargo.lock` |
-| Async runtime, HTTP | tokio, an async HTTP client with rustls (AWS-LC) | MIT/Apache-2.0, ISC | decided: async – the engine waits on many transfers and push at once; **OPEN**: which HTTP client |
+| Async runtime, HTTP | tokio, reqwest 0.13 with rustls (AWS-LC, post-quantum key exchange preferred) – through kernoid's SDK | MIT/Apache-2.0, ISC | async – the engine waits on many transfers and push at once |
 | Local state | SQLite | public domain | one file on every system |
 | Sign-in | OIDC with PKCE as a public client; tokens in the system's keychain | – | as RFC 0001 describes for apps |
 | Viewing files | pdfrx 2.9 (PDFium, prebuilt and fetched at build time with its hash); text and pictures by Flutter | MIT; PDFium BSD-3-Clause/Apache-2.0 | audio and video go to another app of the system (decided 2026-11-04): no player on all five systems without LGPL libraries; share_plus 13.3 (BSD-3-Clause) for the share sheet on phones |
