@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'tokens.dart';
 
@@ -39,7 +40,7 @@ class KApp extends StatelessWidget {
     return WidgetsApp(
       color: k.accent,
       onGenerateTitle: onGenerateTitle,
-      localizationsDelegates: localizationsDelegates,
+      localizationsDelegates: [_DateFormats.delegate, ...localizationsDelegates],
       supportedLocales: supportedLocales,
       textStyle: KText.body(k),
       pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) =>
@@ -66,6 +67,25 @@ class KApp extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Sets up intl's dates and times for the app's language as it loads – what Material's localizations did, wherever
+/// the app is built (also in tests that start it without `main`).
+abstract final class _DateFormats {
+  static const delegate = _DateFormatsDelegate();
+}
+
+class _DateFormatsDelegate extends LocalizationsDelegate<void> {
+  const _DateFormatsDelegate();
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<void> load(Locale locale) => initializeDateFormatting(locale.toLanguageTag());
+
+  @override
+  bool shouldReload(_DateFormatsDelegate old) => false;
 }
 
 /// Scrolling as the platform has it, with a thin scroll bar in kernoid's colours on desktops.

@@ -423,7 +423,8 @@ class _KSelectState<T> extends State<KSelect<T>> {
       child: Opacity(
         opacity: enabled ? 1 : 0.55,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          // Stretched only when it takes its parent's width: in a row the width has no bound.
+          crossAxisAlignment: widget.expand ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.label != null)

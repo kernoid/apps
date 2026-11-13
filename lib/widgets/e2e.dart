@@ -120,7 +120,7 @@ class _RecoveryDialogState extends State<_RecoveryDialog> {
               child: KSelectable.text(
                 widget.code,
                 key: const ValueKey('the-recovery-code'),
-                style: KText.heading(context.k).copyWith(fontFamily: 'monospace', letterSpacing: 1.2),
+                style: KText.heading(context.k).copyWith(fontFamily: KFont.mono, letterSpacing: 1.2),
               ),
             ),
             Align(

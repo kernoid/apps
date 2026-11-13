@@ -35,17 +35,29 @@ Future<T?> showKDialog<T>(BuildContext context, {required WidgetBuilder builder,
 /// The frame of a dialog: a title, its content (scrolling when long), its buttons at the bottom end. What Material's
 /// alert dialog was.
 class KDialog extends StatelessWidget {
-  const KDialog({super.key, this.title, required this.content, this.actions = const [], this.width = 420});
+  const KDialog({
+    super.key,
+    this.title,
+    required this.content,
+    this.actions = const [],
+    this.width = 420,
+    this.scrollable = false,
+  });
 
   final String? title;
   final Widget content;
   final List<Widget> actions;
   final double width;
 
+  /// The content scrolls when it is too long – for text; content with a list of its own sizes itself (as Material's
+  /// alert dialog did).
+  final bool scrollable;
+
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final insets = MediaQuery.viewInsetsOf(context);
+    final padding = EdgeInsets.fromLTRB(22, title != null ? 14 : 22, 22, actions.isEmpty ? 22 : 8);
     return AnimatedPadding(
       duration: const Duration(milliseconds: 100),
       padding: EdgeInsets.only(bottom: insets.bottom) + const EdgeInsets.all(20),
@@ -76,10 +88,9 @@ class KDialog extends StatelessWidget {
                         child: Text(title!, style: KText.heading(k).copyWith(fontSize: 17)),
                       ),
                     Flexible(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(22, title != null ? 14 : 22, 22, actions.isEmpty ? 22 : 8),
-                        child: content,
-                      ),
+                      child: scrollable
+                          ? SingleChildScrollView(padding: padding, child: content)
+                          : Padding(padding: padding, child: content),
                     ),
                     if (actions.isNotEmpty)
                       Padding(
@@ -172,6 +183,7 @@ Future<bool> confirmAction(
     context,
     builder: (context) => KDialog(
       width: 400,
+      scrollable: true,
       content: Text(text, style: KText.body(context.k)),
       actions: [
         KButton(
@@ -196,6 +208,7 @@ Future<void> showNote(BuildContext context, {required String text, required Stri
   context,
   builder: (context) => KDialog(
     width: 400,
+    scrollable: true,
     content: Text(text, style: KText.body(context.k)),
     actions: [
       KButton(

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
-import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/appearance.dart';
 import 'app/documents_provider.dart';
@@ -14,8 +13,6 @@ import 'src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await RustLib.init();
-  // Dates in every language of the app (Material's localizations did this before).
-  await initializeDateFormatting();
   await Appearance.load();
   runApp(const KernoidApp());
 }

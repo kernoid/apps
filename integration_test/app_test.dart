@@ -46,6 +46,9 @@ const contact = String.fromEnvironment('KERNOID_TEST_CONTACT');
 const newAddress = String.fromEnvironment('KERNOID_TEST_NEW_ADDRESS');
 const newPassword = String.fromEnvironment('KERNOID_TEST_NEW_PASSWORD');
 
+/// What carries the tooltip `message` – kernoid's own tooltip, which Flutter's `find.byTooltip` does not know.
+Finder byTooltip(String message) => find.byWidgetPredicate((w) => w is KTooltip && w.message == message);
+
 /// Waits until `finder` finds something, pumping frames; the Rust side answers on its own threads.
 Future<void> waitFor(WidgetTester tester, Finder finder, {Duration timeout = const Duration(seconds: 20)}) async {
   final end = DateTime.now().add(timeout);
@@ -55,7 +58,7 @@ Future<void> waitFor(WidgetTester tester, Finder finder, {Duration timeout = con
     if (finder.evaluate().isNotEmpty) return;
   }
   await shoot(tester, 'failed-${DateTime.now().millisecondsSinceEpoch}');
-  throw TestFailure('not found in time: $finder');
+  throw TestFailure('not found in time: ${finder.describeMatch(Plurality.zero)}');
 }
 
 /// Types into a field and checks it took the text: right after the app's first start the window may not take the
@@ -82,7 +85,7 @@ Future<void> waitGone(WidgetTester tester, Finder finder, {Duration timeout = co
     if (finder.evaluate().isEmpty) return;
   }
   await shoot(tester, 'failed-${DateTime.now().millisecondsSinceEpoch}');
-  throw TestFailure('still there: $finder');
+  throw TestFailure('still there: ${finder.describeMatch(Plurality.many)}');
 }
 
 /// Pictures go to KERNOID_TEST_SCREENSHOTS, or – in the sandbox of macOS, which may not write elsewhere – to
@@ -477,7 +480,7 @@ void main() {
     double indent(String label) => tester.widget<KSideItem>(side(label)).indent;
     Future<void> name(String text) async {
       await waitFor(tester, find.byKey(const ValueKey('ask-text')));
-      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await fill(tester, 'ask-text', text);
       await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
     }
 
@@ -533,7 +536,7 @@ void main() {
     await waitFor(tester, find.byWidgetPredicate((w) => '${w.key}'.contains('new-folder-')));
     await settledTap(tester, find.byWidgetPredicate((w) => '${w.key}'.contains('new-folder-')).first);
     await waitFor(tester, find.byKey(const ValueKey('ask-text')));
-    await tester.enterText(find.byKey(const ValueKey('ask-text')), folder);
+    await fill(tester, 'ask-text', folder);
     await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
     await waitFor(tester, side(folder));
     await shoot(tester, 'folders-phone');
@@ -577,7 +580,7 @@ void main() {
 
     Future<void> ask(String text) async {
       await waitFor(tester, find.byKey(const ValueKey('ask-text')));
-      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await fill(tester, 'ask-text', text);
       await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
     }
 
@@ -728,7 +731,7 @@ void main() {
       await settle();
       await settledTap(tester, find.byKey(const ValueKey('new-folder')));
       await waitFor(tester, find.byKey(const ValueKey('ask-text')));
-      await tester.enterText(find.byKey(const ValueKey('ask-text')), name);
+      await fill(tester, 'ask-text', name);
       await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
       await waitFor(tester, row(name));
     }
@@ -811,7 +814,7 @@ void main() {
 
     Future<void> ask(String text) async {
       await waitFor(tester, find.byKey(const ValueKey('ask-text')));
-      await tester.enterText(find.byKey(const ValueKey('ask-text')), text);
+      await fill(tester, 'ask-text', text);
       await settledTap(tester, find.byKey(const ValueKey('ask-confirm')));
     }
 
@@ -859,7 +862,7 @@ void main() {
           .drain<void>();
       await dir.delete(recursive: true);
     });
-    await settledTap(tester, find.byTooltip(l.refresh));
+    await settledTap(tester, byTooltip(l.refresh));
     await waitFor(tester, row('Brief.txt'));
     await shoot(tester, 'vault');
     await settledTap(tester, row('Brief.txt'));
@@ -948,7 +951,7 @@ void main() {
     // Again: the folder there is filled, not made a second time.
     expect(await upload({'c.txt': 'drei'}), ['$folder/c.txt']);
 
-    await settledTap(tester, find.byTooltip(AppLocalizations.of(tester.element(row('Notizen.txt'))).refresh));
+    await settledTap(tester, byTooltip(AppLocalizations.of(tester.element(row('Notizen.txt'))).refresh));
     await waitFor(tester, row(folder));
     expect(row(folder), findsOneWidget);
     await settledTap(tester, row(folder));
@@ -1066,11 +1069,11 @@ void main() {
           KTheme.of(tester.element(find.byKey(const ValueKey('sign-out')))).dark ? Brightness.dark : Brightness.light;
 
       // Light, then as the system again.
-      await settledTap(tester, find.byKey(const ValueKey('segment-ThemeMode.light')));
+      await settledTap(tester, find.byKey(const ValueKey('segment-KThemeMode.light')));
       await tester.pumpAndSettle();
       expect(brightness(), Brightness.light);
       await shoot(tester, 'account-$name-light');
-      await settledTap(tester, find.byKey(const ValueKey('segment-ThemeMode.system')));
+      await settledTap(tester, find.byKey(const ValueKey('segment-KThemeMode.system')));
       await tester.pumpAndSettle();
 
       // The vacation response on, kept at the server, and off again.
@@ -1298,6 +1301,8 @@ void main() {
     await waitFor(tester, find.byWidgetPredicate((w) => states.contains(w.key)));
     if (make.evaluate().isNotEmpty) {
       await shoot(tester, 'key-none');
+      await tester.ensureVisible(make);
+      await tester.pump();
       await tester.tap(make);
       await waitFor(tester, find.byKey(const ValueKey('the-recovery-code')), timeout: const Duration(seconds: 60));
       await shoot(tester, 'key-recovery-code');
