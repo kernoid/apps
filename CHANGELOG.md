@@ -7,6 +7,13 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- The file shells (Android's Files app, Explorer, Finder) showed files read-only: kernoid gives rights on directories
+  only, and the shells' core gave a file none. A file now has the rights of its directory, at the top of a store the
+  store's – as the app's own file page has them –, and the Trash is neither renamed nor deleted. Found running the app
+  and its DocumentsProvider in an Android emulator for the first time (Android Automotive 15 image).
+
 ## [0.3.0] – 2026-11-05
 
 ### Added

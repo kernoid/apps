@@ -160,12 +160,22 @@ async fn answer(request: &Value) -> Result<Value, KernoidError> {
     Ok(match op {
         "stores" => stores(&client),
         "list" => {
-            let store = text(request, "store")?;
-            let nodes = files::children(&client, store, optional(request, "parent")).await?;
-            json!({ "items": nodes.iter().map(item).collect::<Vec<_>>() })
+            let (store, parent) = (text(request, "store")?, optional(request, "parent"));
+            let nodes = files::children(&client, store, parent).await?;
+            let here = rights_at(&client, store, parent).await?;
+            json!({ "items": nodes.iter().map(|n| item_in(n, Some(here))).collect::<Vec<_>>() })
         }
         "changes" => changes(&client, text(request, "store")?, optional(request, "since")).await?,
-        "item" => json!({ "item": item(&node(&client, text(request, "store")?, text(request, "id")?).await?) }),
+        "item" => {
+            let store = text(request, "store")?;
+            let n = node(&client, store, text(request, "id")?).await?;
+            let here = if n.my_rights.is_some() {
+                None
+            } else {
+                Some(rights_at(&client, store, n.parent_id.as_deref()).await?)
+            };
+            json!({ "item": item_in(&n, here) })
+        }
         "fetch" => fetch(&client, request).await?,
         "create" => create(&client, request).await?,
         "modify" => modify(&client, request).await?,
@@ -191,10 +201,68 @@ fn stores(client: &Client) -> Value {
     })).collect::<Vec<_>>() })
 }
 
-/// An item as the shells see it: its version changes with its content, name or place – what the File Provider and
-/// Cloud Files compare.
-fn item(n: &files::FileNode) -> Value {
-    let r = n.rights();
+/// An item as the shells see it, with the rights of its directory when it has none of its own (a file): its version
+/// changes with its content, name or place – what the File Provider and Cloud Files compare.
+async fn item(client: &Client, store: &str, n: &files::FileNode) -> Result<Value, KernoidError> {
+    let here = if n.my_rights.is_some() { None } else { Some(rights_at(client, store, n.parent_id.as_deref()).await?) };
+    Ok(item_in(n, here))
+}
+
+/// [`item`] for many: a file takes the rights of its directory from the same list when it is there, else asks once
+/// per directory.
+async fn items(client: &Client, store: &str, nodes: &[files::FileNode]) -> Result<Vec<Value>, KernoidError> {
+    let mut known: std::collections::HashMap<Option<String>, files::Rights> =
+        nodes.iter().filter_map(|n| Some((Some(n.id.clone()), n.my_rights?))).collect();
+    let mut out = Vec::with_capacity(nodes.len());
+    for n in nodes {
+        let here = match n.my_rights {
+            Some(_) => None,
+            None => Some(match known.get(&n.parent_id) {
+                Some(rights) => *rights,
+                None => {
+                    let rights = rights_at(client, store, n.parent_id.as_deref()).await?;
+                    known.insert(n.parent_id.clone(), rights);
+                    rights
+                }
+            }),
+        };
+        out.push(item_in(n, here));
+    }
+    Ok(out)
+}
+
+/// The rights where an item lies: its directory's, or at the top of the store everything in the own one and adding
+/// where the session allows it – as the app's file page has them (`lib/pages/files.dart`, `_rightsOf`).
+async fn rights_at(client: &Client, store: &str, parent: Option<&str>) -> Result<files::Rights, KernoidError> {
+    if let Some(parent) = parent {
+        return Ok(node(client, store, parent).await?.rights());
+    }
+    let own = files::stores(client).iter().any(|s| s.id == store && s.kind == files::StoreKind::Own);
+    let may_create = client
+        .session
+        .accounts
+        .get(store)
+        .and_then(|a| a.account_capabilities.get(FILENODE))
+        .and_then(|c| c.get("mayCreateTopLevelFileNode"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    Ok(if own {
+        files::Level::Full
+    } else if may_create {
+        files::Level::Edit
+    } else {
+        files::Level::Read
+    }
+    .rights())
+}
+
+/// [`item`] with the rights of where it lies for an item without its own – kernoid gives `myRights` on directories
+/// only, so a file has its directory's. A directory with a role (the Trash) is neither renamed nor deleted.
+fn item_in(n: &files::FileNode, inherited: Option<files::Rights>) -> Value {
+    let mut r = n.my_rights.or(inherited).unwrap_or_default();
+    if n.role.is_some() {
+        (r.may_rename, r.may_delete) = (false, false);
+    }
     json!({
         "id": n.id,
         "parent": n.parent_id,
@@ -223,12 +291,12 @@ async fn node(client: &Client, store: &str, id: &str) -> Result<files::FileNode,
 async fn changes(client: &Client, store: &str, since: Option<&str>) -> Result<Value, KernoidError> {
     let Some(since) = since.filter(|s| !s.is_empty()) else {
         let snapshot = files::snapshot(client, store).await?;
-        let items: Vec<Value> = snapshot.nodes.iter().map(item).collect();
+        let items = items(client, store, &snapshot.nodes).await?;
         return Ok(json!({ "items": items, "deleted": [], "anchor": snapshot.state, "more": false, "reset": true }));
     };
     match files::changes(client, store, since, MAX_CHANGES).await {
         Ok(changes) => Ok(json!({
-            "items": changes.changed.iter().map(item).collect::<Vec<_>>(),
+            "items": items(client, store, &changes.changed).await?,
             "deleted": changes.destroyed,
             "anchor": changes.new_state,
             "more": changes.has_more_changes,
@@ -252,7 +320,7 @@ async fn fetch(client: &Client, request: &Value) -> Result<Value, KernoidError> 
     let mut file = tokio::fs::File::create(to).await.map_err(|e| error(&e.to_string()))?;
     let kind = n.media_type.as_deref().unwrap_or("application/octet-stream");
     client.download(store, blob, &n.name, kind, &mut file, &mut |_, _| {}).await?;
-    Ok(json!({ "item": item(&n) }))
+    Ok(json!({ "item": item(client, store, &n).await? }))
 }
 
 async fn create(client: &Client, request: &Value) -> Result<Value, KernoidError> {
@@ -280,7 +348,7 @@ async fn create(client: &Client, request: &Value) -> Result<Value, KernoidError>
         .into_iter()
         .find(|n| n.name == name)
         .ok_or_else(|| error("the item was not made"))?;
-    Ok(json!({ "item": item(&made) }))
+    Ok(json!({ "item": item(client, store, &made).await? }))
 }
 
 async fn modify(client: &Client, request: &Value) -> Result<Value, KernoidError> {
@@ -311,7 +379,7 @@ async fn modify(client: &Client, request: &Value) -> Result<Value, KernoidError>
         client.set(&[FILENODE], "FileNode", store, change, json!({})).await?;
         n = node(client, store, id).await?;
     }
-    Ok(json!({ "item": item(&n) }))
+    Ok(json!({ "item": item(client, store, &n).await? }))
 }
 
 #[cfg(test)]

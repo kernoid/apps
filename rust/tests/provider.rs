@@ -51,6 +51,11 @@ fn the_core_answers_what_a_file_manager_asks() {
     assert!(ids.contains(&folder["id"].as_str().unwrap()) && ids.contains(&file["id"].as_str().unwrap()));
     let listed = ask(json!({ "op": "list", "session": session, "store": store, "parent": folder["id"] }));
     assert_eq!(listed["items"].as_array().unwrap().len(), 1);
+    // kernoid gives rights on directories only: a file takes its directory's, in every answer of the core.
+    let writable = |item: &Value| item["rights"]["write"] == true && item["rights"]["rename"] == true;
+    assert!(writable(&file), "{file}");
+    assert!(writable(&listed["items"][0]), "{listed}");
+    assert!(changed["items"].as_array().unwrap().iter().filter(|i| i["id"] == file["id"]).all(writable), "{changed}");
 
     // Renamed and given new content: a new version; fetched with it.
     std::fs::write(dir.join("changed"), "second, longer").unwrap();
