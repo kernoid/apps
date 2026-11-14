@@ -1762,9 +1762,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-client"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e8c3dddf064a131f5bebd9986504c447839446718550b771ae3998da8e44201"
+checksum = "b97b5d635f747df0ba880b117b08818861ec030efc9c8984f40a93f89d68feb7"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1788,9 +1788,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-e2e"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d62471db6f51d5fcf5a1e07276e4b3d31f2173b85b82d099bbc210881e12bad"
+checksum = "d5845298b59a750dccecd034f10bbc56a91e534c2d0cc18bfa65584dd0740f48"
 dependencies = [
  "base64 0.22.1",
  "mail-parser",
@@ -1803,9 +1803,9 @@ dependencies = [
 
 [[package]]
 name = "kernoid-sync"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7adada743d0c82ec3cf75e95f484857424cb43240a86fb4b75e2981ce32bb713"
+checksum = "652cb7c3e464ab9193b1a26bb30ddacde720c4e843e1a43fb26da5ae6fe55e9e"
 dependencies = [
  "chrono",
  "kernoid-client",
@@ -1855,9 +1855,9 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.38.2"
+version = "0.39.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1d20bef17f513b9b3004532233187769cd072d790971f4e4da0e346eb6401e8"
+checksum = "14a5f01b87b92705d07b433c06f96cbc764637d81a0bffb5734ce17cf0f9a2b3"
 dependencies = [
  "cc",
  "pkg-config",
@@ -2727,9 +2727,9 @@ dependencies = [
 
 [[package]]
 name = "rusqlite"
-version = "0.40.2"
+version = "0.41.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23f2a97da3e3873c73cb2a2e71b35c40ff95e0b1eefa8d72d8499a6928c3b5b3"
+checksum = "da9bba6f3506135e120a6586df05be18b48d18896600646a4bec8f993d91a594"
 dependencies = [
  "bitflags",
  "fallible-iterator",

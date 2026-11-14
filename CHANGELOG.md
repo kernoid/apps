@@ -21,6 +21,8 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ### Fixed
 
+- kernoid's SDK 0.3.1: the folder kept in step stores its state with SQLite 3.54.1 (RUSTSEC-2026-0459, through
+  rusqlite 0.41.1).
 - The file shells (Android's Files app, Explorer, Finder) showed files read-only: kernoid gives rights on directories
   only, and the shells' core gave a file none. A file now has the rights of its directory, at the top of a store the
   store's – as the app's own file page has them –, and the Trash is neither renamed nor deleted. Found running the app
