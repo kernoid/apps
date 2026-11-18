@@ -379,7 +379,7 @@ pub struct ReplyPhrases {
     pub date: String,
     pub subject: String,
     pub to: String,
-    /// chrono's format of a date, e.g. `%d.%m.%Y %H:%M`.
+    /// The format of a date (strftime, as Jiff reads it), e.g. `%d.%m.%Y %H:%M`.
     pub date_format: String,
 }
 
@@ -1713,7 +1713,7 @@ impl Kernoid {
     pub async fn vacation(&self) -> Result<Option<VacationResponse>, KernoidError> {
         let client = self.client.clone();
         let found = run(async move { mail::vacation(&client).await }).await?;
-        let time = |t: Option<chrono::NaiveDateTime>| t.map(|t| t.format(LOCAL_TIME).to_string());
+        let time = |t: Option<jiff::civil::DateTime>| t.map(|t| t.strftime(LOCAL_TIME).to_string());
         Ok(found.map(|v| VacationResponse {
             on: v.on,
             from: time(v.from),
@@ -1724,9 +1724,9 @@ impl Kernoid {
     }
 
     pub async fn set_vacation(&self, vacation: VacationResponse) -> Result<(), KernoidError> {
-        let time = |t: Option<String>| -> Result<Option<chrono::NaiveDateTime>, KernoidError> {
+        let time = |t: Option<String>| -> Result<Option<jiff::civil::DateTime>, KernoidError> {
             t.filter(|t| !t.is_empty())
-                .map(|t| chrono::NaiveDateTime::parse_from_str(&t, LOCAL_TIME))
+                .map(|t| jiff::civil::DateTime::strptime(LOCAL_TIME, &t))
                 .transpose()
                 .map_err(|error| KernoidError { unauthorized: false, message: error.to_string() })
         };
@@ -1978,7 +1978,7 @@ fn html_of(email: &mail::Email) -> Option<String> {
 /// stay while its time does.
 fn event_form(draft: EventDraft, earlier: Option<calendars::EventForm>) -> client::Result<calendars::EventForm> {
     let time = |text: &str| {
-        chrono::NaiveDateTime::parse_from_str(text, "%Y-%m-%dT%H:%M:%S")
+        jiff::civil::DateTime::strptime("%Y-%m-%dT%H:%M:%S", text)
             .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
     };
     let form = calendars::EventForm {
@@ -2002,14 +2002,14 @@ fn event_form(draft: EventDraft, earlier: Option<calendars::EventForm>) -> clien
 
 fn event(e: calendars::Event, own: &[String]) -> Event {
     let invitation = if e.organized_by(own) { None } else { e.me(own).map(|(key, p)| (key.to_owned(), p.clone())) };
-    let rfc3339 = |time: chrono::DateTime<chrono::Utc>| time.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    let rfc3339 = |time: jiff::Timestamp| format!("{time:.0}");
     // An all-day event is days, not times: its local start date and as many days as its duration says.
     let (start, end) = if e.show_without_time {
-        let first = e.start.as_deref().and_then(|s| chrono::NaiveDate::parse_from_str(s.get(..10)?, "%Y-%m-%d").ok());
+        let first = e.start.as_deref().and_then(|s| jiff::civil::Date::strptime("%Y-%m-%d", s.get(..10)?).ok());
         let days = e.duration.as_deref().and_then(calendars::parse_duration).map_or(1, |s| (s / 86_400).max(1));
         (
             first.map(|d| d.to_string()),
-            first.and_then(|d| d.checked_add_days(chrono::Days::new(days as u64))).map(|d| d.to_string()),
+            first.and_then(|d| d.checked_add(jiff::Span::new().days(days)).ok()).map(|d| d.to_string()),
         )
     } else {
         (e.starts().map(rfc3339), e.ends().map(rfc3339))
@@ -2068,9 +2068,7 @@ impl Kernoid {
         let client = self.client.clone();
         run(async move {
             let parse = |text: &str| {
-                chrono::DateTime::parse_from_rfc3339(text)
-                    .map(|time| time.with_timezone(&chrono::Utc))
-                    .map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
+                text.parse::<jiff::Timestamp>().map_err(|_| client::Error::Protocol(format!("not a time: {text}")))
             };
             let (after, before) = (parse(&from)?, parse(&to)?);
             let list = calendars::calendars(&client).await?;
@@ -2104,7 +2102,7 @@ impl Kernoid {
                 .ok_or_else(|| client::Error::Protocol("the event is gone".into()))?;
             let form = calendars::EventForm::of(&event, &own)
                 .ok_or_else(|| client::Error::Protocol("the event has no start".into()))?;
-            let local = |time: chrono::NaiveDateTime| time.format("%Y-%m-%dT%H:%M:%S").to_string();
+            let local = |time: jiff::civil::DateTime| time.strftime("%Y-%m-%dT%H:%M:%S").to_string();
             Ok(EventDraft {
                 calendar_id: event.calendar_ids.keys().next().cloned().unwrap_or_default(),
                 account_id,

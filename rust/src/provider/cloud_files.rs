@@ -103,7 +103,7 @@ impl Item {
 
     /// Windows' time of the last change: 100 ns since 1601 (UTC).
     pub fn filetime(&self) -> i64 {
-        self.modified.as_deref().and_then(filetime).unwrap_or_else(|| filetime_of(chrono::Utc::now()))
+        self.modified.as_deref().and_then(filetime).unwrap_or_else(|| filetime_of(jiff::Timestamp::now()))
     }
 }
 
@@ -113,12 +113,12 @@ fn content(version: &str) -> &str {
 
 /// An RFC 3339 time in Windows' FILETIME.
 pub(crate) fn filetime(text: &str) -> Option<i64> {
-    chrono::DateTime::parse_from_rfc3339(text).ok().map(|t| filetime_of(t.with_timezone(&chrono::Utc)))
+    text.parse::<jiff::Timestamp>().ok().map(filetime_of)
 }
 
-fn filetime_of(time: chrono::DateTime<chrono::Utc>) -> i64 {
+fn filetime_of(time: jiff::Timestamp) -> i64 {
     const SINCE_1601: i64 = 11_644_473_600;
-    (time.timestamp() + SINCE_1601) * 10_000_000 + i64::from(time.timestamp_subsec_nanos() / 100)
+    (time.as_second() + SINCE_1601) * 10_000_000 + i64::from(time.subsec_nanosecond() / 100)
 }
 
 /// Whether Windows allows `name` for a file or folder: no reserved characters, no trailing dot or space, not a device

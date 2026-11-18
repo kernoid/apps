@@ -18,8 +18,9 @@ publish = false
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-chrono = { version = "=0.4.45", default-features = false, features = ["clock", "std"] }
 flutter_rust_bridge = "=2.13.0"
+# Dates and times in the device's time zone (Unlicense OR MIT) – in place of chrono (RUSTSEC-2026-0543).
+jiff = "=1.0.1"
 # kernoid's Rust SDK (MIT): JMAP, push, end-to-end encryption (on kernoid-e2e) – released with kernoid, the same
 # version as the apps (docs/plan.md, 1).
 kernoid-client = "=0.3.1"

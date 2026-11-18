@@ -468,7 +468,7 @@ fn run(roots: &[Arc<Shared>], stopped: &mpsc::Receiver<()>) {
                 report(format!("{}: {}", shared.root().path, failure.message));
             }
         }
-        lock(&STATUS).last_round = Some(chrono::Utc::now().to_rfc3339());
+        lock(&STATUS).last_round = Some(jiff::Timestamp::now().to_string());
         match stopped.recv_timeout(ROUND) {
             Err(RecvTimeoutError::Timeout) => {}
             _ => return,
