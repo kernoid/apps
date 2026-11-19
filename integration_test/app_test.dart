@@ -19,15 +19,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:kernoid/app/kept_login.dart';
-import 'package:kernoid/app/sync_folders.dart';
-import 'package:kernoid/app/tray.dart';
-import 'package:kernoid/l10n/app_localizations.dart';
+import 'package:kernoid_shell/app/kept_login.dart';
+import 'package:kernoid_files/sync_folders.dart';
+import 'package:kernoid_files/tray.dart';
+import 'package:kernoid_l10n/l10n/app_localizations.dart';
 import 'package:kernoid/main.dart';
-import 'package:kernoid/pages/mail.dart';
-import 'package:kernoid/src/rust/api/kernoid.dart';
-import 'package:kernoid/src/rust/frb_generated.dart';
-import 'package:kernoid/ui/ui.dart';
+import 'package:kernoid_shell/kernoid_shell.dart';
+import 'package:kernoid_mail/mail.dart';
+import 'package:kernoid_bridge/kernoid_bridge.dart';
+import 'package:kernoid_ui/ui.dart';
 
 const server = String.fromEnvironment('KERNOID_TEST_SERVER');
 const address = String.fromEnvironment('KERNOID_TEST_ADDRESS');
@@ -120,7 +120,7 @@ void main() {
       }
       tester.view.physicalSize = size * tester.view.devicePixelRatio;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(const KernoidApp());
+      await tester.pumpWidget(const KernoidApp(features: features));
       await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
 
       await fill(tester, 'server', server);
@@ -1214,7 +1214,7 @@ void main() {
       final account = await Kernoid.finishLogin(login: login, callback: await browser(login.url, address, password));
       await KeptLogin.keep(account);
     });
-    await tester.pumpWidget(const KernoidApp());
+    await tester.pumpWidget(const KernoidApp(features: features));
     await waitFor(tester, find.byKey(const ValueKey('nav-account')), timeout: const Duration(seconds: 60));
     await settledTap(tester, find.byKey(const ValueKey('nav-account')));
     await waitFor(tester, find.byKey(const ValueKey('display-name')));
@@ -1436,7 +1436,7 @@ Future<void> settledTap(WidgetTester tester, Finder finder) async {
 }
 
 Future<void> signIn(WidgetTester tester, String address, String password) async {
-  await tester.pumpWidget(const KernoidApp());
+  await tester.pumpWidget(const KernoidApp(features: features));
   // Not pumpAndSettle: while a kept login is tried, the page shows a progress indicator.
   await waitFor(tester, find.byKey(const ValueKey('server')), timeout: const Duration(seconds: 60));
   await fill(tester, 'server', server);

@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: MIT
-# kernoid's app for macOS, iOS, Linux, Android and Windows (docs/plan.md). Dependencies are exact and at least two
-# weeks old when taken; the Rust side is in rust/, built by cargokit through the plugin in rust_builder/.
+# kernoid's app for macOS, iOS, Linux, Android and Windows (docs/plan.md), put together from kernoid's app kit
+# (kit/flutter/ in kernoid/kernoid, RFC 0011) – the Rust side is the kit's package kernoid_bridge. Dependencies are exact
+# and at least two weeks old when taken.
 name: kernoid
-description: "kernoid on desktops and phones: mail, calendars, contacts and files."
+description: "kernoid on desktops and phones: mail, calendars, contacts and files, from kernoid's app kit."
 publish_to: 'none'
 version: 0.4.1+9
 
@@ -10,39 +11,92 @@ environment:
   sdk: ^3.14.0
 
 dependencies:
-  file_selector: 1.1.0
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  flutter_rust_bridge: 2.13.0
-  flutter_secure_storage: 11.2.0
-  flutter_web_auth_2: 5.1.0
-  intl: any
-  lucide_icons_flutter: 4.0.0
-  kernoid_bridge:
-    path: rust_builder
-  path_provider: 2.1.6
-  flutter_widget_from_html_core: 0.17.4
-  url_launcher: 6.3.3
-  # PDFs drawn by PDFium (BSD-3-Clause/Apache-2.0) through pdfrx's engine; pdfrx's own viewer would bring Material.
-  pdfrx_engine: 0.7.4
-  pdfium_flutter: 0.4.0
-  share_plus: 13.3.1
-  desktop_drop: 0.8.4
-  tray_manager: 0.5.3
-  window_manager: 0.5.2
+  # kernoid's app kit (RFC 0011), from kernoid/kernoid at the release of the same version; the packages refer to each
+  # other by path there, so every one of them is named again below (dependency_overrides). To develop against a
+  # checkout beside this one, `scripts/kit.sh` writes a pubspec_overrides.yaml (not tracked).
+  kernoid_calendar:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_calendar
+  kernoid_contacts:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_contacts
+  kernoid_files:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_files
+  kernoid_mail:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_mail
+  kernoid_shell:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_shell
 
 dev_dependencies:
   flutter_lints: 6.0.0
+  # The integration test reaches into the kit and Lucide's icons directly.
+  kernoid_bridge: any
+  kernoid_l10n: any
+  kernoid_ui: any
+  lucide_icons_flutter: 4.0.0
   flutter_test:
     sdk: flutter
   integration_test:
     sdk: flutter
 
-# Platform parts of file_selector, and parts pdfrx's engine brings, set back to their newest versions at least two weeks old
-# (CLAUDE.md, Rules).
+# The kit's packages, all from the same release – and platform parts of file_selector and parts pdfrx's engine brings,
+# set back to their newest versions at least two weeks old (CLAUDE.md, Rules).
 dependency_overrides:
+  kernoid_bridge:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_bridge
+  kernoid_calendar:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_calendar
+  kernoid_contacts:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_contacts
+  kernoid_files:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_files
+  kernoid_l10n:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_l10n
+  kernoid_mail:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_mail
+  kernoid_shell:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_shell
+  kernoid_ui:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.5.0
+      path: kit/flutter/kernoid_ui
   archive: 4.5.2
   file_selector_ios: 0.5.3+6
   file_selector_macos: 0.9.5+1
@@ -52,25 +106,6 @@ dependency_overrides:
 
 flutter:
   uses-material-design: false
-  generate: true
-  # The tray icon on desktops (kernoid/brand, CC BY-ND 4.0).
+  # The tray icon on desktops (kernoid/brand, CC BY-ND 4.0). The fonts come with kernoid_ui.
   assets:
     - assets/tray/
-  # kernoid's look: IBM Plex (assets/fonts, OFL-1.1).
-  fonts:
-    - family: Plex Sans
-      fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
-        - asset: assets/fonts/IBMPlexSans-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/IBMPlexSans-Bold.ttf
-          weight: 700
-    - family: Plex Mono
-      fonts:
-        - asset: assets/fonts/IBMPlexMono-Regular.ttf
-        - asset: assets/fonts/IBMPlexMono-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/IBMPlexMono-Bold.ttf
-          weight: 700
