@@ -7,6 +7,19 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.4.0] – 2026-11-19
+
+### Changed
+
+- kernoid's SDK 0.4.0: dates and times with Jiff 1.0 in place of chrono and chrono-tz, which are no longer maintained
+  (RUSTSEC-2026-0543, RUSTSEC-2026-0555). The bridge reads and writes them with Jiff too; what the app shows is the
+  same.
+
+### Fixed
+
+- Linux: the app built again on systems whose libayatana-appindicator marks `app_indicator_new` (used by the tray)
+  deprecated.
+
 ## [0.3.1] – 2026-11-14
 
 ### Changed
