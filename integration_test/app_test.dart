@@ -23,6 +23,10 @@ import 'package:kernoid_shell/app/kept_login.dart';
 import 'package:kernoid_files/sync_folders.dart';
 import 'package:kernoid_files/tray.dart';
 import 'package:kernoid_l10n/l10n/app_localizations.dart';
+import 'package:kernoid_mail/l10n/mail_text.dart';
+import 'package:kernoid_files/l10n/files_text.dart';
+import 'package:kernoid_contacts/l10n/contacts_text.dart';
+import 'package:kernoid_calendar/l10n/calendar_text.dart';
 import 'package:kernoid/main.dart';
 import 'package:kernoid_shell/kernoid_shell.dart';
 import 'package:kernoid_mail/mail.dart';
@@ -277,8 +281,8 @@ void main() {
     await waitFor(tester, find.byKey(const ValueKey('edit-contact')));
     // The labels came back from the server.
     final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('edit-contact'))));
-    expect(find.text('${l.emails} · ${l.labelWork}'), findsOneWidget);
-    expect(find.text('${l.phones} · ${l.labelMobile}'), findsOneWidget);
+    expect(find.text('${l.contactsText.emails} · ${l.contactsText.labelWork}'), findsOneWidget);
+    expect(find.text('${l.contactsText.phones} · ${l.contactsText.labelMobile}'), findsOneWidget);
     await shoot(tester, 'contact-labels');
     await settledTap(tester, find.byKey(const ValueKey('edit-contact')));
     await waitFor(tester, find.byKey(const ValueKey('contact-organization')));
@@ -320,7 +324,7 @@ void main() {
     final l = AppLocalizations.of(tester.element(find.byKey(const ValueKey('event-title'))));
     await tester.enterText(find.byKey(const ValueKey('event-title')), title);
     await settledTap(tester, find.byKey(const ValueKey('event-repeat')));
-    await settledTap(tester, find.text(l.repeatWeekly).last);
+    await settledTap(tester, find.text(l.calendarText.repeatWeekly).last);
     await settledTap(tester, find.byKey(const ValueKey('save-event')));
     await waitFor(tester, inList(title));
     expect(inList(title), findsNWidgets(2));
@@ -598,7 +602,7 @@ void main() {
     await menu('Plan.txt', 'copy');
     await waitFor(tester, find.byKey(const ValueKey('target-store')));
     await settledTap(tester, find.byKey(const ValueKey('target-store')));
-    await settledTap(tester, find.text(l.myFiles).last);
+    await settledTap(tester, find.text(l.filesText.myFiles).last);
     await waitFor(tester, find.byKey(ValueKey('target-$folder')));
     await settledTap(tester, find.byKey(ValueKey('target-$folder')));
     await waitFor(tester, find.byKey(const ValueKey('copy-here')));
@@ -617,14 +621,20 @@ void main() {
     await waitFor(tester, row('Kopie.txt'));
     await menu('Kopie.txt', 'delete');
     await waitGone(tester, row('Kopie.txt'));
-    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await settledTap(
+      tester,
+      find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles)),
+    );
     await waitFor(tester, row('Trash'));
     await settledTap(tester, row('Trash'));
     await waitFor(tester, row('Kopie.txt'));
     await menu('Kopie.txt', 'delete');
     await settledTap(tester, find.byKey(const ValueKey('confirm-action')));
     await waitGone(tester, row('Kopie.txt'));
-    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await settledTap(
+      tester,
+      find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles)),
+    );
     await waitFor(tester, row(folder));
 
     // Shared with bob, and a link to it.
@@ -635,7 +645,7 @@ void main() {
     await settledTap(tester, find.byKey(const ValueKey('principal-bob@demo.localhost')));
     await waitFor(tester, find.byKey(const ValueKey('level-0')));
     await settledTap(tester, find.byKey(const ValueKey('share-save')));
-    await waitFor(tester, find.descendant(of: row(folder), matching: find.text(l.shared)));
+    await waitFor(tester, find.descendant(of: row(folder), matching: find.text(l.filesText.shared)));
     await menu(folder, 'link');
     await waitFor(tester, find.byKey(const ValueKey('link-create')));
     await settledTap(tester, find.byKey(const ValueKey('link-create')));
@@ -661,13 +671,16 @@ void main() {
     await settle();
     await tester.enterText(find.byKey(const ValueKey('files-search')), 'Roadmap');
     await tester.testTextInput.receiveAction(TextInputAction.search);
-    await waitFor(tester, find.textContaining('${l.myFiles} / Projekte'));
+    await waitFor(tester, find.textContaining('${l.filesText.myFiles} / Projekte'));
     await shoot(tester, 'files-search');
     await tester.enterText(find.byKey(const ValueKey('files-search')), '');
     await tester.testTextInput.receiveAction(TextInputAction.search);
 
     // The folder goes, for good.
-    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await settledTap(
+      tester,
+      find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles)),
+    );
     await waitFor(tester, row(folder));
     await menu(folder, 'delete');
     await waitGone(tester, row(folder));
@@ -753,9 +766,15 @@ void main() {
     await waitGone(tester, row(inner));
     await settledTap(tester, row(outer));
     await waitFor(tester, row(inner));
-    await dragTo(row(inner), find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await dragTo(
+      row(inner),
+      find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles)),
+    );
     await waitGone(tester, row(inner));
-    await settledTap(tester, find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles)));
+    await settledTap(
+      tester,
+      find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles)),
+    );
     await waitFor(tester, row(inner));
     await shoot(tester, 'files-dragged');
 
@@ -862,7 +881,7 @@ void main() {
           .drain<void>();
       await dir.delete(recursive: true);
     });
-    await settledTap(tester, byTooltip(l.refresh));
+    await settledTap(tester, byTooltip(l.filesText.refresh));
     await waitFor(tester, row('Brief.txt'));
     await shoot(tester, 'vault');
     await settledTap(tester, row('Brief.txt'));
@@ -886,7 +905,7 @@ void main() {
     await settle();
 
     // Dragged onto the top of the store: refused, it stays.
-    final top = find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.myFiles));
+    final top = find.descendant(of: find.byKey(const ValueKey('trail')), matching: find.text(l.filesText.myFiles));
     final gesture = await tester.startGesture(tester.getCenter(row('Brief.txt')), kind: PointerDeviceKind.mouse);
     final (start, end) = (tester.getCenter(row('Brief.txt')), tester.getCenter(top));
     for (var i = 1; i <= 10; i++) {
@@ -894,7 +913,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 30));
     }
     await gesture.up();
-    await waitFor(tester, find.text(l.vaultMoveNo));
+    await waitFor(tester, find.text(l.filesText.vaultMoveNo));
     expect(row('Brief.txt'), findsOneWidget);
 
     // The vault goes, for good.
@@ -951,7 +970,7 @@ void main() {
     // Again: the folder there is filled, not made a second time.
     expect(await upload({'c.txt': 'drei'}), ['$folder/c.txt']);
 
-    await settledTap(tester, byTooltip(AppLocalizations.of(tester.element(row('Notizen.txt'))).refresh));
+    await settledTap(tester, byTooltip(AppLocalizations.of(tester.element(row('Notizen.txt'))).filesText.refresh));
     await waitFor(tester, row(folder));
     expect(row(folder), findsOneWidget);
     await settledTap(tester, row(folder));
@@ -1271,13 +1290,13 @@ void main() {
     await saved('language-note');
 
     // Undo sending for 10 seconds, kept at the server, then off again.
-    await choose('undo-send', l.seconds(10));
+    await choose('undo-send', l.mailText.seconds(10));
     await tester.ensureVisible(find.byKey(const ValueKey('mail-settings-save')));
     await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
     await saved('mail-settings-note');
     await reload();
     expect(tester.widget<KSelect<int>>(find.byKey(const ValueKey('undo-send'))).value, 10);
-    await choose('undo-send', l.off);
+    await choose('undo-send', l.mailText.off);
     await settledTap(tester, find.byKey(const ValueKey('mail-settings-save')));
     await saved('mail-settings-note');
 
