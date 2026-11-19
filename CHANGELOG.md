@@ -7,6 +7,12 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+### Changed
+
+- The app is put together from **kernoid's app kit** (kernoid 0.5, RFC 0011): its pages, the look, the strings and the
+  Rust side are Flutter packages in kernoid/kernoid now, and the app shows the parts its server offers – against a
+  kernoid that runs identity alone, only the account; against one without files, no files.
+
 ## [0.4.1] – 2026-11-19
 
 ### Fixed
