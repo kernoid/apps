@@ -73,6 +73,9 @@ set_target_properties(${BINARY_NAME}
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
+# tray_manager 0.5.3 calls app_indicator_new, which newer libayatana-appindicator marks deprecated; keep the warning,
+# but do not let it fail the build (-Werror above).
+target_compile_options(tray_manager_plugin PRIVATE -Wno-error=deprecated-declarations)
 
 
 # === Installation ===

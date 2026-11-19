@@ -1460,7 +1460,7 @@ class ReplyPhrases {
   final String subject;
   final String to;
 
-  /// chrono's format of a date, e.g. `%d.%m.%Y %H:%M`.
+  /// The format of a date (strftime, as Jiff reads it), e.g. `%d.%m.%Y %H:%M`.
   final String dateFormat;
 
   const ReplyPhrases({
