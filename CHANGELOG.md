@@ -7,6 +7,14 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.4.1] – 2026-11-19
+
+### Fixed
+
+- The account's own picture shows at the foot of the side bar and atop the account page, not only in the profile
+  section; a new or removed picture shows there at once. As before, only a login of OpenID Connect reads it – with an
+  app password the initials stand in for it.
+
 ## [0.4.0] – 2026-11-19
 
 ### Changed
