@@ -25,7 +25,14 @@ import 'login.dart';
 /// with the password – the password itself, second factors, passkeys, app passwords, sessions – is the web app's, a
 /// click away.
 class AccountPage extends StatelessWidget {
-  const AccountPage({super.key, required this.account, required this.onSignOut, this.sync, this.explorer});
+  const AccountPage({
+    super.key,
+    required this.account,
+    required this.onSignOut,
+    this.sync,
+    this.explorer,
+    this.picture,
+  });
 
   final Kernoid account;
   final VoidCallback onSignOut;
@@ -35,6 +42,9 @@ class AccountPage extends StatelessWidget {
 
   /// The stores in Windows' Explorer.
   final ExplorerFiles? explorer;
+
+  /// The account's own picture, shared with the side bar; changed here, it changes there.
+  final ValueNotifier<Uint8List?>? picture;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +66,12 @@ class AccountPage extends StatelessWidget {
                   KSection(
                     title: account.username,
                     description: account.server,
-                    trailing: KAvatar(name: account.username, size: 40),
+                    trailing: picture == null
+                        ? KAvatar(name: account.username, size: 40)
+                        : ValueListenableBuilder(
+                            valueListenable: picture!,
+                            builder: (context, image, _) => KAvatar(name: account.username, size: 40, image: image),
+                          ),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: KButton(
@@ -88,7 +103,7 @@ class AccountPage extends StatelessWidget {
                     ),
                   ),
                   if (account.settingsAvailable()) ...[
-                    _ProfileSection(account: account),
+                    _ProfileSection(account: account, picture: picture),
                     _LanguageSection(account: account),
                     _MailSettingsSection(account: account),
                   ],
@@ -186,9 +201,12 @@ abstract class _SettingsState<T extends StatefulWidget> extends State<T> {
 
 /// The name others see and the picture beside it.
 class _ProfileSection extends StatefulWidget {
-  const _ProfileSection({required this.account});
+  const _ProfileSection({required this.account, this.picture});
 
   final Kernoid account;
+
+  /// Told of a new picture, for the side bar and the head of the page.
+  final ValueNotifier<Uint8List?>? picture;
 
   @override
   State<_ProfileSection> createState() => _ProfileSectionState();
@@ -203,6 +221,7 @@ class _ProfileSectionState extends _SettingsState<_ProfileSection> {
     final (name, picture) = (await widget.account.ownName(), await widget.account.ownAvatar());
     _name.text = name;
     _picture = picture;
+    widget.picture?.value = picture;
   }
 
   @override
@@ -233,6 +252,7 @@ class _ProfileSectionState extends _SettingsState<_ProfileSection> {
           : 'image/jpeg';
       await widget.account.setOwnAvatar(image: bytes, mediaType: type);
       _picture = bytes;
+      widget.picture?.value = bytes;
     });
   }
 
@@ -279,6 +299,7 @@ class _ProfileSectionState extends _SettingsState<_ProfileSection> {
                                   : () => save(() async {
                                       await widget.account.removeOwnAvatar();
                                       _picture = null;
+                                      widget.picture?.value = null;
                                     }),
                             ),
                         ],

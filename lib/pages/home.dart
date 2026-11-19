@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+import 'package:flutter/foundation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../app/explorer_files.dart';
@@ -42,12 +43,27 @@ class _HomePageState extends State<HomePage> {
   /// The stores in Windows' Explorer, kept in step while the app is open.
   late final _explorer = ExplorerFiles(widget.account);
 
+  /// The account's own picture, at the foot of the side bar and atop the account page – only a login of OpenID Connect
+  /// may read it (an app password may not).
+  final _picture = ValueNotifier<Uint8List?>(null);
+
   @override
   void initState() {
     super.initState();
     _sync.addListener(_trayWhenNeeded);
     _sync.start();
     _explorer.start();
+    _loadPicture();
+  }
+
+  Future<void> _loadPicture() async {
+    if (!widget.account.settingsAvailable()) return;
+    try {
+      final picture = await widget.account.ownAvatar();
+      if (mounted) _picture.value = picture;
+    } catch (_) {
+      // Without the picture the initials stand in for it.
+    }
   }
 
   void _trayWhenNeeded() {
@@ -70,6 +86,7 @@ class _HomePageState extends State<HomePage> {
     _tray?.stop();
     _sync.dispose();
     _explorer.dispose();
+    _picture.dispose();
     super.dispose();
   }
 
@@ -88,7 +105,13 @@ class _HomePageState extends State<HomePage> {
       1 => CalendarPage(key: const ValueKey('calendar'), account: widget.account),
       2 => ContactsPage(key: const ValueKey('contacts'), account: widget.account),
       3 => FilesPage(key: const ValueKey('files'), account: widget.account),
-      _ => AccountPage(account: widget.account, onSignOut: widget.onSignOut, sync: _sync, explorer: _explorer),
+      _ => AccountPage(
+        account: widget.account,
+        onSignOut: widget.onSignOut,
+        sync: _sync,
+        explorer: _explorer,
+        picture: _picture,
+      ),
     };
     final name = widget.account.username;
     if (MediaQuery.sizeOf(context).width >= wideLayout) {
@@ -123,6 +146,7 @@ class _HomePageState extends State<HomePage> {
                       _AccountItem(
                         key: const ValueKey('nav-account'),
                         name: name,
+                        picture: _picture,
                         label: l.account,
                         selected: _section == sections.length,
                         onTap: () => setState(() => _section = sections.length),
@@ -171,9 +195,17 @@ class _HomePageState extends State<HomePage> {
 
 /// The account at the foot of the side bar: its avatar and address.
 class _AccountItem extends StatefulWidget {
-  const _AccountItem({super.key, required this.name, required this.label, required this.selected, required this.onTap});
+  const _AccountItem({
+    super.key,
+    required this.name,
+    required this.picture,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String name;
+  final ValueListenable<Uint8List?> picture;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -209,7 +241,10 @@ class _AccountItemState extends State<_AccountItem> {
             ),
             child: Row(
               children: [
-                KAvatar(name: widget.name, size: 30),
+                ValueListenableBuilder(
+                  valueListenable: widget.picture,
+                  builder: (context, picture, _) => KAvatar(name: widget.name, size: 30, image: picture),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
