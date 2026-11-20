@@ -440,74 +440,74 @@ packages:
     dependency: "direct dev"
     description:
       path: "kit/flutter/kernoid_bridge"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_calendar:
     dependency: "direct main"
     description:
       path: "kit/flutter/kernoid_calendar"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_contacts:
     dependency: "direct main"
     description:
       path: "kit/flutter/kernoid_contacts"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_files:
     dependency: "direct main"
     description:
       path: "kit/flutter/kernoid_files"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_l10n:
     dependency: "direct dev"
     description:
       path: "kit/flutter/kernoid_l10n"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_mail:
     dependency: "direct main"
     description:
       path: "kit/flutter/kernoid_mail"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_shell:
     dependency: "direct main"
     description:
       path: "kit/flutter/kernoid_shell"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   kernoid_ui:
     dependency: "direct dev"
     description:
       path: "kit/flutter/kernoid_ui"
-      ref: "v0.5.1"
-      resolved-ref: "977662de023bed1cc450ba914f1e6b990a4039b7"
+      ref: "v0.6.0"
+      resolved-ref: "69e8dd127b53822cca6f462c9fc115aca16ca06b"
       url: "https://github.com/kernoid/kernoid"
     source: git
-    version: "0.5.1"
+    version: "0.6.0"
   leak_tracker:
     dependency: transitive
     description:

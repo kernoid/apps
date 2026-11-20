@@ -7,6 +7,12 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.6.0] – 2026-11-21
+
+Belongs to kernoid 0.6.0. The app is built on kernoid's app kit 0.6.0: calendars and contacts read and written by
+kernoid's own library (`kernoid-pim`), mail by `kernoid-mime` – a changed event of a series now shows on its day –, one
+HTTP stack for vaults on spaces. Nothing to change for users.
+
 ## [0.5.1] – 2026-11-20
 
 Belongs to kernoid 0.5.1 (0.5.0 was never released).
