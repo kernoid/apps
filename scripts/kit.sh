@@ -9,6 +9,8 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 kernoid=$(cd "${KERNOID_DIR:-$here/../kernoid}" && pwd)
 kit="$kernoid/kit/flutter"
 [ -d "$kit/kernoid_shell" ] || { echo "no kit at $kit" >&2; exit 1; }
+# Git Bash on Windows names paths /d/…, which Dart cannot read: give it D:/… there.
+if command -v cygpath >/dev/null 2>&1; then kit=$(cygpath -m "$kit"); fi
 {
   echo "# Written by scripts/kit.sh – the kit of $kit, not the release."
   echo "dependency_overrides:"
