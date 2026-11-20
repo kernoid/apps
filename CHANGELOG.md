@@ -7,6 +7,24 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.5.1] – 2026-11-20
+
+Belongs to kernoid 0.5.1 (0.5.0 was never released).
+
+### Added
+
+- **Vaults on spaces** (kernoid RFC 0010, 5): new vaults are kept end to end with post-quantum keys in a space of
+  kernoid's relay – the server sees neither names nor how many files there are. A vault opens in a view of its own
+  with folders, uploads, the viewer, renaming, moving and its own trash; it is renamed in its space. An existing
+  OpenPGP vault moves onto a space beside it (**Move onto a space**), the old one kept until it is removed.
+- Sharing such a vault makes those shared with members at their level – reading, editing, or editing and sharing on
+  –, groups through their members; a share changed elsewhere reaches the vault when someone who may share opens it.
+  Someone who may only read is offered nothing to change.
+- The folders kept in step on the computer and the system's file manager (Finder, the Files app on Android, Explorer)
+  keep and show vaults on spaces too – the file manager as a device of its own, handed what it needs with its login.
+  On Apple's systems this waits for the signing team (the app group).
+- What a device keeps of its vaults is sealed with a key in the system's key store, next to the login.
+
 ### Changed
 
 - The app is put together from **kernoid's app kit** (kernoid 0.5, RFC 0011): its pages, the look, the strings and the

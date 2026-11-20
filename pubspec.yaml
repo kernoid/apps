@@ -5,7 +5,7 @@
 name: kernoid
 description: "kernoid on desktops and phones: mail, calendars, contacts and files, from kernoid's app kit."
 publish_to: 'none'
-version: 0.4.1+9
+version: 0.5.1+10
 
 environment:
   sdk: ^3.14.0
