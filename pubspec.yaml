@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # kernoid's app for macOS, iOS, Linux, Android and Windows (docs/plan.md), put together from kernoid's app kit
-# (kit/flutter/ in kernoid/kernoid, RFC 0011) – the Rust side is the kit's package kernoid_bridge. Dependencies are exact
-# and at least two weeks old when taken.
+# (kit/flutter/ in kernoid/kernoid, RFC 0011) – the Rust side is the kit's package kernoid_bridge, built into the app by
+# kernoid_native (RFC 0011, 4). Dependencies are exact and at least two weeks old when taken.
 name: kernoid
 description: "kernoid on desktops and phones: mail, calendars, contacts and files, from kernoid's app kit."
 publish_to: 'none'
@@ -36,6 +36,12 @@ dependencies:
       url: https://github.com/kernoid/kernoid
       ref: v0.6.0
       path: kit/flutter/kernoid_mail
+  # The app's one Rust library: the crate of kernoid_bridge, built for every platform.
+  kernoid_native:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.6.0
+      path: kit/flutter/kernoid_native
   kernoid_shell:
     git:
       url: https://github.com/kernoid/kernoid
@@ -87,6 +93,11 @@ dependency_overrides:
       url: https://github.com/kernoid/kernoid
       ref: v0.6.0
       path: kit/flutter/kernoid_mail
+  kernoid_native:
+    git:
+      url: https://github.com/kernoid/kernoid
+      ref: v0.6.0
+      path: kit/flutter/kernoid_native
   kernoid_shell:
     git:
       url: https://github.com/kernoid/kernoid

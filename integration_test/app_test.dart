@@ -114,7 +114,7 @@ Future<void> shoot(WidgetTester tester, String name) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async => RustLib.init());
+  setUpAll(() async => loadKernoid());
 
   for (final (name, size) in [('wide', const Size(1280, 800)), ('phone', const Size(390, 844))]) {
     testWidgets('mail, files and the account – $name', (tester) async {

@@ -22,7 +22,7 @@ print(os.path.normpath(os.path.join(path, "rust")))
 ' "$config")
 
 # Rust from rustup first – a Rust of Homebrew has no targets for iOS (CLAUDE.md, Building) –, and Xcode's own tools
-# out of the way of the build scripts, as cargokit does (cargokit/build_pod.sh in kernoid_bridge).
+# out of the way of the build scripts, as cargokit does (cargokit/build_pod.sh in kernoid_native).
 PATH=$(printf '%s' "$PATH" | tr ':' '\n' | grep -v 'Contents/Developer/' | tr '\n' ':')
 export PATH="$HOME/.cargo/bin:${PATH%:}"
 

@@ -9,6 +9,6 @@ ARCHS = arm64
 KERNOID_RUST_TARGET = aarch64-apple-darwin
 
 // The core of the file shells, statically (native/apple/build-rust.sh), and what it needs of the system. Not
-// $(inherited): the project's settings carry the pods' `-framework kernoid_bridge` – cargokit's build of the same crate
+// $(inherited): the project's settings carry the pods' `-framework kernoid_native` – cargokit's build of the same crate
 // for the app –, which would bind the extension to that instead.
 OTHER_LDFLAGS = "$(PROJECT_TEMP_DIR)/kernoid-rust/$(KERNOID_RUST_TARGET)/release/libkernoid_bridge.a" -framework Security -framework CoreFoundation -liconv
