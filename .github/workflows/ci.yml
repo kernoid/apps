@@ -86,7 +86,7 @@ jobs:
       - run: $FLUTTER pub get
       - name: Build
         run: |
-          if [[ "$RUNNER_OS" == Windows ]]; then "$FLUTTER" build windows --debug -v; else "$FLUTTER" build linux --debug; fi
+          if [[ "$RUNNER_OS" == Windows ]]; then "$FLUTTER" build windows --debug; else "$FLUTTER" build linux --debug; fi
 
   android:
     runs-on: ubuntu-latest
