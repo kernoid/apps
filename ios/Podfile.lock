@@ -1,21 +1,21 @@
 PODS:
   - Flutter (1.0.0)
-  - kernoid_bridge (0.0.1):
+  - kernoid_native (0.0.1):
     - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - kernoid_bridge (from `.symlinks/plugins/kernoid_bridge/ios`)
+  - kernoid_native (from `.symlinks/plugins/kernoid_native/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  kernoid_bridge:
-    :path: ".symlinks/plugins/kernoid_bridge/ios"
+  kernoid_native:
+    :path: ".symlinks/plugins/kernoid_native/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  kernoid_bridge: 0bbd64d5caa71497bfa31d5ded68026d14e08892
+  kernoid_native: 387f9ab9ea8590b3e2d27ccd37c69d443084e7be
 
 PODFILE CHECKSUM: a394d919de395c9fbe4659aa0269b3b141540e13
 

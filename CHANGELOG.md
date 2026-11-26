@@ -7,6 +7,17 @@ go with kernoid's – the apps 0.2.0 belong to kernoid 0.2.0.
 
 ## [Unreleased]
 
+## [0.7.0] – 2026-11-26
+
+Belongs to kernoid 0.7.0. The app is built on kernoid's app kit 0.7.0; its Rust library now comes from the kit's
+package `kernoid_native`.
+
+### Upgrading
+
+- **Vaults on spaces do not carry over** (kernoid's changelog, 0.7.0): the format of the foundation's streams changed
+  throughout, and the app talks only to kernoid 0.7.0 or newer for them. A vault on a space is made anew and filled
+  again; vaults of the OpenPGP kind and everything else are untouched.
+
 ## [0.6.0] – 2026-11-21
 
 Belongs to kernoid 0.6.0. The app is built on kernoid's app kit 0.6.0: calendars and contacts read and written by

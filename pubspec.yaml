@@ -5,7 +5,7 @@
 name: kernoid
 description: "kernoid on desktops and phones: mail, calendars, contacts and files, from kernoid's app kit."
 publish_to: 'none'
-version: 0.6.0+11
+version: 0.7.0+12
 
 environment:
   sdk: ^3.14.0
@@ -19,33 +19,33 @@ dependencies:
   kernoid_calendar:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_calendar
   kernoid_contacts:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_contacts
   kernoid_files:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_files
   kernoid_mail:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_mail
   # The app's one Rust library: the crate of kernoid_bridge, built for every platform.
   kernoid_native:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_native
   kernoid_shell:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_shell
 
 dev_dependencies:
@@ -66,47 +66,47 @@ dependency_overrides:
   kernoid_bridge:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_bridge
   kernoid_calendar:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_calendar
   kernoid_contacts:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_contacts
   kernoid_files:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_files
   kernoid_l10n:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_l10n
   kernoid_mail:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_mail
   kernoid_native:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_native
   kernoid_shell:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_shell
   kernoid_ui:
     git:
       url: https://github.com/kernoid/kernoid
-      ref: v0.6.0
+      ref: v0.7.0
       path: kit/flutter/kernoid_ui
   archive: 4.5.2
   file_selector_ios: 0.5.3+6
